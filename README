@@ -1,0 +1,10 @@
+DocTor -- A service that periodically checks the Tor network
+          for consensus conflicts and other hiccups
+============================================================
+
+DocTor is a Java application that downloads the Tor consensus and votes
+from the Tor directory authorities and checks them for consensus problems.
+
+DocTor writes its findings to local files which can then be sent to a
+mailing list or IRC bot, or which can be served by an HTTP server.
+
