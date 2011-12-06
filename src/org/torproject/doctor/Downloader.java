@@ -56,9 +56,6 @@ public class Downloader {
       if (responses.containsKey(url)) {
         String response = responses.get(url);
         this.downloadedConsensuses.put(nickname, response);
-      } else {
-        System.err.println("Could not download consensus from directory "
-            + "authority " + nickname + ".  Ignoring.");
       }
     }
     if (responses.isEmpty()) {
