@@ -403,7 +403,7 @@ public class MetricsWebsiteReport implements Report {
           ("circwindow,CircuitPriorityHalflifeMsec,refuseunknownexits,"
           + "cbtdisabled,cbtnummodes,cbtrecentcount,cbtmaxtimeouts,"
           + "cbtmincircs,cbtquantile,cbtclosequantile,cbttestfreq,"
-          + "cbtmintimeout,cbtinitialtimeout,bwauthpid").split(",")));
+          + "cbtmintimeout,cbtinitialtimeout").split(",")));
       Map<String, String> consensusConsensusParams =
           downloadedConsensus.getConsensusParams();
       for (Status vote : this.downloadedVotes) {
@@ -416,7 +416,8 @@ public class MetricsWebsiteReport implements Report {
             if (!consensusConsensusParams.containsKey(e.getKey()) ||
                 !consensusConsensusParams.get(e.getKey()).equals(
                 e.getValue()) ||
-                !validParameters.contains(e.getKey())) {
+                (!validParameters.contains(e.getKey()) &&
+                !e.getKey().startsWith("bwauth"))) {
               conflictOrInvalid = true;
               break;
             }
