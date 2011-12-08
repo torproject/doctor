@@ -29,6 +29,15 @@ public class Status implements Comparable<Status> {
     return this.unparsedString;
   }
 
+  /* Fetch time in millis. */
+  private long fetchTime;
+  public void setFetchTime(long fetchTime) {
+    this.fetchTime = fetchTime;
+  }
+  public long getFetchTime() {
+    return this.fetchTime;
+  }
+
   /* Votes published at the same time as this consensus; votes don't
    * reference any statuses. */
   private SortedSet<Status> votes = new TreeSet<Status>();

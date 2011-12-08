@@ -37,8 +37,8 @@ public class Downloader {
   }
 
   /* Download the most recent consensus from all authorities. */
-  private SortedMap<String, String> downloadedConsensuses =
-      new TreeMap<String, String>();
+  private List<Download> downloadedConsensuses =
+      new ArrayList<Download>();
   private void downloadConsensus() {
     Map<String, String> urls = new HashMap<String, String>();
     for (Map.Entry<String, String> e : this.authorities.entrySet()) {
@@ -46,19 +46,10 @@ public class Downloader {
       String address = e.getValue();
       String resource = "/tor/status-vote/current/consensus.z";
       String fullUrl = "http://" + address + resource;
-      urls.put(nickname, fullUrl);
+      urls.put(fullUrl, nickname);
     }
-    Map<String, String> responses =
-        this.downloadFromAuthority(new HashSet<String>(urls.values()));
-    for (Map.Entry<String, String> e : urls.entrySet()) {
-      String nickname = e.getKey();
-      String url = e.getValue();
-      if (responses.containsKey(url)) {
-        String response = responses.get(url);
-        this.downloadedConsensuses.put(nickname, response);
-      }
-    }
-    if (responses.isEmpty()) {
+    this.downloadedConsensuses = this.downloadFromAuthority(urls);
+    if (this.downloadedConsensuses.isEmpty()) {
       System.err.println("Could not download consensus from any of the "
           + "directory authorities.  Ignoring.");
     }
@@ -68,14 +59,18 @@ public class Downloader {
    * interrupted after a timeout. */
   private static class DownloadRunnable implements Runnable {
     Thread mainThread;
+    String nickname;
     String url;
     String response;
     boolean finished = false;
-    public DownloadRunnable(String url) {
+    long requestStart = 0L, requestEnd = 0L;
+    public DownloadRunnable(String nickname, String url) {
       this.mainThread = Thread.currentThread();
+      this.nickname = nickname;
       this.url = url;
     }
     public void run() {
+      this.requestStart = System.currentTimeMillis();
       try {
         URL u = new URL(this.url);
         HttpURLConnection huc = (HttpURLConnection) u.openConnection();
@@ -105,16 +100,28 @@ public class Downloader {
         /* Can't do much except leaving this.response at null. */
       }
       this.finished = true;
+      this.requestEnd = System.currentTimeMillis();
+    }
+    public Download getDownload() {
+      Download result = null;
+      if (this.response != null) {
+        result = new Download(this.nickname, this.url, this.response,
+          this.requestEnd - this.requestStart);
+      }
+      return result;
     }
   }
 
   /* Download one or more consensuses or votes from one or more directory
    * authorities using a timeout of 60 seconds. */
-  private Map<String, String> downloadFromAuthority(Set<String> urls) {
+  private List<Download> downloadFromAuthority(Map<String, String> urls) {
     Set<DownloadRunnable> downloadRunnables =
         new HashSet<DownloadRunnable>();
-    for (String url : urls) {
-      DownloadRunnable downloadRunnable = new DownloadRunnable(url);
+    for (Map.Entry<String, String> e : urls.entrySet()) {
+      String url = e.getKey();
+      String nickname = e.getValue();
+      DownloadRunnable downloadRunnable = new DownloadRunnable(nickname,
+          url);
       downloadRunnables.add(downloadRunnable);
       new Thread(downloadRunnable).start();
     }
@@ -137,12 +144,11 @@ public class Downloader {
         break;
       }
     }
-    Map<String, String> responses = new HashMap<String, String>();
+    List<Download> responses = new ArrayList<Download>();
     for (DownloadRunnable downloadRunnable : downloadRunnables) {
-      String url = downloadRunnable.url;
-      String response = downloadRunnable.response;
-      if (response != null) {
-        responses.put(url, response);
+      Download download = downloadRunnable.getDownload();
+      if (download != null) {
+        responses.add(download);
       }
       downloadRunnable.finished = true;
     }
@@ -160,8 +166,8 @@ public class Downloader {
    * authorities publishing the corresponding votes. */
   private SortedSet<String> fingerprints = new TreeSet<String>();
   private void parseConsensusToFindReferencedVotes() {
-    for (String downloadedConsensus :
-        this.downloadedConsensuses.values()) {
+    for (Download download : this.downloadedConsensuses) {
+      String downloadedConsensus = download.getResponseString();
       try {
         BufferedReader br = new BufferedReader(new StringReader(
             downloadedConsensus));
@@ -208,7 +214,7 @@ public class Downloader {
 
   /* Download the votes published by directory authorities listed in the
    * consensus. */
-  private List<String> downloadedVotes = new ArrayList<String>();
+  private List<Download> downloadedVotes = new ArrayList<Download>();
   private void downloadReferencedVotes() {
     for (String fingerprint : this.fingerprints) {
       String downloadedVote = null;
@@ -222,26 +228,21 @@ public class Downloader {
         String resource = "/tor/status-vote/current/" + fingerprint
             + ".z";
         String fullUrl = "http://" + authority + resource;
-        Set<String> urls = new HashSet<String>();
-        urls.add(fullUrl);
-        Map<String, String> downloadedVotes =
-            this.downloadFromAuthority(urls);
-        if (downloadedVotes.containsKey(fullUrl)) {
-          downloadedVote = downloadedVotes.get(fullUrl);
-          this.downloadedVotes.add(downloadedVote);
-        }
+        Map<String, String> urls = new HashMap<String, String>();
+        urls.put(fullUrl, authority);
+        this.downloadedVotes = this.downloadFromAuthority(urls);
       }
     }
   }
 
   /* Return the previously downloaded (unparsed) consensus string by
    * authority nickname. */
-  public SortedMap<String, String> getConsensusStrings() {
+  public List<Download> getConsensuses() {
     return this.downloadedConsensuses;
   }
 
   /* Return the previously downloaded (unparsed) vote strings. */
-  public List<String> getVoteStrings() {
+  public List<Download> getVotes() {
     return this.downloadedVotes;
   }
 }

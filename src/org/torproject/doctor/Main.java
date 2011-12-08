@@ -19,11 +19,13 @@ public class Main {
      * authorities. */
     Downloader downloader = new Downloader();
     downloader.downloadFromAuthorities();
+    List<Download> downloadedConsensuses = downloader.getConsensuses();
+    List<Download> downloadedVotes = downloader.getVotes();
 
     /* Parse consensus and votes. */
     Parser parser = new Parser();
     SortedMap<String, Status> parsedDownloadedConsensuses = parser.parse(
-        downloader.getConsensusStrings(), downloader.getVoteStrings());
+        downloadedConsensuses, downloadedVotes);
 
     /* Check consensus and votes for possible problems. */
     Checker checker = new Checker();

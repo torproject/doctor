@@ -13,22 +13,26 @@ public class Parser {
   /* Parse and return a consensus and corresponding votes, or null if
    * something goes wrong. */
   public SortedMap<String, Status> parse(
-      SortedMap<String, String> consensusStrings,
-      List<String> voteStrings) {
+      List<Download> downloadedConsensuses,
+      List<Download> downloadedVotes) {
     SortedSet<Status> parsedVotes = new TreeSet<Status>();
-    for (String voteString : voteStrings) {
-      Status parsedVote = this.parseConsensusOrVote(voteString, false);
+    for (Download downloadedVote : downloadedVotes) {
+      String voteString = downloadedVote.getResponseString();
+      long fetchTime = downloadedVote.getFetchTime();
+      Status parsedVote = this.parseConsensusOrVote(voteString, fetchTime,
+          false);
       if (parsedVote != null) {
         parsedVotes.add(parsedVote);
       }
     }
     SortedMap<String, Status> parsedConsensuses =
         new TreeMap<String, Status>();
-    for (Map.Entry<String, String> e : consensusStrings.entrySet()) {
-      String nickname = e.getKey();
-      String consensusString = e.getValue();
+    for (Download downloadedConsensus : downloadedConsensuses) {
+      String nickname = downloadedConsensus.getAuthority();
+      String consensusString = downloadedConsensus.getResponseString();
+      long fetchTime = downloadedConsensus.getFetchTime();
       Status parsedConsensus = this.parseConsensusOrVote(consensusString,
-          true);
+          fetchTime, true);
       if (parsedConsensus != null) {
         for (Status parsedVote : parsedVotes) {
           if (parsedConsensus.getValidAfterMillis() ==
@@ -50,13 +54,14 @@ public class Parser {
   }
 
   /* Parse a consensus or vote string into a Status instance. */
-  private Status parseConsensusOrVote(String statusString,
+  private Status parseConsensusOrVote(String statusString, long fetchTime,
       boolean isConsensus) {
     if (statusString == null) {
       return null;
     }
     Status status = new Status();
     status.setUnparsedString(statusString);
+    status.setFetchTime(fetchTime);
     try {
       BufferedReader br = new BufferedReader(new StringReader(
           statusString));
