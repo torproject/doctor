@@ -230,7 +230,7 @@ public class Downloader {
         String fullUrl = "http://" + authority + resource;
         Map<String, String> urls = new HashMap<String, String>();
         urls.put(fullUrl, authority);
-        this.downloadedVotes = this.downloadFromAuthority(urls);
+        this.downloadedVotes.addAll(this.downloadFromAuthority(urls));
       }
     }
   }

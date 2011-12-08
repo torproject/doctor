@@ -37,6 +37,7 @@ public class Download {
   public Download(String authority, String url, String responseString,
       long requestStartMillis, long fetchTime) {
     this.authority = authority;
+    this.url = url;
     this.responseString = responseString;
     this.requestStartMillis = requestStartMillis;
     this.fetchTime = fetchTime;
