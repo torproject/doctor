@@ -106,7 +106,7 @@ public class Downloader {
       Download result = null;
       if (this.response != null) {
         result = new Download(this.nickname, this.url, this.response,
-          this.requestEnd - this.requestStart);
+          this.requestStart, this.requestEnd - this.requestStart);
       }
       return result;
     }

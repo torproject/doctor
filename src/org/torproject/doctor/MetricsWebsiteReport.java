@@ -51,6 +51,14 @@ public class MetricsWebsiteReport implements Report {
     }
   }
 
+  /* Store the DownloadStatistics reference to request download statistics
+   * when writing the report. */
+  private DownloadStatistics statistics;
+  public void includeFetchStatistics(
+      DownloadStatistics statistics) {
+    this.statistics = statistics;
+  }
+
   /* Writer to write all HTML output to. */
   private BufferedWriter bw;
 
@@ -71,6 +79,7 @@ public class MetricsWebsiteReport implements Report {
         writeAuthorityKeys();
         writeBandwidthScannerStatus();
         writeAuthorityVersions();
+        writeDownloadStatistics();
         writeRelayFlagsTable();
         writeRelayFlagsSummary();
         writePageFooter();
@@ -567,6 +576,59 @@ public class MetricsWebsiteReport implements Report {
             + "Authority flag may be different from the list of v3 "
             + "directory authorities!</i></p>\n");
     }
+  }
+
+
+  /* Write some download statistics. */
+  private void writeDownloadStatistics() throws IOException {
+    SortedSet<String> knownAuthorities =
+        this.statistics.getKnownAuthorities();
+    if (knownAuthorities.isEmpty()) {
+      return;
+    }
+    this.bw.write("        <br>\n"
+         + "        <a name=\"downloadstats\">\n"
+         + "        <h3><a href=\"#downloadstats\" class=\"anchor\">"
+           + "Consensus download statistics</a></h3>\n"
+        + "        <br>\n"
+        + "        <p>The following table contains statistics on "
+          + "consensus download times in milliseconds over the last 7 "
+          + "days:</p>\n"
+        + "        <table border=\"0\" cellpadding=\"4\" "
+        + "cellspacing=\"0\" summary=\"\">\n"
+        + "          <colgroup>\n"
+        + "            <col width=\"160\">\n"
+        + "            <col width=\"100\">\n"
+        + "            <col width=\"100\">\n"
+        + "            <col width=\"100\">\n"
+        + "            <col width=\"100\">\n"
+        + "            <col width=\"100\">\n"
+        + "            <col width=\"100\">\n"
+        + "          </colgroup>\n"
+        + "          <tr><td><b>Authority</b></td>"
+          + "<td><b>Minimum</b></td>"
+          + "<td><b>1st Quartile</b></td>"
+          + "<td><b>Median</b></td>"
+          + "<td><b>3rd Quartile</b></td>"
+          + "<td><b>Maximum</b></td>"
+          + "<td><b>Timeouts</b></td></tr>\n");
+    for (String authority : knownAuthorities) {
+      this.bw.write("          <tr>\n"
+          + "            <td>" + authority + "</td>\n"
+          + "            <td>"
+            + this.statistics.getPercentile(authority, 0) + "</td>"
+          + "            <td>"
+            + this.statistics.getPercentile(authority, 25) + "</td>"
+          + "            <td>"
+            + this.statistics.getPercentile(authority, 50) + "</td>"
+          + "            <td>"
+            + this.statistics.getPercentile(authority, 75) + "</td>"
+          + "            <td>"
+            + this.statistics.getPercentile(authority, 100) + "</td>"
+          + "            <td>"
+            + this.statistics.getNAs(authority) + "</td></tr>\n");
+    }
+    this.bw.write("        </table>\n");
   }
 
   /* Write the (huge) table containing relay flags contained in votes and

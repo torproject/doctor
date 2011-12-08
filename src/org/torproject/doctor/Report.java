@@ -17,6 +17,10 @@ public interface Report {
   public abstract void processWarnings(
       SortedMap<Warning, String> warnings);
 
+  /* Include download statistics. */
+  public abstract void includeFetchStatistics(
+      DownloadStatistics statistics);
+
   /* Finish writing report. */
   public abstract void writeReport();
 }

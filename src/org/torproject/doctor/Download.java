@@ -22,6 +22,12 @@ public class Download {
     return this.responseString;
   }
 
+  /* Request start timestamp. */
+  private long requestStartMillis;
+  public long getRequestStartMillis() {
+    return this.requestStartMillis;
+  }
+
   /* Fetch time in millis. */
   private long fetchTime;
   public long getFetchTime() {
@@ -29,9 +35,10 @@ public class Download {
   }
 
   public Download(String authority, String url, String responseString,
-      long fetchTime) {
+      long requestStartMillis, long fetchTime) {
     this.authority = authority;
     this.responseString = responseString;
+    this.requestStartMillis = requestStartMillis;
     this.fetchTime = fetchTime;
   }
 }

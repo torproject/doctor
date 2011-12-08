@@ -22,6 +22,12 @@ public class Main {
     List<Download> downloadedConsensuses = downloader.getConsensuses();
     List<Download> downloadedVotes = downloader.getVotes();
 
+    /* Write fetch times for requesting consensuses to disk and prepare
+     * statistics about fetch times in the last 7 days. */
+    DownloadStatistics fetchStatistics = new DownloadStatistics();
+    fetchStatistics.memorizeFetchTimes(downloadedConsensuses);
+    fetchStatistics.prepareStatistics();
+
     /* Parse consensus and votes. */
     Parser parser = new Parser();
     SortedMap<String, Status> parsedDownloadedConsensuses = parser.parse(
@@ -37,6 +43,7 @@ public class Main {
     for (Report report : reports) {
       report.processWarnings(warnings);
       report.processDownloadedConsensuses(parsedDownloadedConsensuses);
+      report.includeFetchStatistics(fetchStatistics);
       report.writeReport();
     }
 

@@ -33,6 +33,11 @@ public class StatusFileReport implements Report {
     this.warnings = warnings;
   }
 
+  /* Ignore download statistics for this report. */
+  public void includeFetchStatistics(DownloadStatistics statistics) {
+    /* Do nothing. */
+  }
+
   /* Check consensuses and votes for irregularities and write output to
    * stdout. */
   public void writeReport() {
