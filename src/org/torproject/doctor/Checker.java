@@ -35,6 +35,8 @@ public class Checker {
     this.findMostRecentConsensus();
     this.checkMissingConsensuses();
     this.checkAllConsensusesFresh();
+    this.checkContainedVotes();
+    this.checkConsensusSignatures();
     if (this.downloadedConsensus != null) {
       if (this.isConsensusFresh(this.downloadedConsensus)) {
         this.checkConsensusMethods();
@@ -98,6 +100,53 @@ public class Checker {
         sb.append(", " + nickname);
       }
       this.warnings.put(Warning.ConsensusNotFresh,
+          sb.toString().substring(2));
+    }
+  }
+
+  /* Check if all downloaded consensuses contain the same set of votes. */
+  private void checkContainedVotes() {
+    Set<String> allVotes = new HashSet<String>();
+    for (Status consensus : downloadedConsensuses.values()) {
+      allVotes.addAll(consensus.getContainedVotes());
+    }
+    SortedSet<String> missingVotes = new TreeSet<String>();
+    for (Map.Entry<String, Status> e : downloadedConsensuses.entrySet()) {
+      String nickname = e.getKey();
+      Status downloadedConsensus = e.getValue();
+      if (!downloadedConsensus.getContainedVotes().containsAll(
+          allVotes)) {
+        missingVotes.add(nickname);
+      }
+    }
+    if (!missingVotes.isEmpty()) {
+      StringBuilder sb = new StringBuilder();
+      for (String nickname : missingVotes) {
+        sb.append(", " + nickname);
+      }
+      this.warnings.put(Warning.ConsensusMissingVotes,
+          sb.toString().substring(2));
+    }
+  }
+
+  /* Check if all downloaded consensuses contain signatures from all other
+   * authorities. */
+  private void checkConsensusSignatures() {
+    SortedSet<String> missingSignatures = new TreeSet<String>();
+    for (Map.Entry<String, Status> e : downloadedConsensuses.entrySet()) {
+      String nickname = e.getKey();
+      Status downloadedConsensus = e.getValue();
+      if (!downloadedConsensus.getContainedSignatures().containsAll(
+          downloadedConsensus.getContainedVotes())) {
+        missingSignatures.add(nickname);
+      }
+    }
+    if (!missingSignatures.isEmpty()) {
+      StringBuilder sb = new StringBuilder();
+      for (String nickname : missingSignatures) {
+        sb.append(", " + nickname);
+      }
+      this.warnings.put(Warning.ConsensusMissingSignatures,
           sb.toString().substring(2));
     }
   }

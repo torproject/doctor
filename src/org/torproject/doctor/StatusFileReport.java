@@ -138,6 +138,18 @@ public class StatusFileReport implements Report {
               + "not reporting bandwidth scanner results: " + details,
               150L * 60L * 1000L);
           break;
+        case ConsensusMissingVotes:
+          warningStrings.put("The consensuses downloaded from the "
+              + "following authorities are missing votes that are "
+              + "contained in consensuses downloaded from other "
+              + "authorities: " + details, 150L * 60L * 1000L);
+          break;
+        case ConsensusMissingSignatures:
+          warningStrings.put("The consensuses downloaded from the "
+              + "following authorities are missing signatures from "
+              + "other, previously voting authorities: " + details,
+              150L * 60L * 1000L);
+          break;
       }
     }
     long now = System.currentTimeMillis();

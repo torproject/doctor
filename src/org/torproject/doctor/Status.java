@@ -136,6 +136,26 @@ public class Status implements Comparable<Status> {
     return this.knownFlags;
   }
 
+  /* Fingerprints of directory authorities of contained votes (only
+   * relevant for consensuses). */
+  private SortedSet<String> containedVotes = new TreeSet<String>();
+  public void addContainedVote(String fingerprint) {
+    this.containedVotes.add(fingerprint);
+  }
+  public SortedSet<String> getContainedVotes() {
+    return this.containedVotes;
+  }
+
+  /* Fingerprints of directory authorities of contained signatures (only
+   * relevant for consensuses). */
+  private SortedSet<String> containedSignatures = new TreeSet<String>();
+  public void addContainedSignature(String fingerprint) {
+    this.containedSignatures.add(fingerprint);
+  }
+  public SortedSet<String> getContainedSignatures() {
+    return this.containedSignatures;
+  }
+
   /* Number of status entries with the Running flag. */
   private int runningRelays;
   public void setRunningRelays(int runningRelays) {

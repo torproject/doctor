@@ -41,6 +41,15 @@ public enum Warning {
 
   /* One or more directory authorities are not reporting bandwidth scanner
    * results. */
-  BandwidthScannerResultsMissing
+  BandwidthScannerResultsMissing,
+
+  /* The consensuses downloaded from one or more authorities are missing
+   * votes that are contained in consensuses downloaded from other
+   * authorities. */
+  ConsensusMissingVotes,
+
+  /* The consensuses downloaded from one or more authorities are missing
+   * signatures from other, previously voting authorities. */
+  ConsensusMissingSignatures
 }
 

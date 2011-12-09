@@ -108,9 +108,15 @@ public class Parser {
               status.addConsensusParam(paramName, paramValue);
             }
           }
-        } else if (line.startsWith("dir-source ") && !isConsensus) {
-          status.setNickname(line.split(" ")[1]);
-          status.setFingerprint(line.split(" ")[2]);
+        } else if (line.startsWith("dir-source ")) {
+          String nickname = line.split(" ")[1];
+          String fingerprint = line.split(" ")[2];
+          if (isConsensus) {
+            status.addContainedVote(fingerprint);
+          } else {
+            status.setNickname(line.split(" ")[1]);
+            status.setFingerprint(line.split(" ")[2]);
+          }
         } else if (line.startsWith("dir-key-expires ")) {
           try {
             status.setDirKeyExpiresMillis(dateTimeFormat.parse(
@@ -140,8 +146,6 @@ public class Parser {
           }
           if (line.startsWith("r ")) {
             rLine = line;
-          } else {
-            break;
           }
         } else if (line.startsWith("s ") || line.equals("s")) {
           sLine = line;
@@ -156,6 +160,10 @@ public class Parser {
         } else if (line.startsWith("w ") && !isConsensus &&
               line.contains(" Measured")) {
           bandwidthWeights++;
+        } else if (line.startsWith("directory-signature ") &&
+            isConsensus) {
+          String fingerprint = line.split(" ")[1];
+          status.addContainedSignature(fingerprint);
         }
       }
       br.close();
