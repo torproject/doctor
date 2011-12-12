@@ -5,6 +5,7 @@
   <path id="classpath">
     <pathelement path="${classes}"/>
     <pathelement location="${libs}/commons-codec-1.4.jar"/>
+    <pathelement location="${libs}/descriptor.jar"/>
   </path>
   <target name="init">
     <mkdir dir="${classes}"/>
