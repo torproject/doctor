@@ -5,6 +5,7 @@ package org.torproject.doctor;
 import java.io.*;
 import java.text.*;
 import java.util.*;
+import org.torproject.descriptor.*;
 
 /* Check a given consensus and votes for irregularities and write results
  * to a warnings map consisting of warning type and details. */
@@ -26,12 +27,15 @@ public class Checker {
   }
 
   /* Downloaded consensus and corresponding votes for processing. */
-  private SortedMap<String, Status> downloadedConsensuses;
-  private Status downloadedConsensus;
-  private SortedSet<Status> downloadedVotes;
+  private SortedMap<String, RelayNetworkStatusConsensus>
+      downloadedConsensuses = new TreeMap<String,
+      RelayNetworkStatusConsensus>();
+  private RelayNetworkStatusConsensus downloadedConsensus;
+  private List<RelayNetworkStatusVote> downloadedVotes =
+      new ArrayList<RelayNetworkStatusVote>();
   public void processDownloadedConsensuses(
-      SortedMap<String, Status> downloadedConsensuses) {
-    this.downloadedConsensuses = downloadedConsensuses;
+      List<DescriptorRequest> downloads) {
+    this.storeDownloads(downloads);
     this.findMostRecentConsensus();
     this.checkMissingConsensuses();
     this.checkAllConsensusesFresh();
@@ -51,19 +55,35 @@ public class Checker {
     }
   }
 
+  /* Store consensuses and votes in a way that we can process them more
+   * easily. */
+  private void storeDownloads(List<DescriptorRequest> downloads) {
+    for (DescriptorRequest request : downloads) {
+      for (Descriptor descriptor : request.getDescriptors()) {
+        if (descriptor instanceof RelayNetworkStatusConsensus) {
+          this.downloadedConsensuses.put(request.getDirectoryNickname(),
+              (RelayNetworkStatusConsensus) descriptor);
+        } else if (descriptor instanceof RelayNetworkStatusVote) {
+          this.downloadedVotes.add((RelayNetworkStatusVote) descriptor);
+        } else {
+          System.err.println("Did not expect a descriptor of type "
+              + descriptor.getClass() + ".  Ignoring.");
+        }
+      }
+    }
+  }
+
   /* Find most recent consensus and corresponding votes. */
   private void findMostRecentConsensus() {
     long mostRecentValidAfterMillis = -1L;
-    for (Status downloadedConsensus : downloadedConsensuses.values()) {
+    for (RelayNetworkStatusConsensus downloadedConsensus :
+        downloadedConsensuses.values()) {
       if (downloadedConsensus.getValidAfterMillis() >
           mostRecentValidAfterMillis) {
         this.downloadedConsensus = downloadedConsensus;
         mostRecentValidAfterMillis =
             downloadedConsensus.getValidAfterMillis();
       }
-    }
-    if (this.downloadedConsensus != null) {
-      this.downloadedVotes = this.downloadedConsensus.getVotes();
     }
   }
 
@@ -87,9 +107,10 @@ public class Checker {
   private void checkAllConsensusesFresh() {
     long fresh = System.currentTimeMillis() - 60L * 60L * 1000L;
     SortedSet<String> nonFresh = new TreeSet<String>();
-    for (Map.Entry<String, Status> e : downloadedConsensuses.entrySet()) {
+    for (Map.Entry<String, RelayNetworkStatusConsensus> e :
+        downloadedConsensuses.entrySet()) {
       String nickname = e.getKey();
-      Status downloadedConsensus = e.getValue();
+      RelayNetworkStatusConsensus downloadedConsensus = e.getValue();
       if (downloadedConsensus.getValidAfterMillis() < fresh) {
         nonFresh.add(nickname);
       }
@@ -107,14 +128,16 @@ public class Checker {
   /* Check if all downloaded consensuses contain the same set of votes. */
   private void checkContainedVotes() {
     Set<String> allVotes = new HashSet<String>();
-    for (Status consensus : downloadedConsensuses.values()) {
-      allVotes.addAll(consensus.getContainedVotes());
+    for (RelayNetworkStatusConsensus consensus :
+        downloadedConsensuses.values()) {
+      allVotes.addAll(consensus.getDirSourceEntries().keySet());
     }
     SortedSet<String> missingVotes = new TreeSet<String>();
-    for (Map.Entry<String, Status> e : downloadedConsensuses.entrySet()) {
+    for (Map.Entry<String, RelayNetworkStatusConsensus> e :
+        downloadedConsensuses.entrySet()) {
       String nickname = e.getKey();
-      Status downloadedConsensus = e.getValue();
-      if (!downloadedConsensus.getContainedVotes().containsAll(
+      RelayNetworkStatusConsensus downloadedConsensus = e.getValue();
+      if (!downloadedConsensus.getDirSourceEntries().keySet().containsAll(
           allVotes)) {
         missingVotes.add(nickname);
       }
@@ -133,11 +156,13 @@ public class Checker {
    * authorities. */
   private void checkConsensusSignatures() {
     SortedSet<String> missingSignatures = new TreeSet<String>();
-    for (Map.Entry<String, Status> e : downloadedConsensuses.entrySet()) {
+    for (Map.Entry<String, RelayNetworkStatusConsensus> e :
+        downloadedConsensuses.entrySet()) {
       String nickname = e.getKey();
-      Status downloadedConsensus = e.getValue();
-      if (!downloadedConsensus.getContainedSignatures().containsAll(
-          downloadedConsensus.getContainedVotes())) {
+      RelayNetworkStatusConsensus downloadedConsensus = e.getValue();
+      if (!downloadedConsensus.getDirectorySignatures().keySet().
+          containsAll(downloadedConsensus.getDirSourceEntries().
+          keySet())) {
         missingSignatures.add(nickname);
       }
     }
@@ -152,7 +177,8 @@ public class Checker {
   }
 
   /* Check if the most recent consensus is older than 1 hour. */
-  private boolean isConsensusFresh(Status consensus) {
+  private boolean isConsensusFresh(
+      RelayNetworkStatusConsensus consensus) {
     return (consensus.getValidAfterMillis() >=
         System.currentTimeMillis() - 60L * 60L * 1000L);
   }
@@ -160,9 +186,9 @@ public class Checker {
   /* Check supported consensus methods of all votes. */
   private void checkConsensusMethods() {
     SortedSet<String> dirs = new TreeSet<String>();
-    for (Status vote : this.downloadedVotes) {
+    for (RelayNetworkStatusVote vote : this.downloadedVotes) {
       if (!vote.getConsensusMethods().contains(
-          this.downloadedConsensus.getConsensusMethods().last())) {
+          this.downloadedConsensus.getConsensusMethod())) {
         dirs.add(vote.getNickname());
       }
     }
@@ -181,7 +207,7 @@ public class Checker {
   private void checkRecommendedVersions() {
     SortedSet<String> unrecommendedClientVersions = new TreeSet<String>(),
         unrecommendedServerVersions = new TreeSet<String>();
-    for (Status vote : this.downloadedVotes) {
+    for (RelayNetworkStatusVote vote : this.downloadedVotes) {
       if (vote.getRecommendedClientVersions() != null &&
           !downloadedConsensus.getRecommendedClientVersions().equals(
           vote.getRecommendedClientVersions())) {
@@ -231,7 +257,7 @@ public class Checker {
         + "cbtmintimeout,cbtinitialtimeout,perconnbwburst,perconnbwrate").
         split(",")));
     SortedSet<String> conflicts = new TreeSet<String>();
-    for (Status vote : this.downloadedVotes) {
+    for (RelayNetworkStatusVote vote : this.downloadedVotes) {
       Map<String, String> voteConsensusParams =
           vote.getConsensusParams();
       boolean conflictOrInvalid = false;
@@ -272,7 +298,7 @@ public class Checker {
     SortedMap<String, String> expiringCertificates =
         new TreeMap<String, String>();
     long now = System.currentTimeMillis();
-    for (Status vote : this.downloadedVotes) {
+    for (RelayNetworkStatusVote vote : this.downloadedVotes) {
       long voteDirKeyExpiresMillis = vote.getDirKeyExpiresMillis();
       if (voteDirKeyExpiresMillis - 14L * 24L * 60L * 60L * 1000L < now) {
         expiringCertificates.put(vote.getNickname(),
@@ -299,7 +325,7 @@ public class Checker {
         + "tor26,urras").split(",")));
     SortedSet<String> missingVotes =
         new TreeSet<String>(knownAuthorities);
-    for (Status vote : this.downloadedVotes) {
+    for (RelayNetworkStatusVote vote : this.downloadedVotes) {
       missingVotes.remove(vote.getNickname());
     }
     if (!missingVotes.isEmpty()) {
@@ -316,8 +342,15 @@ public class Checker {
   private void checkBandwidthScanners() {
     SortedSet<String> missingBandwidthScanners = new TreeSet<String>(
         Arrays.asList("ides,urras,moria1,gabelmoo,maatuska".split(",")));
-    for (Status vote : this.downloadedVotes) {
-      if (vote.getBandwidthWeights() > 0) {
+    for (RelayNetworkStatusVote vote : this.downloadedVotes) {
+      boolean containsMeasuredBandwidths = false;
+      for (NetworkStatusEntry entry : vote.getStatusEntries().values()) {
+        if (entry.getBandwidth().contains("Measured=")) {
+          containsMeasuredBandwidths = true;
+          break;
+        }
+      }
+      if (containsMeasuredBandwidths) {
         missingBandwidthScanners.remove(vote.getNickname());
       }
     }

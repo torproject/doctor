@@ -8,7 +8,7 @@ import java.util.*;
 
 /* Check a given consensus and votes for irregularities and write results
  * to stdout while rate-limiting warnings based on severity. */
-public class StatusFileReport implements Report {
+public class StatusFileReport {
 
   /* Date-time format to format timestamps. */
   private static SimpleDateFormat dateTimeFormat;
@@ -17,25 +17,10 @@ public class StatusFileReport implements Report {
     dateTimeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
   }
 
-  /* Downloaded consensus and corresponding votes for later
-   * processing. */
-  private SortedMap<String, Status> downloadedConsensuses;
-  private Status downloadedConsensus;
-  private SortedSet<Status> downloadedVotes;
-  public void processDownloadedConsensuses(
-      SortedMap<String, Status> downloadedConsensuses) {
-    this.downloadedConsensuses = downloadedConsensuses;
-  }
-
   /* Warnings obtained from checking the current consensus and votes. */
   private SortedMap<Warning, String> warnings;
   public void processWarnings(SortedMap<Warning, String> warnings) {
     this.warnings = warnings;
-  }
-
-  /* Ignore download statistics for this report. */
-  public void includeFetchStatistics(DownloadStatistics statistics) {
-    /* Do nothing. */
   }
 
   /* Check consensuses and votes for irregularities and write output to

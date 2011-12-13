@@ -4,21 +4,26 @@ package org.torproject.doctor;
 
 import java.io.*;
 import java.util.*;
+import org.torproject.descriptor.*;
 
 public class DownloadStatistics {
-  public void memorizeFetchTimes(List<Download> downloadedConsensuses) {
+  public void memorizeFetchTimes(List<DescriptorRequest> downloads) {
     try {
       BufferedWriter bw = new BufferedWriter(new FileWriter(
           this.statisticsFile, true));
-      for (Download downloadedConsensus : downloadedConsensuses) {
-        String authority = downloadedConsensus.getAuthority();
-        long requestStartMillis =
-            downloadedConsensus.getRequestStartMillis();
-        long fetchTimeMillis = downloadedConsensus.getFetchTime();
-        String line = authority + ","
-            + String.valueOf(requestStartMillis) + ","
-            + String.valueOf(fetchTimeMillis);
-        bw.write(line + "\n");
+      for (DescriptorRequest request : downloads) {
+        for (Descriptor descriptor : request.getDescriptors()) {
+          if (descriptor instanceof RelayNetworkStatusConsensus) {
+            String authority = request.getDirectoryNickname();
+            long requestStartMillis = request.getRequestStart();
+            long fetchTimeMillis = request.getRequestEnd()
+                - request.getRequestStart();
+            String line = authority + ","
+                + String.valueOf(requestStartMillis) + ","
+                + String.valueOf(fetchTimeMillis);
+            bw.write(line + "\n");
+          }
+        }
       }
       bw.close();
     } catch (IOException e) {

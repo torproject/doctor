@@ -5,10 +5,11 @@ package org.torproject.doctor;
 import java.io.*;
 import java.text.*;
 import java.util.*;
+import org.torproject.descriptor.*;
 
 /* Transform the most recent consensus and corresponding votes into an
  * HTML page showing possible irregularities. */
-public class MetricsWebsiteReport implements Report {
+public class MetricsWebsiteReport {
 
   /* Date-time format to format timestamps. */
   private static SimpleDateFormat dateTimeFormat;
@@ -25,29 +26,34 @@ public class MetricsWebsiteReport implements Report {
     this.htmlOutputFile = new File(htmlOutputFilename);
   }
 
-  /* Process warnings. */
-  public void processWarnings(SortedMap<Warning, String> warnings) {
-    /* We could use these warnings instead of running all checks
-     * ourselves.  But we're not doing that yet. */
-  }
-
   /* Store the downloaded consensus and corresponding votes for later
    * processing. */
-  private Status downloadedConsensus;
-  private SortedSet<Status> downloadedVotes;
+  private RelayNetworkStatusConsensus downloadedConsensus;
+  private SortedMap<String, RelayNetworkStatusVote> downloadedVotes =
+      new TreeMap<String, RelayNetworkStatusVote>();
   public void processDownloadedConsensuses(
-      SortedMap<String, Status> downloadedConsensuses) {
+      List<DescriptorRequest> downloads) {
     long mostRecentValidAfterMillis = -1L;
-    for (Status downloadedConsensus : downloadedConsensuses.values()) {
-      if (downloadedConsensus.getValidAfterMillis() >
-          mostRecentValidAfterMillis) {
-        this.downloadedConsensus = downloadedConsensus;
-        mostRecentValidAfterMillis =
-            downloadedConsensus.getValidAfterMillis();
+    for (DescriptorRequest request : downloads) {
+      for (Descriptor descriptor : request.getDescriptors()) {
+        if (descriptor instanceof RelayNetworkStatusConsensus) {
+          RelayNetworkStatusConsensus downloadedConsensus =
+              (RelayNetworkStatusConsensus) descriptor;
+          if (downloadedConsensus.getValidAfterMillis() >
+              mostRecentValidAfterMillis) {
+            this.downloadedConsensus = downloadedConsensus;
+            mostRecentValidAfterMillis =
+                downloadedConsensus.getValidAfterMillis();
+          }
+        } else if (descriptor instanceof RelayNetworkStatusVote) {
+          RelayNetworkStatusVote vote =
+              (RelayNetworkStatusVote) descriptor;
+          this.downloadedVotes.put(vote.getNickname(), vote);
+        } else {
+          System.err.println("Did not expect a descriptor of type "
+              + descriptor.getClass() + ".  Ignoring.");
+        }
       }
-    }
-    if (this.downloadedConsensus != null) {
-      this.downloadedVotes = this.downloadedConsensus.getVotes();
     }
   }
 
@@ -177,7 +183,7 @@ public class MetricsWebsiteReport implements Report {
     if (this.downloadedVotes.size() < 1) {
       this.bw.write("          <tr><td>(No votes.)</td><td></td></tr>\n");
     } else {
-      for (Status vote : this.downloadedVotes) {
+      for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
         this.bw.write("          <tr>\n"
             + "            <td>" + vote.getNickname() + "</td>\n"
             + "            <td>known-flags");
@@ -218,14 +224,27 @@ public class MetricsWebsiteReport implements Report {
       this.bw.write("          <tr><td>(No votes.)</td><td></td><td></td>"
             + "</tr>\n");
     } else {
-      for (Status vote : this.downloadedVotes) {
+      for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
+        int runningRelays = 0;
+        for (NetworkStatusEntry entry :
+            vote.getStatusEntries().values()) {
+          if (entry.getFlags().contains("Running")) {
+            runningRelays++;
+          }
+        }
         this.bw.write("          <tr>\n"
             + "            <td>" + vote.getNickname() + "</td>\n"
             + "            <td>" + vote.getStatusEntries().size()
               + " total</td>\n"
-            + "            <td>" + vote.getRunningRelays()
-              + " Running</td>\n"
+            + "            <td>" + runningRelays + " Running</td>\n"
             + "          </tr>\n");
+      }
+    }
+    int runningRelays = 0;
+    for (NetworkStatusEntry entry :
+        this.downloadedConsensus.getStatusEntries().values()) {
+      if (entry.getFlags().contains("Running")) {
+        runningRelays++;
       }
     }
     this.bw.write("          <tr>\n"
@@ -234,8 +253,7 @@ public class MetricsWebsiteReport implements Report {
         + "            <td><font color=\"blue\">"
           + this.downloadedConsensus.getStatusEntries().size()
           + " total</font></td>\n"
-        + "            <td><font color=\"blue\">"
-          + this.downloadedConsensus.getRunningRelays()
+        + "            <td><font color=\"blue\">" + runningRelays
           + " Running</font></td>\n"
         + "          </tr>\n"
         + "        </table>\n");
@@ -258,11 +276,10 @@ public class MetricsWebsiteReport implements Report {
     if (this.downloadedVotes.size() < 1) {
       this.bw.write("          <tr><td>(No votes.)</td><td></td></tr>\n");
     } else {
-      for (Status vote : this.downloadedVotes) {
-        SortedSet<Integer> consensusMethods =
-            vote.getConsensusMethods();
+      for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
+        List<Integer> consensusMethods = vote.getConsensusMethods();
         if (consensusMethods.contains(
-            this.downloadedConsensus.getConsensusMethods().last())) {
+            this.downloadedConsensus.getConsensusMethod())) {
           this.bw.write("          <tr>\n"
                + "            <td>" + vote.getNickname() + "</td>\n"
                + "            <td>consensus-methods");
@@ -289,7 +306,7 @@ public class MetricsWebsiteReport implements Report {
         + "            <td><font color=\"blue\">consensus</font>"
           + "</td>\n"
         + "            <td><font color=\"blue\">consensus-method "
-          + this.downloadedConsensus.getConsensusMethods().last()
+          + this.downloadedConsensus.getConsensusMethod()
           + "</font></td>\n"
         + "          </tr>\n"
         + "        </table>\n");
@@ -311,10 +328,10 @@ public class MetricsWebsiteReport implements Report {
     if (this.downloadedVotes.size() < 1) {
       this.bw.write("          <tr><td>(No votes.)</td><td></td></tr>\n");
     } else {
-      for (Status vote : this.downloadedVotes) {
+      for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
         SortedSet<String> voteRecommendedClientVersions =
             vote.getRecommendedClientVersions();
-        if (voteRecommendedClientVersions != null) {
+        if (!voteRecommendedClientVersions.isEmpty()) {
           if (downloadedConsensus.getRecommendedClientVersions().equals(
               voteRecommendedClientVersions)) {
             this.bw.write("          <tr>\n"
@@ -342,7 +359,7 @@ public class MetricsWebsiteReport implements Report {
         }
         SortedSet<String> voteRecommendedServerVersions =
             vote.getRecommendedServerVersions();
-        if (voteRecommendedServerVersions != null) {
+        if (!voteRecommendedServerVersions.isEmpty()) {
           if (downloadedConsensus.getRecommendedServerVersions().equals(
               voteRecommendedServerVersions)) {
             this.bw.write("          <tr>\n"
@@ -415,7 +432,7 @@ public class MetricsWebsiteReport implements Report {
           + "cbtmintimeout,cbtinitialtimeout").split(",")));
       Map<String, String> consensusConsensusParams =
           downloadedConsensus.getConsensusParams();
-      for (Status vote : this.downloadedVotes) {
+      for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
         Map<String, String> voteConsensusParams =
             vote.getConsensusParams();
         boolean conflictOrInvalid = false;
@@ -485,7 +502,7 @@ public class MetricsWebsiteReport implements Report {
     if (this.downloadedVotes.size() < 1) {
       this.bw.write("          <tr><td>(No votes.)</td><td></td></tr>\n");
     } else {
-      for (Status vote : this.downloadedVotes) {
+      for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
         long voteDirKeyExpiresMillis = vote.getDirKeyExpiresMillis();
         if (voteDirKeyExpiresMillis - 14L * 24L * 60L * 60L * 1000L <
             System.currentTimeMillis()) {
@@ -530,11 +547,17 @@ public class MetricsWebsiteReport implements Report {
     if (this.downloadedVotes.size() < 1) {
       this.bw.write("          <tr><td>(No votes.)</td><td></td></tr>\n");
     } else {
-      for (Status vote : this.downloadedVotes) {
-        if (vote.getBandwidthWeights() > 0) {
+      for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
+        int bandwidthWeights = 0;
+        for (NetworkStatusEntry entry : vote.getStatusEntries().values()) {
+          if (entry.getBandwidth().contains("Measured=")) {
+            bandwidthWeights++;
+          }
+        }
+        if (bandwidthWeights > 0) {
           this.bw.write("          <tr>\n"
               + "            <td>" + vote.getNickname() + "</td>\n"
-              + "            <td>" + vote.getBandwidthWeights()
+              + "            <td>" + bandwidthWeights
                 + " Measured values in w lines</td>\n"
               + "          </tr>\n");
         }
@@ -550,8 +573,14 @@ public class MetricsWebsiteReport implements Report {
          + "        <h3><a href=\"#authorityversions\" class=\"anchor\">"
            + "Authority versions</a></h3>\n"
         + "        <br>\n");
-    Map<String, String> authorityVersions =
-        this.downloadedConsensus.getAuthorityVersions();
+    SortedMap<String, String> authorityVersions =
+        new TreeMap<String, String>();
+    for (NetworkStatusEntry entry :
+        this.downloadedConsensus.getStatusEntries().values()) {
+      if (entry.getFlags().contains("Authority")) {
+        authorityVersions.put(entry.getNickname(), entry.getVersion());
+      }
+    }
     if (authorityVersions.size() < 1) {
       this.bw.write("          <p>(No relays with Authority flag found.)"
             + "</p>\n");
@@ -671,13 +700,14 @@ public class MetricsWebsiteReport implements Report {
     }
     this.bw.write("          </colgroup>\n");
     SortedMap<String, String> allRelays = new TreeMap<String, String>();
-    for (Status vote : this.downloadedVotes) {
-      for (StatusEntry statusEntry : vote.getStatusEntries().values()) {
+    for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
+      for (NetworkStatusEntry statusEntry :
+          vote.getStatusEntries().values()) {
         allRelays.put(statusEntry.getFingerprint(),
             statusEntry.getNickname());
       }
     }
-    for (StatusEntry statusEntry :
+    for (NetworkStatusEntry statusEntry :
         this.downloadedConsensus.getStatusEntries().values()) {
       allRelays.put(statusEntry.getFingerprint(),
           statusEntry.getNickname());
@@ -699,7 +729,7 @@ public class MetricsWebsiteReport implements Report {
   private void writeRelayFlagsTableHeader() throws IOException {
     this.bw.write("          <tr><td><br><b>Fingerprint</b></td>"
         + "<td><br><b>Nickname</b></td>\n");
-    for (Status vote : this.downloadedVotes) {
+    for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
       String shortDirName = vote.getNickname().length() > 6 ?
           vote.getNickname().substring(0, 5) + "." :
           vote.getNickname();
@@ -714,8 +744,7 @@ public class MetricsWebsiteReport implements Report {
     this.bw.write("          <tr>\n");
     if (this.downloadedConsensus.containsStatusEntry(fingerprint) &&
         this.downloadedConsensus.getStatusEntry(fingerprint).getFlags().
-        contains("Named") &&
-        !Character.isDigit(nickname.charAt(0))) {
+        contains("Named") && !Character.isDigit(nickname.charAt(0))) {
       this.bw.write("            <td id=\"" + nickname
           + "\"><a href=\"relay.html?fingerprint="
           + fingerprint + "\" target=\"_blank\">"
@@ -727,18 +756,18 @@ public class MetricsWebsiteReport implements Report {
     }
     this.bw.write("            <td>" + nickname + "</td>\n");
     SortedSet<String> relevantFlags = new TreeSet<String>();
-    for (Status vote : this.downloadedVotes) {
+    for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
       if (vote.containsStatusEntry(fingerprint)) {
         relevantFlags.addAll(vote.getStatusEntry(fingerprint).getFlags());
       }
     }
     SortedSet<String> consensusFlags = null;
     if (this.downloadedConsensus.containsStatusEntry(fingerprint)) {
-      consensusFlags = this.downloadedConsensus.
-          getStatusEntry(fingerprint).getFlags();
+      consensusFlags = this.downloadedConsensus.getStatusEntries().get(
+          fingerprint).getFlags();
       relevantFlags.addAll(consensusFlags);
     }
-    for (Status vote : this.downloadedVotes) {
+    for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
       if (vote.containsStatusEntry(fingerprint)) {
         SortedSet<String> flags = vote.getStatusEntry(fingerprint).
             getFlags();
@@ -818,7 +847,7 @@ public class MetricsWebsiteReport implements Report {
           + "<td><b>In vote and consensus</b></td>"
           + "<td><b>Only in consensus</b></td>\n");
     Set<String> allFingerprints = new HashSet<String>();
-    for (Status vote : this.downloadedVotes) {
+    for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
       allFingerprints.addAll(vote.getStatusEntries().keySet());
     }
     allFingerprints.addAll(this.downloadedConsensus.getStatusEntries().
@@ -832,9 +861,9 @@ public class MetricsWebsiteReport implements Report {
     for (String fingerprint : allFingerprints) {
       SortedSet<String> consensusFlags =
           this.downloadedConsensus.containsStatusEntry(fingerprint) ?
-          this.downloadedConsensus.getStatusEntry(fingerprint).getFlags() :
-          null;
-      for (Status vote : this.downloadedVotes) {
+          this.downloadedConsensus.getStatusEntry(fingerprint).getFlags()
+          : null;
+      for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
         String dir = vote.getNickname();
         if (vote.containsStatusEntry(fingerprint)) {
           SortedSet<String> flags = vote.getStatusEntry(fingerprint).
@@ -868,7 +897,7 @@ public class MetricsWebsiteReport implements Report {
         }
       }
     }
-    for (Status vote : this.downloadedVotes) {
+    for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
       String dir = vote.getNickname();
       int i = 0;
       for (String flag : vote.getKnownFlags()) {

@@ -13,8 +13,8 @@ import org.torproject.descriptor.*;
  * votes. */
 public class Downloader {
 
-  /* Download a new consensus and corresponding votes. */
-  public void downloadFromAuthorities() {
+  /* Download the current consensus and corresponding votes. */
+  public List<DescriptorRequest> downloadFromAuthorities() {
 
     RelayDescriptorDownloader downloader =
         DescriptorSourceFactory.createRelayDescriptorDownloader();
@@ -33,58 +33,24 @@ public class Downloader {
 
     downloader.setRequestTimeout(60L * 1000L);
 
+    List<DescriptorRequest> allRequests =
+        new ArrayList<DescriptorRequest>();
     Iterator<DescriptorRequest> descriptorRequests =
         downloader.downloadDescriptors();
     while (descriptorRequests.hasNext()) {
-      DescriptorRequest request = descriptorRequests.next();
-      String authority = request.getDirectoryNickname();
-      String requestUrl = request.getRequestUrl();
-      long requestStart = request.getRequestStart();
-      long fetchTime = request.getRequestEnd()
-          - request.getRequestStart();
-      if (request.globalTimeoutHasExpired()) {
-        System.err.println("Global timeout has expired.  Exiting.");
-        System.exit(1);
-      } else if (!request.requestTimeoutHasExpired()) {
-        if (request.getDescriptors().isEmpty()) {
-          /* No response.  We'll realize later on if we're missing a
-           * consensus or vote. */
-          continue;
-        } else if (request.getDescriptors().size() > 1) {
-          System.out.println("Response contains more than 1 "
-              + "descriptor.  Considering only the first.");
-        }
-        Descriptor downloadedDescriptor = request.getDescriptors().get(0);
-        String response = new String(request.getDescriptors().get(0).
-            getRawDescriptorBytes());
-        Download download = new Download(authority, requestUrl, response,
-            requestStart, fetchTime);
-        if (downloadedDescriptor instanceof
-            RelayNetworkStatusConsensus) {
-          this.downloadedConsensuses.add(download);
-        } else if (downloadedDescriptor instanceof
-            RelayNetworkStatusVote) {
-          this.downloadedVotes.add(download);
-        } else {
-          System.err.println("Did not expect a descriptor of type "
-              + downloadedDescriptor.getClass() + ".  Ignoring.");
-        }
+      try {
+        allRequests.add(descriptorRequests.next());
+      } catch (NoSuchElementException e) {
+        /* TODO In theory, this exception shouldn't be thrown. */
+        System.err.println("Internal error: next() doesn't provide an "
+            + "element even though hasNext() returned true.  Got "
+            + allRequests.size() + " elements so far.  Stopping to "
+            + "request further elements.");
+        break;
       }
     }
-  }
 
-  /* Return the previously downloaded (unparsed) consensus string by
-   * authority nickname. */
-  private List<Download> downloadedConsensuses =
-      new ArrayList<Download>();
-  public List<Download> getConsensuses() {
-    return this.downloadedConsensuses;
-  }
-
-  /* Return the previously downloaded (unparsed) vote strings. */
-  private List<Download> downloadedVotes = new ArrayList<Download>();
-  public List<Download> getVotes() {
-    return this.downloadedVotes;
+    return allRequests;
   }
 }
 
