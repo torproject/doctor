@@ -49,7 +49,7 @@ public enum Warning {
   ConsensusMissingVotes,
 
   /* The consensuses downloaded from one or more authorities are missing
-   * signatures from other, previously voting authorities. */
+   * signatures from previously voting authorities. */
   ConsensusMissingSignatures
 }
 

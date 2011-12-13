@@ -5,13 +5,13 @@ package org.torproject.doctor;
 import java.util.*;
 import org.torproject.descriptor.*;
 
-/* Coordinate the process of downloading consensus and votes to check
- * Tor's consensus health. */
+/* Coordinate the process of downloading the current consensus and votes
+ * to check Tor's consensus health. */
 public class Main {
   public static void main(String[] args) {
 
-    /* Download consensus and corresponding votes from the directory
-     * authorities. */
+    /* Download the current consensus from all directory authorities and
+     * all referenced votes from any directory authority. */
     Downloader downloader = new Downloader();
     List<DescriptorRequest> downloads =
         downloader.downloadFromAuthorities();
@@ -26,8 +26,7 @@ public class Main {
     statusFile.writeReport();
 
     /* Write a complete consensus-health report to an HTML file. */
-    MetricsWebsiteReport website =
-        new MetricsWebsiteReport("website/consensus-health.html");
+    MetricsWebsiteReport website = new MetricsWebsiteReport();
     website.processDownloadedConsensuses(downloads);
     DownloadStatistics fetchStatistics = new DownloadStatistics();
     fetchStatistics.memorizeFetchTimes(downloads);

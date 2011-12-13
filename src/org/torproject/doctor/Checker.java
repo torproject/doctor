@@ -14,7 +14,6 @@ public class Checker {
   /* Warning messages consisting of type and details. */
   private SortedMap<Warning, String> warnings =
       new TreeMap<Warning, String>();
-
   public SortedMap<Warning, String> getWarnings() {
     return this.warnings;
   }
@@ -26,13 +25,7 @@ public class Checker {
     dateTimeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
   }
 
-  /* Downloaded consensus and corresponding votes for processing. */
-  private SortedMap<String, RelayNetworkStatusConsensus>
-      downloadedConsensuses = new TreeMap<String,
-      RelayNetworkStatusConsensus>();
-  private RelayNetworkStatusConsensus downloadedConsensus;
-  private List<RelayNetworkStatusVote> downloadedVotes =
-      new ArrayList<RelayNetworkStatusVote>();
+  /* Check consensuses and votes. */
   public void processDownloadedConsensuses(
       List<DescriptorRequest> downloads) {
     this.storeDownloads(downloads);
@@ -57,6 +50,12 @@ public class Checker {
 
   /* Store consensuses and votes in a way that we can process them more
    * easily. */
+  private SortedMap<String, RelayNetworkStatusConsensus>
+      downloadedConsensuses = new TreeMap<String,
+      RelayNetworkStatusConsensus>();
+  private RelayNetworkStatusConsensus downloadedConsensus;
+  private List<RelayNetworkStatusVote> downloadedVotes =
+      new ArrayList<RelayNetworkStatusVote>();
   private void storeDownloads(List<DescriptorRequest> downloads) {
     for (DescriptorRequest request : downloads) {
       for (Descriptor descriptor : request.getDescriptors()) {

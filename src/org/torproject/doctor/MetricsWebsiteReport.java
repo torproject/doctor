@@ -19,12 +19,8 @@ public class MetricsWebsiteReport {
   }
 
   /* Output file to write report to. */
-  private File htmlOutputFile;
-
-  /* Initialize this report. */
-  public MetricsWebsiteReport(String htmlOutputFilename) {
-    this.htmlOutputFile = new File(htmlOutputFilename);
-  }
+  private File htmlOutputFile =
+      new File("out/website/consensus-health.html");
 
   /* Store the downloaded consensus and corresponding votes for later
    * processing. */

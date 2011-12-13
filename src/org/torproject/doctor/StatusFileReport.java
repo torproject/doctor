@@ -7,7 +7,9 @@ import java.text.*;
 import java.util.*;
 
 /* Check a given consensus and votes for irregularities and write results
- * to stdout while rate-limiting warnings based on severity. */
+ * to status files while rate-limiting warnings based on severity.  There
+ * will be a 'all-warnings' file with all warnings and a 'new-warnings'
+ * file with only the warnings that haven't been emitted recently. */
 public class StatusFileReport {
 
   /* Date-time format to format timestamps. */
@@ -23,32 +25,32 @@ public class StatusFileReport {
     this.warnings = warnings;
   }
 
-  /* Check consensuses and votes for irregularities and write output to
-   * stdout. */
+  /* Write warnings to the status files. */
   public void writeReport() {
     this.readLastWarned();
-    this.prepareReports();
+    this.prepareStatusFiles();
     this.writeStatusFiles();
     this.writeLastWarned();
   }
 
-  /* Warning messages of the last 24 hours that is used to implement
-   * rate limiting. */
+  /* Map of warning message strings of the last 24 hours and when they
+   * were last included in the 'new-warnings' file.  This map is used to
+   * implement rate limiting. */
   private Map<String, Long> lastWarned = new HashMap<String, Long>();
 
   /* Read when we last emitted a warning to rate-limit some of them. */
+  private File lastWarnedFile = new File("out/state/last-warned");
   private void readLastWarned() {
     long now = System.currentTimeMillis();
-    File lastWarnedFile = new File("stats/chc-last-warned");
     try {
-      if (lastWarnedFile.exists()) {
+      if (this.lastWarnedFile.exists()) {
         BufferedReader br = new BufferedReader(new FileReader(
-            lastWarnedFile));
+            this.lastWarnedFile));
         String line;
         while ((line = br.readLine()) != null) {
           if (!line.contains(": ")) {
-            System.err.println("Bad line in stats/chc-last-warned: '" + line
-                + "'.  Ignoring this line.");
+            System.err.println("Bad line in stats/chc-last-warned: '"
+                + line + "'.  Ignoring this line.");
             continue;
           }
           long warnedMillis = Long.parseLong(line.substring(0,
@@ -63,20 +65,21 @@ public class StatusFileReport {
       }
     } catch (IOException e) {
       System.err.println("Could not read file '"
-          + lastWarnedFile.getAbsolutePath() + "' to learn which "
+          + this.lastWarnedFile.getAbsolutePath() + "' to learn which "
           + "warnings have been sent out before.  Ignoring.");
     }
   }
 
-  /* Prepare a report to be written to stdout. */
+  /* Prepare status files to be written. */
   private String allWarnings = null, newWarnings = null;
-  private void prepareReports() {
+  private void prepareStatusFiles() {
     SortedMap<String, Long> warningStrings = new TreeMap<String, Long>();
     for (Map.Entry<Warning, String> e : this.warnings.entrySet()) {
       Warning type = e.getKey();
       String details = e.getValue();
       switch (type) {
         case NoConsensusKnown:
+          warningStrings.put("No consensus known.", 0L);
           break;
         case ConsensusDownloadTimeout:
           warningStrings.put("The following directory authorities did "
@@ -158,12 +161,17 @@ public class StatusFileReport {
     }
   }
 
-  /* Write report to stdout. */
+  /* Write status files to disk. */
+  private File allWarningsFile = new File("out/status/all-warnings");
+  private File newWarningsFile = new File("out/status/new-warnings");
   private void writeStatusFiles() {
     try {
+      this.allWarningsFile.getParentFile().mkdirs();
+      this.newWarningsFile.getParentFile().mkdirs();
       BufferedWriter allBw = new BufferedWriter(new FileWriter(
-          "all-warnings")), newBw = new BufferedWriter(new FileWriter(
-          "new-warnings"));
+          this.allWarningsFile));
+      BufferedWriter newBw = new BufferedWriter(new FileWriter(
+          this.newWarningsFile));
       if (this.allWarnings != null) {
         allBw.write(this.allWarnings);
       }
@@ -173,25 +181,25 @@ public class StatusFileReport {
       allBw.close();
       newBw.close();
     } catch (IOException e) {
-      System.err.println("Could not write status files 'all-warnings' "
-          + "and/or 'new-warnings'.  Ignoring.");
+      System.err.println("Could not write status files '"
+          + this.allWarningsFile.getAbsolutePath() + "' and/or '"
+          + this.newWarningsFile.getAbsolutePath() + "'.  Ignoring.");
     }
   }
 
   /* Write timestamps when warnings were last sent to disk. */
   private void writeLastWarned() {
-    File lastWarnedFile = new File("stats/chc-last-warned");
     try {
-      lastWarnedFile.getParentFile().mkdirs();
+      this.lastWarnedFile.getParentFile().mkdirs();
       BufferedWriter bw = new BufferedWriter(new FileWriter(
-          lastWarnedFile));
+          this.lastWarnedFile));
       for (Map.Entry<String, Long> e : lastWarned.entrySet()) {
         bw.write(String.valueOf(e.getValue()) + ": " + e.getKey() + "\n");
       }
       bw.close();
     } catch (IOException e) {
       System.err.println("Could not write file '"
-          + lastWarnedFile.getAbsolutePath() + "' to remember which "
+          + this.lastWarnedFile.getAbsolutePath() + "' to remember which "
           + "warnings have been sent out before.  Ignoring.");
     }
   }

@@ -8,3 +8,39 @@ from the Tor directory authorities and checks them for consensus problems.
 DocTor writes its findings to local files which can then be sent to a
 mailing list or IRC bot, or which can be served by an HTTP server.
 
+
+Howto
+-----
+
+Create a lib/ directory.
+
+Download Apache Commons Codec 1.4 or higher and put it in the lib/
+directory.  If the filename is not commons-codec-1.4.jar, update the
+build.xml file.
+
+Clone metrics-lib, create a .jar file using `ant jar`, and put it in the
+lib/ directory, too.
+
+Compile the Java classes using `ant compile`.
+
+Run the application using `ant run`.
+
+Output files are:
+
+ - out/status/new-warnings: Consensus warnings that have been found in
+   this execution or that were found long enough before to not be
+   rate-limited anymore.
+
+ - out/status/all-warnings: All warnings found in this execution, but only
+   if at least one of them is in new-warnings, too.
+
+ - out/website/consensus-health.html: HTML file containing a full
+   comparison of consensuses to its votes, marking problems in red.
+
+Generated temp files (read: don't mess with them) are:
+
+ - out/stats/download-stats.csv: Raw consensus download times.
+
+ - out/stats/last-warned: Warning messages and when they were last
+   contained in new-warnings or all-warnings.
+

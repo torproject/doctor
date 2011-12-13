@@ -6,9 +6,15 @@ import java.io.*;
 import java.util.*;
 import org.torproject.descriptor.*;
 
+/* Provide simple statistics about consensus download times. */
 public class DownloadStatistics {
+
+  /* Add a new set of download times by append them to the history
+   * file. */
+  private File statisticsFile = new File("out/state/download-stats.csv");
   public void memorizeFetchTimes(List<DescriptorRequest> downloads) {
     try {
+      this.statisticsFile.getParentFile().mkdirs();
       BufferedWriter bw = new BufferedWriter(new FileWriter(
           this.statisticsFile, true));
       for (DescriptorRequest request : downloads) {
@@ -31,10 +37,12 @@ public class DownloadStatistics {
           + this.statisticsFile.getAbsolutePath() + ".  Ignoring.");
     }
   }
+
+  /* Prepare statistics by reading the download history and sorting to
+   * calculate percentiles more easily. */
   private SortedMap<String, List<Long>> downloadData =
       new TreeMap<String, List<Long>>();
   private int maxDownloadsPerAuthority = 0;
-  private File statisticsFile = new File("download-stats.csv");
   public void prepareStatistics() {
     if (this.statisticsFile.exists()) {
       long cutOffMillis = System.currentTimeMillis()
@@ -71,9 +79,13 @@ public class DownloadStatistics {
       }
     }
   }
+
+  /* Return the list of authorities that we have statistics for. */
   public SortedSet<String> getKnownAuthorities() {
     return new TreeSet<String>(this.downloadData.keySet());
   }
+
+  /* Return the download time percentile for a directory authority. */
   public String getPercentile(String authority, int percentile) {
     if (percentile < 0 || percentile > 100 ||
         !this.downloadData.containsKey(authority)) {
@@ -84,6 +96,8 @@ public class DownloadStatistics {
       return String.valueOf(fetchTimes.get(index));
     }
   }
+
+  /* Return the number of NAs (timeouts) for a directory authority. */
   public String getNAs(String authority) {
     if (!this.downloadData.containsKey(authority)) {
       return "NA";
