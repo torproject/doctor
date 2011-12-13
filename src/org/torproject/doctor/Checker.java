@@ -208,7 +208,7 @@ public class Checker {
     SortedSet<String> unrecommendedClientVersions = new TreeSet<String>(),
         unrecommendedServerVersions = new TreeSet<String>();
     for (RelayNetworkStatusVote vote : this.downloadedVotes) {
-      if (!vote.getRecommendedClientVersions().isEmpty() &&
+      if (vote.getRecommendedClientVersions() != null &&
           !downloadedConsensus.getRecommendedClientVersions().equals(
           vote.getRecommendedClientVersions())) {
         StringBuilder message = new StringBuilder();
@@ -218,7 +218,7 @@ public class Checker {
         }
         unrecommendedClientVersions.add(message.toString());
       }
-      if (!vote.getRecommendedServerVersions().isEmpty() &&
+      if (vote.getRecommendedServerVersions() != null &&
           !downloadedConsensus.getRecommendedServerVersions().equals(
           vote.getRecommendedServerVersions())) {
         StringBuilder message = new StringBuilder();

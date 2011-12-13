@@ -331,7 +331,7 @@ public class MetricsWebsiteReport {
       for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
         SortedSet<String> voteRecommendedClientVersions =
             vote.getRecommendedClientVersions();
-        if (!voteRecommendedClientVersions.isEmpty()) {
+        if (voteRecommendedClientVersions != null) {
           if (downloadedConsensus.getRecommendedClientVersions().equals(
               voteRecommendedClientVersions)) {
             this.bw.write("          <tr>\n"
@@ -359,7 +359,7 @@ public class MetricsWebsiteReport {
         }
         SortedSet<String> voteRecommendedServerVersions =
             vote.getRecommendedServerVersions();
-        if (!voteRecommendedServerVersions.isEmpty()) {
+        if (voteRecommendedServerVersions != null) {
           if (downloadedConsensus.getRecommendedServerVersions().equals(
               voteRecommendedServerVersions)) {
             this.bw.write("          <tr>\n"
