@@ -163,8 +163,8 @@ public class MetricsWebsiteReport {
       this.bw.write(dateTimeFormat.format(
           this.downloadedConsensus.getValidAfterMillis()));
     }
-    this.bw.write(". <i>Note that it takes up to 15 to learn about new "
-        + "consensus and votes and process them.</i></p>\n");
+    this.bw.write(". <i>Note that it takes up to 15 minutes to learn "
+        + "about new consensus and votes and process them.</i></p>\n");
   }
 
   /* Write the lists of known flags. */
