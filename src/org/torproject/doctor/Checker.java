@@ -257,11 +257,11 @@ public class Checker {
         split(",")));
     SortedSet<String> conflicts = new TreeSet<String>();
     for (RelayNetworkStatusVote vote : this.downloadedVotes) {
-      Map<String, String> voteConsensusParams =
+      Map<String, Integer> voteConsensusParams =
           vote.getConsensusParams();
       boolean conflictOrInvalid = false;
       if (voteConsensusParams != null) {
-        for (Map.Entry<String, String> e :
+        for (Map.Entry<String, Integer> e :
             voteConsensusParams.entrySet()) {
           if (!downloadedConsensus.getConsensusParams().containsKey(
               e.getKey()) ||
@@ -271,7 +271,7 @@ public class Checker {
               !e.getKey().startsWith("bwauth"))) {
             StringBuilder message = new StringBuilder();
             message.append(vote.getNickname());
-            for (Map.Entry<String, String> p :
+            for (Map.Entry<String, Integer> p :
                 voteConsensusParams.entrySet()) {
               message.append(" " + p.getKey() + "=" + p.getValue());
             }
@@ -344,7 +344,7 @@ public class Checker {
     for (RelayNetworkStatusVote vote : this.downloadedVotes) {
       boolean containsMeasuredBandwidths = false;
       for (NetworkStatusEntry entry : vote.getStatusEntries().values()) {
-        if (entry.getBandwidth().contains("Measured=")) {
+        if (entry.getMeasured() >= 0) {
           containsMeasuredBandwidths = true;
           break;
         }

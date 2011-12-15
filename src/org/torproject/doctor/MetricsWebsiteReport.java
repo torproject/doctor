@@ -426,14 +426,14 @@ public class MetricsWebsiteReport {
           + "cbtdisabled,cbtnummodes,cbtrecentcount,cbtmaxtimeouts,"
           + "cbtmincircs,cbtquantile,cbtclosequantile,cbttestfreq,"
           + "cbtmintimeout,cbtinitialtimeout").split(",")));
-      Map<String, String> consensusConsensusParams =
+      Map<String, Integer> consensusConsensusParams =
           downloadedConsensus.getConsensusParams();
       for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
-        Map<String, String> voteConsensusParams =
+        Map<String, Integer> voteConsensusParams =
             vote.getConsensusParams();
         boolean conflictOrInvalid = false;
         if (voteConsensusParams != null) {
-          for (Map.Entry<String, String> e :
+          for (Map.Entry<String, Integer> e :
               voteConsensusParams.entrySet()) {
             if (!consensusConsensusParams.containsKey(e.getKey()) ||
                 !consensusConsensusParams.get(e.getKey()).equals(
@@ -450,7 +450,7 @@ public class MetricsWebsiteReport {
               + "            <td><font color=\"red\">"
                 + vote.getNickname() + "</font></td>\n"
               + "            <td><font color=\"red\">params");
-          for (Map.Entry<String, String> e :
+          for (Map.Entry<String, Integer> e :
               voteConsensusParams.entrySet()) {
             this.bw.write(" " + e.getKey() + "=" + e.getValue());
           }
@@ -460,7 +460,7 @@ public class MetricsWebsiteReport {
           this.bw.write("          <tr>\n"
               + "            <td>" + vote.getNickname() + "</td>\n"
               + "            <td>params");
-          for (Map.Entry<String, String> e :
+          for (Map.Entry<String, Integer> e :
               voteConsensusParams.entrySet()) {
             this.bw.write(" " + e.getKey() + "=" + e.getValue());
           }
@@ -473,7 +473,7 @@ public class MetricsWebsiteReport {
         + "            <td><font color=\"blue\">consensus</font>"
           + "</td>\n"
         + "            <td><font color=\"blue\">params");
-    for (Map.Entry<String, String> e :
+    for (Map.Entry<String, Integer> e :
         this.downloadedConsensus.getConsensusParams().entrySet()) {
       this.bw.write(" " + e.getKey() + "=" + e.getValue());
     }
@@ -546,7 +546,7 @@ public class MetricsWebsiteReport {
       for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
         int bandwidthWeights = 0;
         for (NetworkStatusEntry entry : vote.getStatusEntries().values()) {
-          if (entry.getBandwidth().contains("Measured=")) {
+          if (entry.getMeasured() >= 0L) {
             bandwidthWeights++;
           }
         }
