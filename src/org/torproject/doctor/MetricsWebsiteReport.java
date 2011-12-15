@@ -325,7 +325,7 @@ public class MetricsWebsiteReport {
       this.bw.write("          <tr><td>(No votes.)</td><td></td></tr>\n");
     } else {
       for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
-        SortedSet<String> voteRecommendedClientVersions =
+        List<String> voteRecommendedClientVersions =
             vote.getRecommendedClientVersions();
         if (voteRecommendedClientVersions != null) {
           if (downloadedConsensus.getRecommendedClientVersions().equals(
@@ -353,7 +353,7 @@ public class MetricsWebsiteReport {
                 + "          </tr>\n");
           }
         }
-        SortedSet<String> voteRecommendedServerVersions =
+        List<String> voteRecommendedServerVersions =
             vote.getRecommendedServerVersions();
         if (voteRecommendedServerVersions != null) {
           if (downloadedConsensus.getRecommendedServerVersions().equals(
