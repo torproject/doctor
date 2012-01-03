@@ -33,8 +33,16 @@ public enum Warning {
   ConflictingOrInvalidConsensusParams,
 
   /* The certificate(s) of one or more directory authorities expire within
-   * the next 14 days. */
-  CertificateExpiresSoon,
+   * the next three months, which we warn about just once. */
+  CertificateExpiresInThreeMonths,
+
+  /* The certificate(s) of one or more directory authorities expire within
+   * the next two months, which we warn about once per week. */
+  CertificateExpiresInTwoMonths,
+
+  /* The certificate(s) of one or more directory authorities expire within
+   * the next 14 days, which we warn about once per day. */
+  CertificateExpiresInTwoWeeks,
 
   /* The vote(s) of one or more directory authorities are missing. */
   VotesMissing,

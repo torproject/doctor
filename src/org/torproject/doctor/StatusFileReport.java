@@ -112,7 +112,17 @@ public class StatusFileReport {
               + "conflicting or invalid consensus parameters: " + details,
               150L * 60L * 1000L);
           break;
-        case CertificateExpiresSoon:
+        case CertificateExpiresInThreeMonths:
+          warningStrings.put("The certificates of the following "
+              + "directory authorities expire within the next three "
+              + "months: " + details, 5L * 7L * 24L * 60L * 60L * 1000L);
+          break;
+        case CertificateExpiresInTwoMonths:
+          warningStrings.put("The certificates of the following "
+              + "directory authorities expire within the next two "
+              + "months: " + details, 7L * 24L * 60L * 60L * 1000L);
+          break;
+        case CertificateExpiresInTwoWeeks:
           warningStrings.put("The certificates of the following "
               + "directory authorities expire within the next 14 days: "
               + details, 24L * 60L * 60L * 1000L);

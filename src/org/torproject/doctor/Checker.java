@@ -294,27 +294,56 @@ public class Checker {
   /* Check whether any of the authority keys expire in the next 14
    * days. */
   private void checkAuthorityKeys() {
-    SortedMap<String, String> expiringCertificates =
+    SortedMap<String, String> certificatesExpiringInThreeMonths =
+        new TreeMap<String, String>();
+    SortedMap<String, String> certificatesExpiringInTwoMonths =
+        new TreeMap<String, String>();
+    SortedMap<String, String> certificatesExpiringInTwoWeeks =
         new TreeMap<String, String>();
     long now = System.currentTimeMillis();
     for (RelayNetworkStatusVote vote : this.downloadedVotes) {
       long voteDirKeyExpiresMillis = vote.getDirKeyExpiresMillis();
       if (voteDirKeyExpiresMillis - 14L * 24L * 60L * 60L * 1000L < now) {
-        expiringCertificates.put(vote.getNickname(),
+        certificatesExpiringInTwoWeeks.put(vote.getNickname(),
+            dateTimeFormat.format(voteDirKeyExpiresMillis));
+      } else if (voteDirKeyExpiresMillis - 60L * 24L * 60L * 60L * 1000L <
+          now) {
+        certificatesExpiringInTwoMonths.put(vote.getNickname(),
+            dateTimeFormat.format(voteDirKeyExpiresMillis));
+      } else if (voteDirKeyExpiresMillis - 90L * 24L * 60L * 60L * 1000L <
+          now) {
+        certificatesExpiringInThreeMonths.put(vote.getNickname(),
             dateTimeFormat.format(voteDirKeyExpiresMillis));
       }
     }
-    if (!expiringCertificates.isEmpty()) {
-      StringBuilder sb = new StringBuilder();
-      for (Map.Entry<String, String> e :
-          expiringCertificates.entrySet()) {
-        String dir = e.getKey();
-        String timestamp = e.getValue();
-        sb.append(", " + dir + " " + timestamp);
-      }
-      this.warnings.put(Warning.CertificateExpiresSoon,
-          sb.toString().substring(2));
+    if (!certificatesExpiringInThreeMonths.isEmpty()) {
+      this.warnAboutExpiringCertificates(
+          Warning.CertificateExpiresInThreeMonths,
+          certificatesExpiringInThreeMonths);
     }
+    if (!certificatesExpiringInTwoMonths.isEmpty()) {
+      this.warnAboutExpiringCertificates(
+          Warning.CertificateExpiresInTwoMonths,
+          certificatesExpiringInTwoMonths);
+    }
+    if (!certificatesExpiringInTwoWeeks.isEmpty()) {
+      this.warnAboutExpiringCertificates(
+          Warning.CertificateExpiresInTwoWeeks,
+          certificatesExpiringInTwoWeeks);
+    }
+  }
+
+  private void warnAboutExpiringCertificates(Warning warningType,
+      SortedMap<String, String> expiringCertificates) {
+    StringBuilder sb = new StringBuilder();
+    for (Map.Entry<String, String> e :
+        expiringCertificates.entrySet()) {
+      String dir = e.getKey();
+      String timestamp = e.getValue();
+      sb.append(", " + dir + " " + timestamp);
+    }
+    String details = sb.toString().substring(2);
+    this.warnings.put(warningType, sb.toString().substring(2));
   }
 
   /* Check if any votes are missing. */
