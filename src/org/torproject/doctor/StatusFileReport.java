@@ -161,6 +161,10 @@ public class StatusFileReport {
               + "previously voting authorities: " + detailsString,
               150L * 60L * 1000L);
           break;
+        case MissingAuthorities:
+          warningStrings.put("WARNING: The following authorities are "
+              + "missing from the consensus: " + detailsString,
+              150L * 60L * 1000L);
       }
     }
     long now = System.currentTimeMillis();

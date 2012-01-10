@@ -58,6 +58,9 @@ public enum Warning {
 
   /* The consensuses downloaded from one or more authorities are missing
    * signatures from previously voting authorities. */
-  ConsensusMissingSignatures
+  ConsensusMissingSignatures,
+
+  /* One or more authorities are missing in the consensus. */
+  MissingAuthorities
 }
 

@@ -42,6 +42,7 @@ public class Checker {
         this.checkAuthorityKeys();
         this.checkMissingVotes();
         this.checkBandwidthScanners();
+        this.checkMissingAuthorities();
       }
     } else {
       this.warnings.put(Warning.NoConsensusKnown, new TreeSet<String>());
@@ -345,6 +346,23 @@ public class Checker {
     if (!missingBandwidthScanners.isEmpty()) {
       this.warnings.put(Warning.BandwidthScannerResultsMissing,
           missingBandwidthScanners);
+    }
+  }
+
+  /* Check if any relays with the Authority flag are missing from the
+   * consensus. */
+  private void checkMissingAuthorities() {
+    SortedSet<String> missingAuthorities = new TreeSet<String>(
+        Arrays.asList(("gabelmoo,tor26,ides,maatuska,dannenberg,urras,"
+        + "moria1,dizum,Tonga").split(",")));
+    for (NetworkStatusEntry entry :
+        this.downloadedConsensus.getStatusEntries().values()) {
+      if (entry.getFlags().contains("Authority")) {
+        missingAuthorities.remove(entry.getNickname());
+      }
+    }
+    if (!missingAuthorities.isEmpty()) {
+      this.warnings.put(Warning.MissingAuthorities, missingAuthorities);
     }
   }
 }
