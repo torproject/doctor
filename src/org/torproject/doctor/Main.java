@@ -21,7 +21,8 @@ public class Main {
     StatusFileReport statusFile = new StatusFileReport();
     Checker checker = new Checker();
     checker.processDownloadedConsensuses(downloads);
-    SortedMap<Warning, String> warnings = checker.getWarnings();
+    SortedMap<Warning, SortedSet<String>> warnings =
+        checker.getWarnings();
     statusFile.processWarnings(warnings);
     statusFile.writeReport();
 

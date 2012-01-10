@@ -12,9 +12,9 @@ import org.torproject.descriptor.*;
 public class Checker {
 
   /* Warning messages consisting of type and details. */
-  private SortedMap<Warning, String> warnings =
-      new TreeMap<Warning, String>();
-  public SortedMap<Warning, String> getWarnings() {
+  private SortedMap<Warning, SortedSet<String>> warnings =
+      new TreeMap<Warning, SortedSet<String>>();
+  public SortedMap<Warning, SortedSet<String>> getWarnings() {
     return this.warnings;
   }
 
@@ -44,7 +44,7 @@ public class Checker {
         this.checkBandwidthScanners();
       }
     } else {
-      this.warnings.put(Warning.NoConsensusKnown, "");
+      this.warnings.put(Warning.NoConsensusKnown, new TreeSet<String>());
     }
   }
 
@@ -93,12 +93,8 @@ public class Checker {
         + "moria1,dizum").split(",")));
     missingConsensuses.removeAll(this.downloadedConsensuses.keySet());
     if (!missingConsensuses.isEmpty()) {
-      StringBuilder sb = new StringBuilder();
-      for (String nickname : missingConsensuses) {
-        sb.append(", " + nickname);
-      }
       this.warnings.put(Warning.ConsensusDownloadTimeout,
-          sb.toString().substring(2));
+          missingConsensuses);
     }
   }
 
@@ -115,12 +111,7 @@ public class Checker {
       }
     }
     if (!nonFresh.isEmpty()) {
-      StringBuilder sb = new StringBuilder();
-      for (String nickname : nonFresh) {
-        sb.append(", " + nickname);
-      }
-      this.warnings.put(Warning.ConsensusNotFresh,
-          sb.toString().substring(2));
+      this.warnings.put(Warning.ConsensusNotFresh, nonFresh);
     }
   }
 
@@ -142,12 +133,7 @@ public class Checker {
       }
     }
     if (!missingVotes.isEmpty()) {
-      StringBuilder sb = new StringBuilder();
-      for (String nickname : missingVotes) {
-        sb.append(", " + nickname);
-      }
-      this.warnings.put(Warning.ConsensusMissingVotes,
-          sb.toString().substring(2));
+      this.warnings.put(Warning.ConsensusMissingVotes, missingVotes);
     }
   }
 
@@ -166,12 +152,8 @@ public class Checker {
       }
     }
     if (!missingSignatures.isEmpty()) {
-      StringBuilder sb = new StringBuilder();
-      for (String nickname : missingSignatures) {
-        sb.append(", " + nickname);
-      }
       this.warnings.put(Warning.ConsensusMissingSignatures,
-          sb.toString().substring(2));
+          missingSignatures);
     }
   }
 
@@ -192,12 +174,7 @@ public class Checker {
       }
     }
     if (!dirs.isEmpty()) {
-      StringBuilder sb = new StringBuilder();
-      for (String dir : dirs) {
-        sb.append(", " + dir);
-      }
-      this.warnings.put(Warning.ConsensusMethodNotSupported,
-          sb.toString().substring(2));
+      this.warnings.put(Warning.ConsensusMethodNotSupported, dirs);
     }
   }
 
@@ -229,20 +206,12 @@ public class Checker {
       }
     }
     if (!unrecommendedServerVersions.isEmpty()) {
-      StringBuilder sb = new StringBuilder();
-      for (String dir : unrecommendedServerVersions) {
-        sb.append(", " + dir);
-      }
       this.warnings.put(Warning.DifferentRecommendedServerVersions,
-          sb.toString().substring(2));
+          unrecommendedServerVersions);
     }
     if (!unrecommendedClientVersions.isEmpty()) {
-      StringBuilder sb = new StringBuilder();
-      for (String dir : unrecommendedClientVersions) {
-        sb.append(", " + dir);
-      }
       this.warnings.put(Warning.DifferentRecommendedClientVersions,
-          sb.toString().substring(2));
+          unrecommendedClientVersions);
     }
   }
 
@@ -282,12 +251,8 @@ public class Checker {
       }
     }
     if (!conflicts.isEmpty()) {
-      StringBuilder sb = new StringBuilder();
-      for (String dir : conflicts) {
-        sb.append(", " + dir);
-      }
       this.warnings.put(Warning.ConflictingOrInvalidConsensusParams,
-          sb.toString().substring(2));
+          conflicts);
     }
   }
 
@@ -335,15 +300,15 @@ public class Checker {
 
   private void warnAboutExpiringCertificates(Warning warningType,
       SortedMap<String, String> expiringCertificates) {
+    SortedSet<String> details = new TreeSet<String>();
     StringBuilder sb = new StringBuilder();
     for (Map.Entry<String, String> e :
         expiringCertificates.entrySet()) {
       String dir = e.getKey();
       String timestamp = e.getValue();
-      sb.append(", " + dir + " " + timestamp);
+      details.add(dir + " " + timestamp);
     }
-    String details = sb.toString().substring(2);
-    this.warnings.put(warningType, sb.toString().substring(2));
+    this.warnings.put(warningType, details);
   }
 
   /* Check if any votes are missing. */
@@ -357,12 +322,7 @@ public class Checker {
       missingVotes.remove(vote.getNickname());
     }
     if (!missingVotes.isEmpty()) {
-      StringBuilder sb = new StringBuilder();
-      for (String missingDir : missingVotes) {
-        sb.append(", " + missingDir);
-      }
-      this.warnings.put(Warning.VotesMissing,
-          sb.toString().substring(2));
+      this.warnings.put(Warning.VotesMissing, missingVotes);
     }
   }
 
@@ -383,12 +343,8 @@ public class Checker {
       }
     }
     if (!missingBandwidthScanners.isEmpty()) {
-      StringBuilder sb = new StringBuilder();
-      for (String dir : missingBandwidthScanners) {
-        sb.append(", " + dir);
-      }
       this.warnings.put(Warning.BandwidthScannerResultsMissing,
-          sb.toString().substring(2));
+          missingBandwidthScanners);
     }
   }
 }

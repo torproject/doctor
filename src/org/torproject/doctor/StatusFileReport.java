@@ -20,8 +20,9 @@ public class StatusFileReport {
   }
 
   /* Warnings obtained from checking the current consensus and votes. */
-  private SortedMap<Warning, String> warnings;
-  public void processWarnings(SortedMap<Warning, String> warnings) {
+  private SortedMap<Warning, SortedSet<String>> warnings;
+  public void processWarnings(SortedMap<Warning,
+      SortedSet<String>> warnings) {
     this.warnings = warnings;
   }
 
@@ -74,78 +75,90 @@ public class StatusFileReport {
   private String allWarnings = null, newWarnings = null;
   private void prepareStatusFiles() {
     SortedMap<String, Long> warningStrings = new TreeMap<String, Long>();
-    for (Map.Entry<Warning, String> e : this.warnings.entrySet()) {
+    for (Map.Entry<Warning, SortedSet<String>> e :
+        this.warnings.entrySet()) {
       Warning type = e.getKey();
-      String details = e.getValue();
+      SortedSet<String> details = e.getValue();
+      StringBuilder sb = new StringBuilder();
+      int written = 0;
+      for (String detail : details) {
+        sb.append((written++ > 0 ? ", " : "") + detail);
+      }
+      String detailsString = sb.toString();
       switch (type) {
         case NoConsensusKnown:
-          warningStrings.put("No consensus known.", 0L);
+          warningStrings.put("ERROR: No consensus known.", 0L);
           break;
         case ConsensusDownloadTimeout:
-          warningStrings.put("The following directory authorities did "
-              + "not return a consensus within a timeout of 60 seconds: "
-              + details, 150L * 60L * 1000L);
+          warningStrings.put((details.size() > 3 ? "ERROR" : "WARNING")
+              + ": The following directory authorities did not return a "
+              + "consensus within a timeout of 60 seconds: "
+              + detailsString, 150L * 60L * 1000L);
           break;
         case ConsensusNotFresh:
-          warningStrings.put("The consensuses published by the following "
-              + "directory authorities are more than 1 hour old and "
-              + "therefore not fresh anymore: " + details,
-              150L * 60L * 1000L);
+          warningStrings.put((details.size() > 3 ? "ERROR" : "WARNING")
+              + ": The consensuses published by the following directory "
+              + "authorities are more than 1 hour old and therefore not "
+              + "fresh anymore: " + detailsString, 150L * 60L * 1000L);
           break;
         case ConsensusMethodNotSupported:
-          warningStrings.put("The following directory authorities do not "
-              + "support the consensus method that the consensus uses: "
-              + details, 24L * 60L * 60L * 1000L);
+          warningStrings.put("WARNING: The following directory "
+              + "authorities do not support the consensus method that "
+              + "the consensus uses: " + detailsString,
+              24L * 60L * 60L * 1000L);
           break;
         case DifferentRecommendedClientVersions:
-          warningStrings.put("The following directory authorities "
-              + "recommend other client versions than the consensus: "
-              + details, 150L * 60L * 1000L);
+          warningStrings.put("NOTICE: The following directory "
+              + "authorities recommend other client versions than the "
+              + "consensus: " + detailsString, 150L * 60L * 1000L);
           break;
         case DifferentRecommendedServerVersions:
-          warningStrings.put("The following directory authorities "
-              + "recommend other server versions than the consensus: "
-              + details, 150L * 60L * 1000L);
+          warningStrings.put("NOTICE: The following directory "
+              + "authorities recommend other server versions than the "
+              + "consensus: " + detailsString, 150L * 60L * 1000L);
           break;
         case ConflictingOrInvalidConsensusParams:
-          warningStrings.put("The following directory authorities set "
-              + "conflicting or invalid consensus parameters: " + details,
-              150L * 60L * 1000L);
+          warningStrings.put("NOTICE: The following directory "
+              + "authorities set conflicting or invalid consensus "
+              + "parameters: " + detailsString, 150L * 60L * 1000L);
           break;
         case CertificateExpiresInThreeMonths:
-          warningStrings.put("The certificates of the following "
+          warningStrings.put("NOTICE: The certificates of the following "
               + "directory authorities expire within the next three "
-              + "months: " + details, 5L * 7L * 24L * 60L * 60L * 1000L);
+              + "months: " + detailsString,
+              5L * 7L * 24L * 60L * 60L * 1000L);
           break;
         case CertificateExpiresInTwoMonths:
-          warningStrings.put("The certificates of the following "
+          warningStrings.put("NOTICE: The certificates of the following "
               + "directory authorities expire within the next two "
-              + "months: " + details, 7L * 24L * 60L * 60L * 1000L);
+              + "months: " + detailsString, 7L * 24L * 60L * 60L * 1000L);
           break;
         case CertificateExpiresInTwoWeeks:
-          warningStrings.put("The certificates of the following "
+          warningStrings.put("WARNING: The certificates of the following "
               + "directory authorities expire within the next 14 days: "
-              + details, 24L * 60L * 60L * 1000L);
+              + detailsString, 24L * 60L * 60L * 1000L);
           break;
         case VotesMissing:
-          warningStrings.put("We're missing votes from the following "
-              + "directory authorities: " + details, 150L * 60L * 1000L);
+          warningStrings.put("WARNING: We're missing votes from the "
+              + "following directory authorities: " + detailsString,
+              150L * 60L * 1000L);
           break;
         case BandwidthScannerResultsMissing:
-          warningStrings.put("The following directory authorities are "
-              + "not reporting bandwidth scanner results: " + details,
+          warningStrings.put((details.size() > 1 ? "ERROR" : "WARNING")
+              + ": The following directory authorities are not reporting "
+              + "bandwidth scanner results: " + detailsString,
               150L * 60L * 1000L);
           break;
         case ConsensusMissingVotes:
-          warningStrings.put("The consensuses downloaded from the "
-              + "following authorities are missing votes that are "
+          warningStrings.put("NOTICE: The consensuses downloaded from "
+              + "the following authorities are missing votes that are "
               + "contained in consensuses downloaded from other "
-              + "authorities: " + details, 150L * 60L * 1000L);
+              + "authorities: " + detailsString, 150L * 60L * 1000L);
           break;
         case ConsensusMissingSignatures:
-          warningStrings.put("The consensuses downloaded from the "
-              + "following authorities are missing signatures from "
-              + "previously voting authorities: " + details,
+          warningStrings.put("NOTICE: The consensuses downloaded from "
+              + "the following authorities are missing signatures from "
+              + "previously voting authorities: " + detailsString,
               150L * 60L * 1000L);
           break;
       }
@@ -153,13 +166,20 @@ public class StatusFileReport {
     long now = System.currentTimeMillis();
     StringBuilder allSb = new StringBuilder(),
         newSb = new StringBuilder();
-    for (Map.Entry<String, Long> e : warningStrings.entrySet()) {
-      String message = e.getKey();
-      allSb.append(message + "\n");
-      long warnInterval = e.getValue();
-      if (!lastWarned.containsKey(message) ||
-          lastWarned.get(message) + warnInterval < now) {
-        newSb.append(message + "\n");
+    List<String> severities = Arrays.asList(new String[] {
+        "ERROR", "WARNING", "NOTICE" });
+    for (String severity : severities) {
+      for (Map.Entry<String, Long> e : warningStrings.entrySet()) {
+        String message = e.getKey();
+        if (!message.startsWith(severity)) {
+          continue;
+        }
+        allSb.append(message + "\n");
+        long warnInterval = e.getValue();
+        if (!lastWarned.containsKey(message) ||
+            lastWarned.get(message) + warnInterval < now) {
+          newSb.append(message + "\n");
+        }
       }
     }
     if (newSb.length() > 0) {
