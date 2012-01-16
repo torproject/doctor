@@ -50,8 +50,9 @@ public class StatusFileReport {
         String line;
         while ((line = br.readLine()) != null) {
           if (!line.contains(": ")) {
-            System.err.println("Bad line in stats/chc-last-warned: '"
-                + line + "'.  Ignoring this line.");
+            System.err.println("Bad line in "
+                + lastWarnedFile.getAbsolutePath() + ": '" + line
+                + "'.  Ignoring this line.");
             continue;
           }
           long warnedMillis = Long.parseLong(line.substring(0,
