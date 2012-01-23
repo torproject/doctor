@@ -33,9 +33,6 @@ public class Downloader {
     downloader.setIncludeCurrentConsensusFromAllDirectoryAuthorities();
     downloader.setIncludeCurrentReferencedVotes();
 
-    /* Set a per-request timeout of 60 seconds. */
-    downloader.setRequestTimeout(60L * 1000L);
-
     /* Iterate over the finished (or aborted) requests and memorize the
      * included consensuses or votes.  The processing will take place
      * later. */
