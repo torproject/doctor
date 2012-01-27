@@ -121,7 +121,7 @@ public class StatusFileReport {
         case ConflictingOrInvalidConsensusParams:
           warningStrings.put("NOTICE: The following directory "
               + "authorities set conflicting or invalid consensus "
-              + "parameters: " + detailsString, 150L * 60L * 1000L);
+              + "parameters: " + detailsString, 330L * 60L * 1000L);
           break;
         case CertificateExpiresInThreeMonths:
           warningStrings.put("NOTICE: The certificates of the following "
