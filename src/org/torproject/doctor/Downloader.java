@@ -14,8 +14,8 @@ public class Downloader {
 
     /* Create a descriptor downloader instance that will do all the hard
      * download work for us. */
-    RelayDescriptorDownloader downloader =
-        DescriptorSourceFactory.createRelayDescriptorDownloader();
+    DescriptorDownloader downloader =
+        DescriptorSourceFactory.createDescriptorDownloader();
 
     /* Configure the currently known directory authorities. */
     downloader.addDirectoryAuthority("gabelmoo", "212.112.245.170", 80);
