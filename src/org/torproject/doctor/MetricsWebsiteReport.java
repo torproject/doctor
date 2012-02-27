@@ -741,14 +741,11 @@ public class MetricsWebsiteReport {
     if (this.downloadedConsensus.containsStatusEntry(fingerprint) &&
         this.downloadedConsensus.getStatusEntry(fingerprint).getFlags().
         contains("Named") && !Character.isDigit(nickname.charAt(0))) {
-      this.bw.write("            <td id=\"" + nickname
-          + "\"><a href=\"relay.html?fingerprint="
-          + fingerprint + "\" target=\"_blank\">"
-          + fingerprint.substring(0, 8) + "</a></td>\n");
+      this.bw.write("            <td id=\"" + nickname + "\">"
+          + fingerprint.substring(0, 8) + "</td>\n");
     } else {
-      this.bw.write("            <td><a href=\"relay.html?fingerprint="
-          + fingerprint + "\" target=\"_blank\">"
-          + fingerprint.substring(0, 8) + "</a></td>\n");
+      this.bw.write("            <td>"
+          + fingerprint.substring(0, 8) + "</td>\n");
     }
     this.bw.write("            <td>" + nickname + "</td>\n");
     SortedSet<String> relevantFlags = new TreeSet<String>();
