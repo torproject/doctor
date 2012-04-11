@@ -90,7 +90,7 @@ public class Checker {
   /* Check if any directory authority didn't tell us a consensus. */
   private void checkMissingConsensuses() {
     SortedSet<String> missingConsensuses = new TreeSet<String>(
-        Arrays.asList(("gabelmoo,tor26,ides,maatuska,dannenberg,urras,"
+        Arrays.asList(("gabelmoo,tor26,turtles,maatuska,dannenberg,urras,"
         + "moria1,dizum").split(",")));
     missingConsensuses.removeAll(this.downloadedConsensuses.keySet());
     if (!missingConsensuses.isEmpty()) {
@@ -315,8 +315,8 @@ public class Checker {
   /* Check if any votes are missing. */
   private void checkMissingVotes() {
     SortedSet<String> knownAuthorities = new TreeSet<String>(
-        Arrays.asList(("dannenberg,dizum,gabelmoo,ides,maatuska,moria1,"
-        + "tor26,urras").split(",")));
+        Arrays.asList(("dannenberg,dizum,gabelmoo,turtles,maatuska,"
+        + "moria1,tor26,urras").split(",")));
     SortedSet<String> missingVotes =
         new TreeSet<String>(knownAuthorities);
     for (RelayNetworkStatusVote vote : this.downloadedVotes) {
@@ -330,7 +330,8 @@ public class Checker {
   /* Check if any bandwidth scanner results are missing. */
   private void checkBandwidthScanners() {
     SortedSet<String> missingBandwidthScanners = new TreeSet<String>(
-        Arrays.asList("ides,urras,moria1,gabelmoo,maatuska".split(",")));
+        Arrays.asList("turtles,urras,moria1,gabelmoo,maatuska".
+        split(",")));
     for (RelayNetworkStatusVote vote : this.downloadedVotes) {
       boolean containsMeasuredBandwidths = false;
       for (NetworkStatusEntry entry : vote.getStatusEntries().values()) {
@@ -353,7 +354,7 @@ public class Checker {
    * consensus. */
   private void checkMissingAuthorities() {
     SortedSet<String> missingAuthorities = new TreeSet<String>(
-        Arrays.asList(("gabelmoo,tor26,ides,maatuska,dannenberg,urras,"
+        Arrays.asList(("gabelmoo,tor26,turtles,maatuska,dannenberg,urras,"
         + "moria1,dizum,Tonga").split(",")));
     for (NetworkStatusEntry entry :
         this.downloadedConsensus.getStatusEntries().values()) {

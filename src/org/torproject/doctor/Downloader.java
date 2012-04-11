@@ -20,7 +20,7 @@ public class Downloader {
     /* Configure the currently known directory authorities. */
     downloader.addDirectoryAuthority("gabelmoo", "212.112.245.170", 80);
     downloader.addDirectoryAuthority("tor26", "86.59.21.38", 80);
-    downloader.addDirectoryAuthority("ides", "216.224.124.114", 9030);
+    downloader.addDirectoryAuthority("turtles", "76.73.17.194", 9030);
     downloader.addDirectoryAuthority("maatuska", "171.25.193.9", 443);
     downloader.addDirectoryAuthority("dannenberg", "193.23.244.244", 80);
     downloader.addDirectoryAuthority("urras", "208.83.223.34", 443);
