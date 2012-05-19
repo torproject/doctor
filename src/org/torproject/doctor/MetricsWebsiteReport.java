@@ -31,6 +31,9 @@ public class MetricsWebsiteReport {
       List<DescriptorRequest> downloads) {
     long mostRecentValidAfterMillis = -1L;
     for (DescriptorRequest request : downloads) {
+      if (request.getDescriptors() == null) {
+        continue;
+      }
       for (Descriptor descriptor : request.getDescriptors()) {
         if (descriptor instanceof RelayNetworkStatusConsensus) {
           RelayNetworkStatusConsensus downloadedConsensus =

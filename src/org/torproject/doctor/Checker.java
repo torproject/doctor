@@ -59,6 +59,9 @@ public class Checker {
       new ArrayList<RelayNetworkStatusVote>();
   private void storeDownloads(List<DescriptorRequest> downloads) {
     for (DescriptorRequest request : downloads) {
+      if (request.getDescriptors() == null) {
+        continue;
+      }
       for (Descriptor descriptor : request.getDescriptors()) {
         if (descriptor instanceof RelayNetworkStatusConsensus) {
           this.downloadedConsensuses.put(request.getDirectoryNickname(),

@@ -41,17 +41,8 @@ public class Downloader {
     List<DescriptorRequest> allRequests =
         new ArrayList<DescriptorRequest>();
     while (descriptorRequests.hasNext()) {
-      try {
-        allRequests.add(descriptorRequests.next());
-      } catch (NoSuchElementException e) {
-        /* TODO In theory, this exception shouldn't be thrown.  This is a
-         * bug in metrics-lib. */
-        System.err.println("Internal error: next() doesn't provide an "
-            + "element even though hasNext() returned true.  Got "
-            + allRequests.size() + " elements so far.  Stopping to "
-            + "request further elements.");
-        break;
-      }
+      DescriptorRequest request = descriptorRequests.next();
+      allRequests.add(request);
     }
 
     /* We downloaded everything we wanted. */

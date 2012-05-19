@@ -18,6 +18,9 @@ public class DownloadStatistics {
       BufferedWriter bw = new BufferedWriter(new FileWriter(
           this.statisticsFile, true));
       for (DescriptorRequest request : downloads) {
+        if (request.getDescriptors() == null) {
+          continue;
+        }
         for (Descriptor descriptor : request.getDescriptors()) {
           if (descriptor instanceof RelayNetworkStatusConsensus) {
             String authority = request.getDirectoryNickname();
