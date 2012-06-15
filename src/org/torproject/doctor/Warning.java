@@ -51,13 +51,13 @@ public enum Warning {
    * results. */
   BandwidthScannerResultsMissing,
 
-  /* The consensuses downloaded from one or more authorities are missing
-   * votes that are contained in consensuses downloaded from other
-   * authorities. */
+  /* The fresh consensuses downloaded from one or more authorities are
+   * missing votes that are contained in fresh consensuses downloaded from
+   * other authorities. */
   ConsensusMissingVotes,
 
-  /* The consensuses downloaded from one or more authorities are missing
-   * signatures from previously voting authorities. */
+  /* The fresh consensuses downloaded from one or more authorities are
+   * missing signatures from previously voting authorities. */
   ConsensusMissingSignatures,
 
   /* One or more authorities are missing in the consensus. */

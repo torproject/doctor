@@ -119,11 +119,16 @@ public class Checker {
     }
   }
 
-  /* Check if all downloaded consensuses contain the same set of votes. */
+  /* Check if all downloaded, fresh consensuses contain the same set of
+   * votes. */
   private void checkContainedVotes() {
+    long fresh = System.currentTimeMillis() - 60L * 60L * 1000L;
     Set<String> allVotes = new HashSet<String>();
     for (RelayNetworkStatusConsensus consensus :
         downloadedConsensuses.values()) {
+      if (consensus.getValidAfterMillis() < fresh) {
+        continue;
+      }
       allVotes.addAll(consensus.getDirSourceEntries().keySet());
     }
     SortedSet<String> missingVotes = new TreeSet<String>();
@@ -131,6 +136,9 @@ public class Checker {
         downloadedConsensuses.entrySet()) {
       String nickname = e.getKey();
       RelayNetworkStatusConsensus downloadedConsensus = e.getValue();
+      if (downloadedConsensus.getValidAfterMillis() < fresh) {
+        continue;
+      }
       if (!downloadedConsensus.getDirSourceEntries().keySet().containsAll(
           allVotes)) {
         missingVotes.add(nickname);
@@ -141,14 +149,18 @@ public class Checker {
     }
   }
 
-  /* Check if all downloaded consensuses contain signatures from all other
-   * authorities. */
+  /* Check if all downloaded, fresh consensuses contain signatures from
+   * all other authorities. */
   private void checkConsensusSignatures() {
+    long fresh = System.currentTimeMillis() - 60L * 60L * 1000L;
     SortedSet<String> missingSignatures = new TreeSet<String>();
     for (Map.Entry<String, RelayNetworkStatusConsensus> e :
         downloadedConsensuses.entrySet()) {
       String nickname = e.getKey();
       RelayNetworkStatusConsensus downloadedConsensus = e.getValue();
+      if (downloadedConsensus.getValidAfterMillis() < fresh) {
+        continue;
+      }
       if (!downloadedConsensus.getDirectorySignatures().keySet().
           containsAll(downloadedConsensus.getDirSourceEntries().
           keySet())) {
