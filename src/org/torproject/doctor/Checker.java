@@ -205,8 +205,19 @@ public class Checker {
           vote.getRecommendedClientVersions())) {
         StringBuilder message = new StringBuilder();
         message.append(vote.getNickname());
-        for (String version : vote.getRecommendedClientVersions()) {
-          message.append(" " + version);
+        SortedSet<String> addedVersions = new TreeSet<String>(
+            vote.getRecommendedClientVersions());
+        addedVersions.removeAll(
+            downloadedConsensus.getRecommendedClientVersions());
+        for (String version : addedVersions) {
+          message.append(" +" + version);
+        }
+        SortedSet<String> removedVersions = new TreeSet<String>(
+            downloadedConsensus.getRecommendedClientVersions());
+        removedVersions.removeAll(
+            vote.getRecommendedClientVersions());
+        for (String version : removedVersions) {
+          message.append(" -" + version);
         }
         unrecommendedClientVersions.add(message.toString());
       }
@@ -215,8 +226,19 @@ public class Checker {
           vote.getRecommendedServerVersions())) {
         StringBuilder message = new StringBuilder();
         message.append(vote.getNickname());
-        for (String version : vote.getRecommendedServerVersions()) {
-          message.append(" " + version);
+        SortedSet<String> addedVersions = new TreeSet<String>(
+            vote.getRecommendedServerVersions());
+        addedVersions.removeAll(
+            downloadedConsensus.getRecommendedServerVersions());
+        for (String version : addedVersions) {
+          message.append(" +" + version);
+        }
+        SortedSet<String> removedVersions = new TreeSet<String>(
+            downloadedConsensus.getRecommendedServerVersions());
+        removedVersions.removeAll(
+            vote.getRecommendedServerVersions());
+        for (String version : removedVersions) {
+          message.append(" -" + version);
         }
         unrecommendedServerVersions.add(message.toString());
       }
