@@ -34,9 +34,9 @@ public class StatusFileReport {
     this.writeLastWarned();
   }
 
-  /* Map of warning message strings of the last 24 hours and when they
-   * were last included in the 'new-warnings' file.  This map is used to
-   * implement rate limiting. */
+  /* Map of warning message strings and when they were last included in
+   * the 'new-warnings' file.  This map is used to implement rate
+   * limiting. */
   private Map<String, Long> lastWarned = new HashMap<String, Long>();
 
   /* Read when we last emitted a warning to rate-limit some of them. */
@@ -57,10 +57,6 @@ public class StatusFileReport {
           }
           long warnedMillis = Long.parseLong(line.substring(0,
               line.indexOf(": ")));
-          if (warnedMillis < now - 24L * 60L * 60L * 1000L) {
-            /* Remove warnings that are older than 24 hours. */
-            continue;
-          }
           String message = line.substring(line.indexOf(": ") + 2);
           lastWarned.put(message, warnedMillis);
         }
