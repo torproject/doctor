@@ -26,6 +26,7 @@ public class Downloader {
     downloader.addDirectoryAuthority("urras", "208.83.223.34", 443);
     downloader.addDirectoryAuthority("moria1", "128.31.0.34", 9131);
     downloader.addDirectoryAuthority("dizum", "194.109.206.212", 80);
+    downloader.addDirectoryAuthority("Faravahar", "154.35.32.5", 80);
 
     /* Instruct the downloader to include the current consensus and all
      * referenced votes in the downloads.  The consensus shall be

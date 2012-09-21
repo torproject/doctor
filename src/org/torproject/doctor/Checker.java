@@ -94,7 +94,7 @@ public class Checker {
   private void checkMissingConsensuses() {
     SortedSet<String> missingConsensuses = new TreeSet<String>(
         Arrays.asList(("gabelmoo,tor26,turtles,maatuska,dannenberg,urras,"
-        + "moria1,dizum").split(",")));
+        + "moria1,dizum,Faravahar").split(",")));
     missingConsensuses.removeAll(this.downloadedConsensuses.keySet());
     if (!missingConsensuses.isEmpty()) {
       this.warnings.put(Warning.ConsensusDownloadTimeout,
@@ -353,7 +353,7 @@ public class Checker {
   private void checkMissingVotes() {
     SortedSet<String> knownAuthorities = new TreeSet<String>(
         Arrays.asList(("dannenberg,dizum,gabelmoo,turtles,maatuska,"
-        + "moria1,tor26,urras").split(",")));
+        + "moria1,tor26,urras,Faravahar").split(",")));
     SortedSet<String> missingVotes =
         new TreeSet<String>(knownAuthorities);
     for (RelayNetworkStatusVote vote : this.downloadedVotes) {
@@ -392,7 +392,7 @@ public class Checker {
   private void checkMissingAuthorities() {
     SortedSet<String> missingAuthorities = new TreeSet<String>(
         Arrays.asList(("gabelmoo,tor26,turtles,maatuska,dannenberg,urras,"
-        + "moria1,dizum,Tonga").split(",")));
+        + "moria1,dizum,Faravahar,Tonga").split(",")));
     for (NetworkStatusEntry entry :
         this.downloadedConsensus.getStatusEntries().values()) {
       if (entry.getFlags().contains("Authority")) {
