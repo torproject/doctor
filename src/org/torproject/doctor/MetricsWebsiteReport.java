@@ -426,7 +426,8 @@ public class MetricsWebsiteReport {
           ("circwindow,CircuitPriorityHalflifeMsec,refuseunknownexits,"
           + "cbtdisabled,cbtnummodes,cbtrecentcount,cbtmaxtimeouts,"
           + "cbtmincircs,cbtquantile,cbtclosequantile,cbttestfreq,"
-          + "cbtmintimeout,cbtinitialtimeout").split(",")));
+          + "cbtmintimeout,cbtinitialtimeout,perconnbwburst,"
+          + "perconnbwrate,UseOptimisticData").split(",")));
       Map<String, Integer> consensusConsensusParams =
           downloadedConsensus.getConsensusParams();
       for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {

@@ -260,8 +260,8 @@ public class Checker {
         ("circwindow,CircuitPriorityHalflifeMsec,refuseunknownexits,"
         + "cbtdisabled,cbtnummodes,cbtrecentcount,cbtmaxtimeouts,"
         + "cbtmincircs,cbtquantile,cbtclosequantile,cbttestfreq,"
-        + "cbtmintimeout,cbtinitialtimeout,perconnbwburst,perconnbwrate").
-        split(",")));
+        + "cbtmintimeout,cbtinitialtimeout,perconnbwburst,perconnbwrate,"
+        + "UseOptimisticData").split(",")));
     SortedSet<String> conflicts = new TreeSet<String>();
     for (RelayNetworkStatusVote vote : this.downloadedVotes) {
       Map<String, Integer> voteConsensusParams =
