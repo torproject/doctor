@@ -114,10 +114,15 @@ public class StatusFileReport {
               + "authorities recommend other server versions than the "
               + "consensus: " + detailsString, 150L * 60L * 1000L);
           break;
-        case ConflictingOrInvalidConsensusParams:
+        case UnknownConsensusParams:
           warningStrings.put("NOTICE: The following directory "
-              + "authorities set conflicting or invalid consensus "
-              + "parameters: " + detailsString, 330L * 60L * 1000L);
+              + "authorities set unknown consensus parameters: "
+              + detailsString, 330L * 60L * 1000L);
+          break;
+        case ConflictingConsensusParams:
+          warningStrings.put("NOTICE: The following directory "
+              + "authorities set conflicting consensus parameters: "
+              + detailsString, 330L * 60L * 1000L);
           break;
         case CertificateExpiresInThreeMonths:
           warningStrings.put("NOTICE: The certificates of the following "

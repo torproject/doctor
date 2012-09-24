@@ -28,9 +28,13 @@ public enum Warning {
    * versions than the ones in the consensus. */
   DifferentRecommendedServerVersions,
 
-  /* One or more directory authorities set conflicting or invalid
-   * consensus parameters. */
-  ConflictingOrInvalidConsensusParams,
+  /* One or more directory authorities set unknown consensus
+   * parameters. */
+  UnknownConsensusParams,
+
+  /* One or more directory authorities set conflicting consensus
+   * parameters. */
+  ConflictingConsensusParams,
 
   /* The certificate(s) of one or more directory authorities expire within
    * the next three months, which we warn about just once. */

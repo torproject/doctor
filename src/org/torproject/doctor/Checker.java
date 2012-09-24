@@ -38,7 +38,8 @@ public class Checker {
       if (this.isConsensusFresh(this.downloadedConsensus)) {
         this.checkConsensusMethods();
         this.checkRecommendedVersions();
-        this.checkConsensusParameters();
+        this.checkUnknownConsensusParameters();
+        this.checkConflictingConsensusParameters();
         this.checkAuthorityKeys();
         this.checkMissingVotes();
         this.checkBandwidthScanners();
@@ -253,10 +254,9 @@ public class Checker {
     }
   }
 
-  /* Check if a vote contains conflicting or invalid consensus
-   * parameters. */
-  private void checkConsensusParameters() {
-    Set<String> validParameters = new HashSet<String>(Arrays.asList(
+  /* Check if a vote contains unknown consensus parameters. */
+  private void checkUnknownConsensusParameters() {
+    Set<String> knownParameters = new HashSet<String>(Arrays.asList(
         ("circwindow,CircuitPriorityHalflifeMsec,refuseunknownexits,"
         + "cbtdisabled,cbtnummodes,cbtrecentcount,cbtmaxtimeouts,"
         + "cbtmincircs,cbtquantile,cbtclosequantile,cbttestfreq,"
@@ -266,31 +266,55 @@ public class Checker {
     for (RelayNetworkStatusVote vote : this.downloadedVotes) {
       Map<String, Integer> voteConsensusParams =
           vote.getConsensusParams();
-      boolean conflictOrInvalid = false;
       if (voteConsensusParams != null) {
+        StringBuilder message = new StringBuilder();
+        message.append(vote.getNickname());
+        int unknownParameters = 0;
+        for (Map.Entry<String, Integer> e :
+            voteConsensusParams.entrySet()) {
+          if (!knownParameters.contains(e.getKey()) &&
+              !e.getKey().startsWith("bwauth")) {
+            message.append(" " + e.getKey() + "=" + e.getValue());
+            unknownParameters++;
+          }
+        }
+        if (unknownParameters > 0) {
+          conflicts.add(message.toString());
+        }
+      }
+    }
+    if (!conflicts.isEmpty()) {
+      this.warnings.put(Warning.UnknownConsensusParams, conflicts);
+    }
+  }
+
+  /* Check if a vote contains conflicting consensus parameters. */
+  private void checkConflictingConsensusParameters() {
+    SortedSet<String> conflicts = new TreeSet<String>();
+    for (RelayNetworkStatusVote vote : this.downloadedVotes) {
+      Map<String, Integer> voteConsensusParams =
+          vote.getConsensusParams();
+      if (voteConsensusParams != null) {
+        StringBuilder message = new StringBuilder();
+        message.append(vote.getNickname());
+        int conflictingParameters = 0;
         for (Map.Entry<String, Integer> e :
             voteConsensusParams.entrySet()) {
           if (!downloadedConsensus.getConsensusParams().containsKey(
               e.getKey()) ||
               !downloadedConsensus.getConsensusParams().get(e.getKey()).
-              equals(e.getValue()) ||
-              (!validParameters.contains(e.getKey()) &&
-              !e.getKey().startsWith("bwauth"))) {
-            StringBuilder message = new StringBuilder();
-            message.append(vote.getNickname());
-            for (Map.Entry<String, Integer> p :
-                voteConsensusParams.entrySet()) {
-              message.append(" " + p.getKey() + "=" + p.getValue());
-            }
-            conflicts.add(message.toString());
-            break;
+              equals(e.getValue())) {
+            message.append(" " + e.getKey() + "=" + e.getValue());
+            conflictingParameters++;
           }
+        }
+        if (conflictingParameters > 0) {
+          conflicts.add(message.toString());
         }
       }
     }
     if (!conflicts.isEmpty()) {
-      this.warnings.put(Warning.ConflictingOrInvalidConsensusParams,
-          conflicts);
+      this.warnings.put(Warning.ConflictingConsensusParams, conflicts);
     }
   }
 
