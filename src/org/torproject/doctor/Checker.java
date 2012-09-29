@@ -452,7 +452,7 @@ public class Checker {
     expectedFingerprints.put("194.109.206.212:80",
         "7ea6ead6fd83083c538f44038bbfa077587dd755,dizum");
     expectedFingerprints.put("154.35.32.5:80",
-        "cf6d0aafb385be71b8e111fc5cff4b47923733bc,faravahar");
+        "cf6d0aafb385be71b8e111fc5cff4b47923733bc,Faravahar");
     expectedFingerprints.put("82.94.251.203:80",
         "4a0ccd2ddc7995083d73f5d667100c8a5831f16d,Tonga");
     SortedSet<String> unexpectedFingerprints = new TreeSet<String>();
