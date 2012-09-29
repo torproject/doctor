@@ -167,6 +167,13 @@ public class StatusFileReport {
           warningStrings.put("WARNING: The following authorities are "
               + "missing from the consensus: " + detailsString,
               150L * 60L * 1000L);
+          break;
+        case UnexpectedFingerprints:
+          warningStrings.put("ERROR: The following relays running on the "
+              + "IP address and dir port of authorities are using "
+              + "different relay identity keys than expected: "
+              + detailsString, 150L * 60L * 1000L);
+          break;
       }
     }
     long now = System.currentTimeMillis();

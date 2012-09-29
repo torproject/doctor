@@ -65,6 +65,11 @@ public enum Warning {
   ConsensusMissingSignatures,
 
   /* One or more authorities are missing in the consensus. */
-  MissingAuthorities
+  MissingAuthorities,
+
+  /* One or more relays running on the IP addresses and dir ports of the
+   * authorities are using a different relay identity key than
+   * expected. */
+  UnexpectedFingerprints
 }
 

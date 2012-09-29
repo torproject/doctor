@@ -44,6 +44,7 @@ public class Checker {
         this.checkMissingVotes();
         this.checkBandwidthScanners();
         this.checkMissingAuthorities();
+        this.checkAuthorityRelayIdentityKeys();
       }
     } else {
       this.warnings.put(Warning.NoConsensusKnown, new TreeSet<String>());
@@ -425,6 +426,50 @@ public class Checker {
     }
     if (!missingAuthorities.isEmpty()) {
       this.warnings.put(Warning.MissingAuthorities, missingAuthorities);
+    }
+  }
+
+  /* Check if there are any relays running on the IP addresses and dir
+   * ports of the authorities using a different relay identity key than
+   * expected. */
+  private void checkAuthorityRelayIdentityKeys() {
+    SortedMap<String, String> expectedFingerprints =
+        new TreeMap<String, String>();
+    expectedFingerprints.put("212.112.245.170:80",
+        "f2044413dac2e02e3d6bcf4735a19bca1de97281,gabelmoo");
+    expectedFingerprints.put("86.59.21.38:80",
+        "847b1f850344d7876491a54892f904934e4eb85d,tor26");
+    expectedFingerprints.put("76.73.17.194:9030",
+        "f397038adc51336135e7b80bd99ca3844360292b,turtles");
+    expectedFingerprints.put("171.25.193.9:443",
+        "bd6a829255cb08e66fbe7d3748363586e46b3810,maatuska");
+    expectedFingerprints.put("193.23.244.244:80",
+        "7be683e65d48141321c5ed92f075c55364ac7123,dannenberg");
+    expectedFingerprints.put("208.83.223.34:443",
+        "0ad3fa884d18f89eea2d89c019379e0e7fd94417,urras");
+    expectedFingerprints.put("128.31.0.34:9131",
+        "9695dfc35ffeb861329b9f1ab04c46397020ce31,moria1");
+    expectedFingerprints.put("194.109.206.212:80",
+        "7ea6ead6fd83083c538f44038bbfa077587dd755,dizum");
+    expectedFingerprints.put("154.35.32.5:80",
+        "cf6d0aafb385be71b8e111fc5cff4b47923733bc,faravahar");
+    expectedFingerprints.put("82.94.251.203:80",
+        "4a0ccd2ddc7995083d73f5d667100c8a5831f16d,Tonga");
+    SortedSet<String> unexpectedFingerprints = new TreeSet<String>();
+    for (NetworkStatusEntry entry :
+        this.downloadedConsensus.getStatusEntries().values()) {
+      if (expectedFingerprints.containsKey(entry.getAddress() + ":"
+            + entry.getDirPort())) {
+        String[] expectedValues = expectedFingerprints.get(
+            entry.getAddress() + ":" + entry.getDirPort()).split(",");
+        if (!entry.getFingerprint().equalsIgnoreCase(expectedValues[0])) {
+          unexpectedFingerprints.add(expectedValues[1]);
+        }
+      }
+    }
+    if (!unexpectedFingerprints.isEmpty()) {
+      this.warnings.put(Warning.UnexpectedFingerprints,
+          unexpectedFingerprints);
     }
   }
 }
