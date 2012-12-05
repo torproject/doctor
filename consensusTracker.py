@@ -63,6 +63,52 @@ Provides alerts for sharp changes in the size and capacity of the tor network.
 """
 FP_WRITE_FAIL_MSG = "Unable to access '%s', fingerprints won't be persisted"
 
+EMAIL_HEADER = """<html>
+  <head></head>
+  <body>
+    <p>%s</p>
+    <hr />
+    <table style="border-collapse:collapse;">
+      <tr>
+        <td></td>
+        <td colspan="3" bgcolor="green"><b>&nbsp;Guards</b></td>
+        <td colspan="3" bgcolor="yellow"><b>&nbsp;Middle</b></td>
+        <td colspan="3" bgcolor="red"><b>&nbsp;Exits</b></td>
+        <td bgcolor="blue"><b>&nbsp;Total</b></td>
+      </tr>
+      
+      <tr>
+        <td bgcolor="#444444"><b>&nbsp;Date:</b></td>
+        <td bgcolor="green"><b>&nbsp;Count:&nbsp;</b></td>
+        <td bgcolor="green"><b>New:&nbsp;</b></td>
+        <td bgcolor="green"><b>Bandwidth:&nbsp;</b></td>
+        <td bgcolor="yellow"><b>&nbsp;Count:&nbsp;</b></td>
+        <td bgcolor="yellow"><b>New:&nbsp;</b></td>
+        <td bgcolor="yellow"><b>Bandwidth:&nbsp;</b></td>
+        <td bgcolor="red"><b>&nbsp;Count:&nbsp;</b></td>
+        <td bgcolor="red"><b>New:&nbsp;</b></td>
+        <td bgcolor="red"><b>Bandwidth:&nbsp;</b></td>
+        <td bgcolor="blue"><b>&nbsp;Bandwidth:&nbsp;</b></td>
+      </tr>
+      
+"""
+
+EMAIL_CELL = """
+      <tr>
+        <td bgcolor="#444444"><b>&nbsp;%s</b></td>
+        <td bgcolor="#44FF44"><b>&nbsp;%s</b></td>
+        <td bgcolor="#44FF44"><b>%s</b></td>
+        <td bgcolor="#44FF44"><b>%s</b></td>
+        <td bgcolor="#FFFF44"><b>&nbsp;%s</b></td>
+        <td bgcolor="#FFFF44"><b>%s</b></td>
+        <td bgcolor="#FFFF44"><b>%s</b></td>
+        <td bgcolor="#FF4444"><b>&nbsp;%s</b></td>
+        <td bgcolor="#FF4444"><b>%s</b></td>
+        <td bgcolor="#FF4444"><b>%s</b></td>
+        <td bgcolor="#4444FF"><b>&nbsp;%s</b></td>
+      </tr>
+"""
+
 def sendViaGmail(gmailAccount, gmailPassword, toAddress, subject, msgText, msgHtml, attachment = None):
   """
   Sends an email via gmail, returning if successful or not.
@@ -469,53 +515,9 @@ def monitorConsensus():
         msgText += sampling.getSummary(descInfo) + "\n"
       
       # constructs the html message
-      msgHtml = """<html>
-  <head></head>
-  <body>
-    <p>%s</p>
-    <hr />
-    <table style="border-collapse:collapse;">
-      <tr>
-        <td></td>
-        <td colspan="3" bgcolor="green"><b>&nbsp;Guards</b></td>
-        <td colspan="3" bgcolor="yellow"><b>&nbsp;Middle</b></td>
-        <td colspan="3" bgcolor="red"><b>&nbsp;Exits</b></td>
-        <td bgcolor="blue"><b>&nbsp;Total</b></td>
-      </tr>
       
-      <tr>
-        <td bgcolor="#444444"><b>&nbsp;Date:</b></td>
-        <td bgcolor="green"><b>&nbsp;Count:&nbsp;</b></td>
-        <td bgcolor="green"><b>New:&nbsp;</b></td>
-        <td bgcolor="green"><b>Bandwidth:&nbsp;</b></td>
-        <td bgcolor="yellow"><b>&nbsp;Count:&nbsp;</b></td>
-        <td bgcolor="yellow"><b>New:&nbsp;</b></td>
-        <td bgcolor="yellow"><b>Bandwidth:&nbsp;</b></td>
-        <td bgcolor="red"><b>&nbsp;Count:&nbsp;</b></td>
-        <td bgcolor="red"><b>New:&nbsp;</b></td>
-        <td bgcolor="red"><b>Bandwidth:&nbsp;</b></td>
-        <td bgcolor="blue"><b>&nbsp;Bandwidth:&nbsp;</b></td>
-      </tr>
-      
-""" % greetingMsg
-      
-      dailyCellEntry = """
-      <tr>
-        <td bgcolor="#444444"><b>&nbsp;%s</b></td>
-        <td bgcolor="#44FF44"><b>&nbsp;%s</b></td>
-        <td bgcolor="#44FF44"><b>%s</b></td>
-        <td bgcolor="#44FF44"><b>%s</b></td>
-        <td bgcolor="#FFFF44"><b>&nbsp;%s</b></td>
-        <td bgcolor="#FFFF44"><b>%s</b></td>
-        <td bgcolor="#FFFF44"><b>%s</b></td>
-        <td bgcolor="#FF4444"><b>&nbsp;%s</b></td>
-        <td bgcolor="#FF4444"><b>%s</b></td>
-        <td bgcolor="#FF4444"><b>%s</b></td>
-        <td bgcolor="#4444FF"><b>&nbsp;%s</b></td>
-      </tr>
-"""
-      
-      hourlyCellEntry = dailyCellEntry.replace("<b>", "").replace("</b>", "").replace("44", "88")
+      msgHtml = EMAIL_HEADER % greetingMsg
+      hourlyCellEntry = EMAIL_CELL.replace("<b>", "").replace("</b>", "").replace("44", "88")
       
       # make a mapping of date => [samplings]
       datesToSamplings = {}
@@ -584,7 +586,7 @@ def monitorConsensus():
         eCountAvg = sum(eCounts) / len(eCounts)
         
         bwAvgLabel = getSizeLabel(sum(totalBw) / len(totalBw), 2)
-        msgHtml += dailyCellEntry % (date + "&nbsp;", gCountAvg, sum(gNew), getSizeLabel(sum(gBw)), mCountAvg, sum(mNew), getSizeLabel(sum(mBw)), eCountAvg, sum(eNew), getSizeLabel(sum(eBw)), bwAvgLabel)
+        msgHtml += EMAIL_CELL % (date + "&nbsp;", gCountAvg, sum(gNew), getSizeLabel(sum(gBw)), mCountAvg, sum(mNew), getSizeLabel(sum(mBw)), eCountAvg, sum(eNew), getSizeLabel(sum(eBw)), bwAvgLabel)
         msgHtml += hourlyEntries
       
       msgHtml += """    </table>
