@@ -30,11 +30,10 @@ from email.mime.multipart import MIMEMultipart
 from email.MIMEBase import MIMEBase
 from email import Encoders
 
-from TorCtl import TorCtl
-from TorCtl import TorUtil
-
-# prevents TorCtl logging from going to stdout
-TorUtil.loglevel = "NONE"
+import stem
+import stem.connection
+import stem.descriptor.networkstatus
+import stem.util.str_tools
 
 # enums representing different poritons of the tor network
 RELAY_GUARD, RELAY_MIDDLE, RELAY_EXIT = range(1, 4)
@@ -150,83 +149,56 @@ def sendViaGmail(gmailAccount, gmailPassword, toAddress, subject, msgText, msgHt
   except smtplib.SMTPAuthenticationError:
     return False
 
-def isExit(conn, nsEntry, default=False):
+def isExit(controller, fingerprint, default=False):
   """
-  Returns if the nsEntry permits exit traffic or not. If unable to fetch the
+  Returns if the given permits exit traffic or not. If unable to fetch the
   descriptor then this provides the default.
   
   Arguments:
-  nsEntry - NetworkStatus entry for the relay
+  fingerprint - relay to be checked
   default - results if the descriptor is unavailable
   """
   
-  queryParam = "desc/id/%s" % nsEntry.idhex
-  
   try:
-    descEntry = conn.get_info(queryParam)[queryParam]
-    
-    # returns true if any accept is available before the reject-all (this errors
-    # on the side of inclusiveness)
-    for line in descEntry.split("\n"):
-      if line == "reject *:*": return False
-      elif line.startswith("accept"): return True
-  except TorCtl.ErrorReply: return default
+    return controller.get_server_descriptor(fingerprint).exit_policy.is_exiting_allowed()
+  except:
+    return default
 
-def getNextConsensus(conn, oldValidAfterDate, sleepTime = 300):
+def getNextConsensus(controller, oldConsensus, sleepTime = 300):
   """
-  This blocks until there's a new consensus available, providing the tuple of
-  the new valid after date and the new consensus.
+  This blocks until there's a new consensus available, providing it back when
+  it is.
   
   Arguments:
-    oldValidAfterDate - previous valid-after date, providing the first
-                        consensus if None
+    oldConsensus      - last consensus we've fetched
     sleepTime         - time to wait if a new consensus is unavailable
   """
   
   # periodically checks for a new consensus
   while True:
     try:
-      newConsensus = conn.get_info("dir/status-vote/current/consensus")["dir/status-vote/current/consensus"]
+      newConsensus = stem.descriptor.networkstatus.NetworkStatusDocumentV3(
+        controller.get_info("dir/status-vote/current/consensus")
+      )
       
-      # checks if it's new (ie, the valid-after date has changed)
-      newValidAfterDate = None
-      
-      for line in newConsensus.split("\n"):
-        if line.startswith("valid-after"):
-          newValidAfterDate = line[12:]
-          break
-      
-      if not newValidAfterDate:
-        # consensus doesn't have a valid-after date... wtf?
-        print "Read consensus without a valid-after date. This really shouldn't happen so giving up."
-        sys.exit(1)
-      
-      if oldValidAfterDate and oldValidAfterDate == newValidAfterDate:
+      if oldConsensus and oldConsensus.valid_after == newConsensus.valid_after:
         time.sleep(sleepTime) # consensus hasn't changed
       else:
-        return (newConsensus, newValidAfterDate) # consensus has changed
-    except TorCtl.ErrorReply:
-      print "Failed to fetch current consensus, waiting and trying again"
-      time.sleep(sleepTime)
-    except TorCtl.TorCtlClosed:
+        return newConsensus
+    except stem.SocketClosed:
       print "Connection to tor is closed"
       sys.exit()
+    except stem.ControllerError:
+      print "Failed to fetch current consensus, waiting and trying again"
+      time.sleep(sleepTime)
 
 def getSizeLabel(bytes, decimal = 0):
   """
   Converts byte count into label in its most significant units, for instance
-  7500 bytes would return "56 KBits".
+  7500 bytes would return "56 Kb/s".
   """
   
-  bits = bytes * 8
-  sign = -1 if bits < 0 else 1
-  bits = abs(bits)
-  
-  format = "%%.%if" % decimal
-  if bits >= 1073741824: return (format + " GBit/s") % (sign * bits / 1073741824.0)
-  elif bits >= 1048576: return (format + " MBit/s") % (sign * bits / 1048576.0)
-  elif bits >= 1024: return (format + " KBit/s") % (sign * bits / 1024.0)
-  else: return "%i bits/s" % (sign * bits)
+  return stem.util.str_tools.get_size_label(bytes, decimal, is_bytes = False) + "/s"
 
 class Sampling:
   """
@@ -234,33 +206,32 @@ class Sampling:
   generating alerts.
   """
   
-  def __init__(self, conn, validAfter, allRelays, newRelays):
+  def __init__(self, controller, consensus, newRelays):
     """
     Creates a new sampling.
     
     Arguments:
-      validAfter - consensus' starting date (ex. "2010-07-18 10:00:00")
-      allRelays  - listing of all ns entries in the consensus
-      newRelays  - listing of ns entries with a fingerprint we haven't seen
-                   before
+      consensus  - latest tor consensus
+      newRelays  - listing of router status entries with a fingerprint we
+                   haven't seen before
     """
     
-    self.validAfter = validAfter
+    self.validAfter = consensus.valid_after
     
-    # constructs mappings of relayType -> [nsEntry list]
+    # constructs mappings of relayType -> [router_status_entry list]
     types = (RELAY_GUARD, RELAY_MIDDLE, RELAY_EXIT)
     self.allRelays = dict([(relayType, []) for relayType in types])
     self.newRelays = dict([(relayType, []) for relayType in types])
     
-    for uncategorized, categorized in ((allRelays, self.allRelays), (newRelays, self.newRelays)):
+    for uncategorized, categorized in ((consensus.routers, self.allRelays), (newRelays, self.newRelays)):
       for nsEntry in uncategorized:
         relayType = RELAY_MIDDLE
-        if isExit(conn, nsEntry): relayType = RELAY_EXIT
+        if isExit(controller, nsEntry.fingerprint): relayType = RELAY_EXIT
         elif "Guard" in nsEntry.flags: relayType = RELAY_GUARD
         categorized[relayType].append(nsEntry)
   
   def getValidAfter(self):
-    return self.validAfter
+    return self.validAfter.strftime("%Y-%m-%d %H:%M:%S")
   
   def getRelays(self, newOnly=True):
     if newOnly:
@@ -289,7 +260,7 @@ class Sampling:
       # we might not have a desc entry (or if FetchUselessDescriptors is
       # unset), but when it first appears network status bandwidth is equal to
       # the observed too
-      if nsEntry.idhex in descInfo: totalBandwidth += descInfo[nsEntry.idhex][0]
+      if nsEntry.fingerprint in descInfo: totalBandwidth += descInfo[nsEntry.fingerprint][0]
       elif nsEntry.bandwidth: totalBandwidth += nsEntry.bandwidth
     
     return totalBandwidth
@@ -350,8 +321,9 @@ def monitorConsensus():
     print "Email notifications disabled"
   
   # get a control port connection
-  conn = TorCtl.connect()
-  if conn == None:
+  controller = stem.connection.connect_port()
+  
+  if controller == None:
     print "Unable to connect to control port"
     sys.exit(1)
   
@@ -375,57 +347,55 @@ def monitorConsensus():
   
   tick = 0 # number of consensuses processed
   samplings = []
-  validAfterDate = None # the 'valid-after' time of the last consensus we've processed
+  consensus = None # latest consensus we've fetched
   
   # fingerprint => (observedBandwidth, exitPolicy) for all relays
   descInfo = {}
   
-  for nsEntry in conn.get_network_status():
-    try:
-      descLookupCmd = "desc/id/%s" % nsEntry.idhex
-      router = TorCtl.Router.build_from_desc(conn.get_info(descLookupCmd)[descLookupCmd].split("\n"), nsEntry)
-      descInfo[router.idhex] = (router.desc_bw, router.exitpolicy)
-    except TorCtl.ErrorReply:
-      pass
-    except TorCtl.TorCtlClosed:
-      print "Connection to tor is closed"
-      sys.exit()
+  try:
+    for desc in controller.get_server_descriptors():
+      descInfo[desc.fingerprint] = (desc.observed_bandwidth, desc.exit_policy)
+  except stem.SocketClosed:
+    print "Connection to tor is closed"
+    sys.exit()
+  except stem.ControllerError, exc:
+    print "Unable to query for server descriptors: %s" % exc
+    sys.exit()
   
   while True:
     tick += 1
     
     # fetches the consensus, blocking until a new one's available
-    newConsensus, validAfterDate = getNextConsensus(conn, validAfterDate)
-    nsEntries = TorCtl.parse_ns_body(newConsensus)
+    consensus = getNextConsensus(controller, consensus)
     
     # determines which entries are new
     newEntries = []
-    for nsEntry in nsEntries:
+    for router in consensus.routers:
       # adds entry to descInfo hash
-      if not nsEntry.idhex in descInfo:
+      if not router.fingerprint in descInfo:
         try:
-          descLookupCmd = "desc/id/%s" % nsEntry.idhex
-          router = TorCtl.Router.build_from_desc(conn.get_info(descLookupCmd)[descLookupCmd].split("\n"), nsEntry)
-          descInfo[router.idhex] = (router.desc_bw, router.exitpolicy)
-        except TorCtl.ErrorReply:
-          pass
-        except TorCtl.TorCtlClosed:
+          desc = controller.get_server_descriptor(router.fingerprint)
+          descInfo[desc.fingerprint] = (desc.observed_bandwidth, desc.exit_policy)
+        except stem.SocketClosed:
           print "Connection to tor is closed"
           sys.exit()
-        
-      if not nsEntry.idhex in seenFingerprints:
-        newEntries.append(nsEntry)
-        seenFingerprints.add(nsEntry.idhex)
+        except stem.ControllerError, exc:
+          print "Unable to query for server descriptors: %s" % exc
+          sys.exit()
+      
+      if not router.fingerprint in seenFingerprints:
+        newEntries.append(router)
+        seenFingerprints.add(router.fingerprint)
         
         # records the seen fingerprint
         if seenFingerprintsFile:
           try:
-            seenFingerprintsFile.write(nsEntry.idhex + "\n")
+            seenFingerprintsFile.write(router.fingerprint + "\n")
           except IOError:
             print FP_WRITE_FAIL_MSG % seenFingerprintsPath
             seenFingerprintsFile = None
     
-    newSampling = Sampling(conn, validAfterDate, nsEntries, newEntries)
+    newSampling = Sampling(controller, consensus, newEntries)
     
     # check if we broke any thresholds (currently just checking hourly exit stats)
     countAlert = newSampling.getCount(RELAY_EXIT, True) > HOURLY_COUNT_THRESHOLD
@@ -454,14 +424,14 @@ def monitorConsensus():
         for nsEntry in newSampling.newRelays[relayType]:
           # TODO: the str call of the following produces a deprecation warning, as discussed on:
           # https://trac.torproject.org/projects/tor/ticket/1777
-          if nsEntry.idhex in descInfo:
-            bwLabel = getSizeLabel(descInfo[nsEntry.idhex][0], 2)
-            exitPolicyLabel = ", ".join([str(policyLine) for policyLine in descInfo[nsEntry.idhex][1]])
+          if nsEntry.fingerprint in descInfo:
+            bwLabel = getSizeLabel(descInfo[nsEntry.fingerprint][0], 2)
+            exitPolicyLabel = ", ".join([str(policyLine) for policyLine in descInfo[nsEntry.fingerprint][1]])
           else:
             bwLabel = getSizeLabel(nsEntry.bandwidth, 2)
             exitPolicyLabel = "Unknown"
           
-          nsContents += "%s (%s:%s)\n" % (nsEntry.idhex, nsEntry.ip, nsEntry.orport)
+          nsContents += "%s (%s:%s)\n" % (nsEntry.fingerprint, nsEntry.ip, nsEntry.orport)
           nsContents += "    nickname: %s\n" % nsEntry.nickname
           nsContents += "    bandwidth: %s\n" % bwLabel
           nsContents += "    flags: %s\n" % ", ".join(nsEntry.flags)
@@ -546,8 +516,8 @@ def monitorConsensus():
         for sampling in datesToSamplings[date]:
           samplingTotalBw = 0
           for nsEntry in sampling.getRelays(False):
-            if nsEntry.idhex in descInfo:
-              samplingTotalBw += descInfo[nsEntry.idhex][0]
+            if nsEntry.fingerprint in descInfo:
+              samplingTotalBw += descInfo[nsEntry.fingerprint][0]
             else:
               samplingTotalBw += nsEntry.bandwidth
           totalBw.append(samplingTotalBw)
