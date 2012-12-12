@@ -381,8 +381,10 @@ def monitorConsensus():
           print "Connection to tor is closed"
           sys.exit()
         except stem.ControllerError, exc:
-          print "Unable to query for server descriptors: %s" % exc
-          sys.exit()
+          # Not unexpected - we often see new relays in the consensus before
+          # getting their server descriptors. Pick it up on another pass.
+          
+          continue
       
       if not router.fingerprint in seenFingerprints:
         newEntries.append(router)
