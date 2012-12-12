@@ -146,7 +146,8 @@ def sendViaGmail(gmailAccount, gmailPassword, toAddress, subject, msgText, msgHt
     server.quit()
     
     return True
-  except smtplib.SMTPAuthenticationError:
+  except smtplib.SMTPAuthenticationError, exc:
+    print "Unable to send email, auth failure: %s" % exc
     return False
 
 def isExit(controller, fingerprint, default=False):
