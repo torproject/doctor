@@ -431,7 +431,7 @@ def monitorConsensus():
             bwLabel = getSizeLabel(nsEntry.bandwidth, 2)
             exitPolicyLabel = "Unknown"
           
-          nsContents += "%s (%s:%s)\n" % (nsEntry.fingerprint, nsEntry.ip, nsEntry.orport)
+          nsContents += "%s (%s:%s)\n" % (nsEntry.fingerprint, nsEntry.address, nsEntry.or_port)
           nsContents += "    nickname: %s\n" % nsEntry.nickname
           nsContents += "    bandwidth: %s\n" % bwLabel
           nsContents += "    flags: %s\n" % ", ".join(nsEntry.flags)
