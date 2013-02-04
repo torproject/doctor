@@ -46,6 +46,7 @@ DEFAULT_NS_OUTPUT = "./newRelays"
 
 # thresholds at which alerts are sent for relay counts
 HOURLY_COUNT_THRESHOLD = 20
+HOURLY_NONEXIT_COUNT_THRESHOLD = 50
 HOURLY_BW_THRESHOLD = 6553600 # trying 50 Mbit/s
 
 OPT = "g:t:f:n:qh"
@@ -404,6 +405,8 @@ def monitorConsensus():
     countAlert = newSampling.getCount(RELAY_EXIT, True) > HOURLY_COUNT_THRESHOLD
     bwAlert = newSampling.getBandwidth(descInfo, RELAY_EXIT, True) > HOURLY_BW_THRESHOLD
     
+    nonexitCountAlert = newSampling.getCount(RELAY_MIDDLE, True) > HOURLY_NONEXIT_COUNT_THRESHOLD
+    
     samplings.insert(0, newSampling)
     if len(samplings) > 192:
       # discards last day's worth of results
@@ -456,20 +459,24 @@ def monitorConsensus():
     # 7. 2010-07-18 10:00:00 - 941/1732/821 relays (8/12/4 are new, 153 MB / 215 MB / 48 MB added bandwidth)
     if not isQuiet:
       print "%i. %s" % (tick, newSampling.getSummary(descInfo))
-      if countAlert: print "  *count threshold broken*"
+      if countAlert or nonexitCountAlert: print "  *count threshold broken*"
       if bwAlert: print "  *bandwidth threshold broken*"
     
     # checks if, with this entry, we have all the samplings for the day
     isMidnightEntry = newSampling.getValidAfter().split(" ")[1] == "23:00:00"
     
-    if countAlert or bwAlert or isMidnightEntry:
+    if countAlert or nonexitCountAlert or bwAlert or isMidnightEntry:
       currentTime = time.strftime("%H:%M", time.localtime(time.time()))
       currentDate = time.strftime("%m/%d/%Y", time.localtime(time.time()))
       
       if countAlert:
-        subject = "Alert: Relay Count Threshold Broken"
+        subject = "Alert: Exit Relay Count Threshold Broken"
         noticeBody = "The relay count threshold was broken today at %s (%s) with the addition of %i new exits (the current threshold is set at %i)."
         noticeMsg = noticeBody % (currentTime, currentDate, newSampling.getCount(RELAY_EXIT), HOURLY_COUNT_THRESHOLD)
+      elif nonexitCountAlert:
+        subject = "Alert: Non-Exit Relay Count Threshold Broken"
+        noticeBody = "The relay count threshold was broken today at %s (%s) with the addition of %i new non-exits (the current threshold is set at %i)."
+        noticeMsg = noticeBody % (currentTime, currentDate, newSampling.getCount(RELAY_MIDDLE), HOURLY_NONEXIT_COUNT_THRESHOLD)
       elif bwAlert:
         subject = "Alert: Relay Bandwidth Threshold Broken"
         noticeBody = "The relay bandwidth threshold was broken today at %s (%s) with the addition of %s of new exit capacity (the current threshold is set at %s)."
