@@ -202,6 +202,15 @@ def getSizeLabel(bytes, decimal = 0):
   
   return stem.util.str_tools.get_size_label(bytes, decimal, is_bytes = False) + "/s"
 
+class Relay:
+  """
+  Router status entry skimmed down to just the attributes we use.
+  """
+
+  def __init__(self, router_status_entry):
+    self.fingerprint = router_status_entry.fingerprint
+    self.bandwidth = router_status_entry.bandwidth
+
 class Sampling:
   """
   Consensus attributes for a given time period we're concerned with for
@@ -230,7 +239,7 @@ class Sampling:
         relayType = RELAY_MIDDLE
         if isExit(controller, nsEntry.fingerprint): relayType = RELAY_EXIT
         elif "Guard" in nsEntry.flags: relayType = RELAY_GUARD
-        categorized[relayType].append(nsEntry)
+        categorized[relayType].append(Relay(nsEntry))
   
   def getValidAfter(self):
     return self.validAfter.strftime("%Y-%m-%d %H:%M:%S")
