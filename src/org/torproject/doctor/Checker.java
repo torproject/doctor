@@ -2,7 +2,6 @@
  * See LICENSE for licensing information */
 package org.torproject.doctor;
 
-import java.io.*;
 import java.text.*;
 import java.util.*;
 import org.torproject.descriptor.*;
@@ -45,6 +44,7 @@ public class Checker {
         this.checkBandwidthScanners();
         this.checkMissingAuthorities();
         this.checkAuthorityRelayIdentityKeys();
+        this.checkAuthorityVersions();
       }
     } else {
       this.warnings.put(Warning.NoConsensusKnown, new TreeSet<String>());
@@ -364,7 +364,6 @@ public class Checker {
   private void warnAboutExpiringCertificates(Warning warningType,
       SortedMap<String, String> expiringCertificates) {
     SortedSet<String> details = new TreeSet<String>();
-    StringBuilder sb = new StringBuilder();
     for (Map.Entry<String, String> e :
         expiringCertificates.entrySet()) {
       String dir = e.getKey();
@@ -470,6 +469,54 @@ public class Checker {
     if (!unexpectedFingerprints.isEmpty()) {
       this.warnings.put(Warning.UnexpectedFingerprints,
           unexpectedFingerprints);
+    }
+  }
+
+  private void checkAuthorityVersions() {
+    if (downloadedConsensus.getRecommendedServerVersions() == null) {
+      return;
+    }
+    Set<String> recommendedVersions = new HashSet<String>();
+    for (String version :
+        downloadedConsensus.getRecommendedServerVersions()) {
+      recommendedVersions.add(version.split("-", 2)[0]);
+    }
+    SortedMap<String, String> authorities = new TreeMap<String, String>();
+    authorities.put("f2044413dac2e02e3d6bcf4735a19bca1de97281",
+        "gabelmoo");
+    authorities.put("847b1f850344d7876491a54892f904934e4eb85d", "tor26");
+    authorities.put("f397038adc51336135e7b80bd99ca3844360292b",
+         "turtles");
+    authorities.put("bd6a829255cb08e66fbe7d3748363586e46b3810",
+        "maatuska");
+    authorities.put("7be683e65d48141321c5ed92f075c55364ac7123",
+        "dannenberg");
+    authorities.put("0ad3fa884d18f89eea2d89c019379e0e7fd94417", "urras");
+    authorities.put("9695dfc35ffeb861329b9f1ab04c46397020ce31", "moria1");
+    authorities.put("7ea6ead6fd83083c538f44038bbfa077587dd755", "dizum");
+    authorities.put("cf6d0aafb385be71b8e111fc5cff4b47923733bc",
+        "Faravahar");
+    authorities.put("4a0ccd2ddc7995083d73f5d667100c8a5831f16d", "Tonga");
+    SortedSet<String> unrecommendedVersions = new TreeSet<String>();
+    for (Map.Entry<String, String> e : authorities.entrySet()) {
+      String fingerprint = e.getKey().toUpperCase();
+      String nickname = e.getValue();
+      if (this.downloadedConsensus.getStatusEntries().containsKey(
+          fingerprint)) {
+        String authorityVersion = this.downloadedConsensus.getStatusEntry(
+            fingerprint).getVersion();
+        if (authorityVersion.startsWith("Tor ")) {
+          authorityVersion = authorityVersion.substring("Tor ".length());
+        }
+        if (!recommendedVersions.contains(
+              authorityVersion.split("-", 2)[0])) {
+          unrecommendedVersions.add(nickname + "=" + authorityVersion);
+        }
+      }
+    }
+    if (!unrecommendedVersions.isEmpty()) {
+      this.warnings.put(Warning.UnrecommendedVersions,
+          unrecommendedVersions);
     }
   }
 }

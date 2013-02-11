@@ -42,7 +42,6 @@ public class StatusFileReport {
   /* Read when we last emitted a warning to rate-limit some of them. */
   private File lastWarnedFile = new File("out/state/last-warned");
   private void readLastWarned() {
-    long now = System.currentTimeMillis();
     try {
       if (this.lastWarnedFile.exists()) {
         BufferedReader br = new BufferedReader(new FileReader(
@@ -60,6 +59,7 @@ public class StatusFileReport {
           String message = line.substring(line.indexOf(": ") + 2);
           lastWarned.put(message, warnedMillis);
         }
+        br.close();
       }
     } catch (IOException e) {
       System.err.println("Could not read file '"
@@ -174,6 +174,11 @@ public class StatusFileReport {
               + "different relay identity keys than expected: "
               + detailsString, 150L * 60L * 1000L);
           break;
+        case UnrecommendedVersions:
+            warningStrings.put("WARNING: The following authorities are "
+                + "running unrecommended Tor versions: "
+                + detailsString, 150L * 60L * 1000L);
+            break;
       }
     }
     long now = System.currentTimeMillis();
