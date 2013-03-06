@@ -509,7 +509,8 @@ public class Checker {
           authorityVersion = authorityVersion.substring("Tor ".length());
         }
         if (!recommendedVersions.contains(
-              authorityVersion.split("-", 2)[0])) {
+              authorityVersion.split("-", 2)[0]) &&
+            !authorityVersion.split("-", 2)[0].endsWith(".0")) {
           unrecommendedVersions.add(nickname + "=" + authorityVersion);
         }
       }
