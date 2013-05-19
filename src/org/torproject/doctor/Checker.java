@@ -262,7 +262,8 @@ public class Checker {
         + "cbtdisabled,cbtnummodes,cbtrecentcount,cbtmaxtimeouts,"
         + "cbtmincircs,cbtquantile,cbtclosequantile,cbttestfreq,"
         + "cbtmintimeout,cbtinitialtimeout,perconnbwburst,perconnbwrate,"
-        + "UseOptimisticData,pb_disablepct").split(",")));
+        + "UseOptimisticData,pb_disablepct,UseNTorHandshake").
+        split(",")));
     SortedSet<String> conflicts = new TreeSet<String>();
     for (RelayNetworkStatusVote vote : this.downloadedVotes) {
       Map<String, Integer> voteConsensusParams =
