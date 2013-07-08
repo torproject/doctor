@@ -158,10 +158,9 @@ public class StatusFileReport {
               + "authorities: " + detailsString, 150L * 60L * 1000L);
           break;
         case ConsensusMissingSignatures:
-          warningStrings.put("NOTICE: The consensuses downloaded from "
-              + "the following authorities are missing signatures from "
-              + "previously voting authorities: " + detailsString,
-              150L * 60L * 1000L);
+          warningStrings.put("NOTICE: The signatures of the following, "
+              + "previously voting authorities are missing from at least "
+              + "one consensus: " + detailsString, 150L * 60L * 1000L);
           break;
         case MissingAuthorities:
           warningStrings.put("WARNING: The following authorities are "

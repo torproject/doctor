@@ -158,7 +158,6 @@ public class Checker {
     SortedSet<String> missingSignatures = new TreeSet<String>();
     for (Map.Entry<String, RelayNetworkStatusConsensus> e :
         downloadedConsensuses.entrySet()) {
-      String nickname = e.getKey();
       RelayNetworkStatusConsensus downloadedConsensus = e.getValue();
       if (downloadedConsensus.getValidAfterMillis() < fresh) {
         continue;
@@ -166,7 +165,13 @@ public class Checker {
       if (!downloadedConsensus.getDirectorySignatures().keySet().
           containsAll(downloadedConsensus.getDirSourceEntries().
           keySet())) {
-        missingSignatures.add(nickname);
+        for (String dirSource : downloadedConsensus.getDirSourceEntries().
+            keySet()) {
+          if (!downloadedConsensus.getDirectorySignatures().containsKey(
+              dirSource)) {
+            missingSignatures.add(dirSource);
+          }
+        }
       }
     }
     if (!missingSignatures.isEmpty()) {
