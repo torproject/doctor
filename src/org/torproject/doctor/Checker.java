@@ -165,11 +165,11 @@ public class Checker {
       if (!downloadedConsensus.getDirectorySignatures().keySet().
           containsAll(downloadedConsensus.getDirSourceEntries().
           keySet())) {
-        for (String dirSource : downloadedConsensus.getDirSourceEntries().
-            keySet()) {
+        for (DirSourceEntry dirSourceEntry :
+            downloadedConsensus.getDirSourceEntries().values()) {
           if (!downloadedConsensus.getDirectorySignatures().containsKey(
-              dirSource)) {
-            missingSignatures.add(dirSource);
+              dirSourceEntry.getIdentity())) {
+            missingSignatures.add(dirSourceEntry.getNickname());
           }
         }
       }
