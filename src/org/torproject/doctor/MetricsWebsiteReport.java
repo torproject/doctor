@@ -85,8 +85,8 @@ public class MetricsWebsiteReport {
         writeBandwidthScannerStatus();
         writeAuthorityVersions();
         writeDownloadStatistics();
-        writeRelayFlagsTable();
         writeRelayFlagsSummary();
+        writeRelayFlagsTable();
         writePageFooter();
         this.bw.close();
       } catch (IOException e) {
@@ -668,7 +668,7 @@ public class MetricsWebsiteReport {
           + "flags</a></h3>\n"
         + "        <br>\n"
         + "        <p>The semantics of flags written in the table is "
-          + "as follows:</p>\n"
+          + "similar to the table above:</p>\n"
         + "        <ul>\n"
         + "          <li><b>In vote and consensus:</b> Flag in vote "
           + "matches flag in consensus, or relay is not listed in "
@@ -687,7 +687,6 @@ public class MetricsWebsiteReport {
           + "consensus:</font></b> Flag in consensus</li>\n"
         + "        </ul>\n"
         + "        <br>\n"
-        + "        <p>See also the summary below the table.</p>\n"
         + "        <table border=\"0\" cellpadding=\"4\" "
         + "cellspacing=\"0\" summary=\"\">\n"
         + "          <colgroup>\n"
@@ -813,8 +812,7 @@ public class MetricsWebsiteReport {
         + "        <h3><a href=\"#overlap\" class=\"anchor\">Overlap "
           + "between votes and consensus</a></h3>\n"
         + "        <br>\n"
-        + "        <p>The semantics of columns is similar to the "
-          + "table above:</p>\n"
+        + "        <p>The semantics of columns is as follows:</p>\n"
         + "        <ul>\n"
         + "          <li><b>In vote and consensus:</b> Flag in vote "
           + "matches flag in consensus, or relay is not listed in "
