@@ -113,7 +113,7 @@ public class MetricsWebsiteReport {
         + "  </head>\n"
         + "  <body>\n"
         + "  <style>\n"
-        + "    tr.bigtable:nth-child(2n+1) {\n"
+        + "    tr:nth-child(2n) {\n"
         + "      background-color:#eeeeee;\n"
         + "    }\n"
         + "  </style>\n"
@@ -744,7 +744,7 @@ public class MetricsWebsiteReport {
   /* Write a single row in the table of relay flags. */
   private void writeRelayFlagsTableRow(String fingerprint,
       String nickname) throws IOException {
-    this.bw.write("          <tr class=\"bigtable\">\n");
+    this.bw.write("          <tr>\n");
     if (this.downloadedConsensus.containsStatusEntry(fingerprint) &&
         this.downloadedConsensus.getStatusEntry(fingerprint).getFlags().
         contains("Named") && !Character.isDigit(nickname.charAt(0))) {
