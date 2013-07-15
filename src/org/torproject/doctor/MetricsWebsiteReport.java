@@ -112,6 +112,11 @@ public class MetricsWebsiteReport {
           + "type=\"image/x-icon\" rel=\"shortcut icon\">\n"
         + "  </head>\n"
         + "  <body>\n"
+        + "  <style>\n"
+        + "    tr.bigtable:nth-child(2n+1) {\n"
+        + "      background-color:#eeeeee;\n"
+        + "    }\n"
+        + "  </style>\n"
         + "    <div class=\"center\">\n"
         + "      <table class=\"banner\" border=\"0\" cellpadding=\"0\" "
           + "cellspacing=\"0\" summary=\"\">\n"
@@ -739,7 +744,7 @@ public class MetricsWebsiteReport {
   /* Write a single row in the table of relay flags. */
   private void writeRelayFlagsTableRow(String fingerprint,
       String nickname) throws IOException {
-    this.bw.write("          <tr>\n");
+    this.bw.write("          <tr class=\"bigtable\">\n");
     if (this.downloadedConsensus.containsStatusEntry(fingerprint) &&
         this.downloadedConsensus.getStatusEntry(fingerprint).getFlags().
         contains("Named") && !Character.isDigit(nickname.charAt(0))) {
