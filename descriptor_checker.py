@@ -11,7 +11,6 @@ import datetime
 import logging
 import os
 import smtplib
-import time
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -53,7 +52,6 @@ def main():
   ]
 
   for descriptor_type, resource in targets:
-    start_time = time.time()
     log.debug("Downloading %s..." % descriptor_type)
 
     query = stem.descriptor.remote.Query(
@@ -65,8 +63,7 @@ def main():
 
     if not query.error:
       count = len(list(query))
-      runtime = time.time() - start_time
-      log.debug("  %i descriptors retrieved from %s in %0.2fs" % (count, query.download_url, runtime))
+      log.debug("  %i descriptors retrieved from %s in %0.2fs" % (count, query.download_url, query.runtime))
     else:
       log.warn("Unable to retrieve the %s: %s" % (descriptor_type, query.error))
       send_email(descriptor_type, query)
@@ -74,7 +71,6 @@ def main():
   # download the consensus from each authority
 
   for authority, endpoint in stem.descriptor.remote.DIRECTORY_AUTHORITIES.items():
-    start_time = time.time()
     log.debug("Downloading the consensus from %s..." % authority)
 
     query = stem.descriptor.remote.Query(
@@ -89,8 +85,7 @@ def main():
 
     if not query.error:
       count = len(list(query)[0].routers)
-      runtime = time.time() - start_time
-      log.debug("  %i descriptors retrieved from %s in %0.2fs" % (count, query.download_url, runtime))
+      log.debug("  %i descriptors retrieved from %s in %0.2fs" % (count, query.download_url, query.runtime))
     else:
       log.warn("Unable to retrieve the consensus from %s: %s" % (authority, query.error))
       send_email('consensus', query)
