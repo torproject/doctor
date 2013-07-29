@@ -10,19 +10,14 @@ issues an email notification when a problem is discovered.
 import datetime
 import logging
 import os
-import smtplib
 
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-
+import gmail
 import stem.descriptor
 import stem.descriptor.remote
 
-SENDER_ACCOUNT = 'verelsa@gmail.com'
-SENDER_PASSWORD = ''
-DESTINATION = 'atagar@torproject.org'
-SUBJECT = 'Unable to retrieve tor descriptors'
-BODY = """\
+EMAIL_SUBJECT = 'Unable to retrieve tor descriptors'
+
+EMAIL_BODY = """\
 Unable to retrieve the present %s...
 
 source: %s
@@ -30,9 +25,7 @@ time: %s
 error: %s
 """
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
-
-handler = logging.FileHandler(os.path.join(script_dir, 'descriptor_checker.log'))
+handler = logging.FileHandler(os.path.abspath('descriptor_checker.log'))
 handler.setFormatter(logging.Formatter(
   fmt = '%(asctime)s [%(levelname)s] %(message)s',
   datefmt = '%m/%d/%Y %H:%M:%S',
@@ -92,30 +85,11 @@ def main():
 
 
 def send_email(descriptor_type, query):
-  """
-  Sends an email via gmail, returning if successful or not.
-  """
-
-  timestamp = datetime.datetime.now().strftime("%m/%d/%Y %H:%M")
-  body = BODY % (descriptor_type, query.download_url, timestamp, query.error)
-
-  msg = MIMEMultipart('alternative')
-  msg['Subject'] = SUBJECT
-  msg['From'] = SENDER_ACCOUNT
-  msg['To'] = DESTINATION
-
-  msg.attach(MIMEText(body, 'plain'))
-
   try:
-    # send the message via the gmail SMTP server
-    server = smtplib.SMTP('smtp.gmail.com:587')
-    server.starttls()
-    server.login(SENDER_ACCOUNT, SENDER_PASSWORD)
-
-    server.sendmail(SENDER_ACCOUNT, [DESTINATION], msg.as_string())
-    server.quit()
-  except smtplib.SMTPAuthenticationError, exc:
-    log.warn("Unable to send email, authentication failure: %s" % exc)
+    timestamp = datetime.datetime.now().strftime("%m/%d/%Y %H:%M")
+    gmail.send(EMAIL_SUBJECT, body_text = EMAIL_BODY % (descriptor_type, query.download_url, timestamp, query.error))
+  except Exception, exc:
+    log.warn("Unable to send email: %s" % exc)
 
 
 if __name__ == '__main__':
