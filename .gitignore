@@ -1,6 +1,7 @@
 *.pyc
 *.swp
 logs/
+data/
 stem
 gmail_pw
 
