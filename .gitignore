@@ -1,0 +1,6 @@
+*.pyc
+*.swp
+logs/
+stem
+gmail_pw
+
