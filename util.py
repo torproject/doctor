@@ -2,6 +2,7 @@
 Module for issuing email notifications to me via gmail.
 """
 
+import logging
 import os
 import smtplib
 
@@ -13,6 +14,33 @@ from email.MIMEBase import MIMEBase
 FROM_ADDRESS = 'verelsa@gmail.com'
 TO_ADDRESS = 'atagar@torproject.org'
 PASSWORD = None
+
+
+def get_logger(name):
+  """
+  Provides a logger configured to write to our local 'logs' directory.
+
+  :param str name: name of our log file
+
+  :returns: preconfigured logger
+  """
+
+  log_dir = os.path.abspath('logs')
+
+  if not os.path.exists(log_dir):
+    os.mkdir(log_dir)
+
+  handler = logging.FileHandler(os.path.join(log_dir, name))
+  handler.setFormatter(logging.Formatter(
+    fmt = '%(asctime)s [%(levelname)s] %(message)s',
+    datefmt = '%m/%d/%Y %H:%M:%S',
+  ))
+
+  log = logging.getLogger(name)
+  log.setLevel(logging.DEBUG)
+  log.addHandler(handler)
+
+  return log
 
 
 def send(subject, body_text = None, body_html = None, attachment = None):

@@ -8,7 +8,6 @@ issues an email notification when a problem is discovered.
 """
 
 import datetime
-import logging
 import os
 
 import util
@@ -26,15 +25,7 @@ time: %s
 error: %s
 """
 
-handler = logging.FileHandler(os.path.abspath('descriptor_checker.log'))
-handler.setFormatter(logging.Formatter(
-  fmt = '%(asctime)s [%(levelname)s] %(message)s',
-  datefmt = '%m/%d/%Y %H:%M:%S',
-))
-
-log = logging.getLogger("descriptor_checker")
-log.setLevel(logging.DEBUG)
-log.addHandler(handler)
+log = util.get_logger('descriptor_checker')
 
 
 def main():
