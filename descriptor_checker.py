@@ -11,7 +11,8 @@ import datetime
 import logging
 import os
 
-import gmail
+import util
+
 import stem.descriptor
 import stem.descriptor.remote
 
@@ -87,7 +88,7 @@ def main():
 def send_email(descriptor_type, query):
   try:
     timestamp = datetime.datetime.now().strftime("%m/%d/%Y %H:%M")
-    gmail.send(EMAIL_SUBJECT, body_text = EMAIL_BODY % (descriptor_type, query.download_url, timestamp, query.error))
+    util.send(EMAIL_SUBJECT, body_text = EMAIL_BODY % (descriptor_type, query.download_url, timestamp, query.error))
   except Exception, exc:
     log.warn("Unable to send email: %s" % exc)
 
