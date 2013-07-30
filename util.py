@@ -104,7 +104,7 @@ def _get_password():
   global PASSWORD
 
   if PASSWORD is None:
-    pw_path = os.path.abspath('gmail_pw')
+    pw_path = get_path('gmail_pw')
 
     if not os.path.exists(pw_path):
       raise ValueError("Unable to determine our gmail password, '%s' doesn't exist" % pw_path)
