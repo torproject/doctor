@@ -19,6 +19,8 @@ PASSWORD = None
 def get_path(*comp):
   """
   Provides a path relative of these scripts.
+
+  :returns: absolute path, relative of these scripts
   """
 
   return os.path.abspath(os.path.join(os.path.dirname(__file__), *comp))
@@ -53,7 +55,7 @@ def get_logger(name):
 
 def send(subject, body_text = None, body_html = None, attachment = None):
   """
-  Sends an email via gmail, returning if successful or not.
+  Sends an email notification via gmail.
 
   :param str subject: subject of the email
   :param str body_text: plaintext body of the email
