@@ -20,7 +20,6 @@ Over the last hour %i new relays have appeared. New additions are...
 
 RELAY_ENTRY = """\
 * %s (%s)
-
   Address: %s:%i
   Version: %s
   Exit Policy: %s
@@ -60,14 +59,18 @@ def main():
 
 
 def send_email(new_relays):
+  # constructs a mapping of nicknames to router status entries so we can provide a listing that's sorted by nicknames
+
+  nickname_to_relay = dict((entry.nickname, entry) for entry in new_relays)
   relay_entries = []
 
-  for relay in new_relays:
+  for nickname in sorted(nickname_to_relay.keys()):
+    relay = nickname_to_relay[nickname]
     relay_entries.append(RELAY_ENTRY % (relay.nickname, relay.fingerprint, relay.address, relay.or_port, relay.version, relay.exit_policy))
 
   try:
     body = EMAIL_BODY % len(new_relays)
-    body += "\n\n".join(relay_entries)
+    body += "\n".join(relay_entries)
 
     util.send(EMAIL_SUBJECT, body_text = body)
   except Exception, exc:
@@ -107,7 +110,6 @@ def save_fingerprints(fingerprints):
 
     with open(FINGERPRINTS_FILE, 'w') as fingerprint_file:
       fingerprint_file.write('\n'.join(fingerprints))
-      log.debug("Saved %i fingerprints" % len(fingerprints))
   except Exception, exc:
     log.debug("Unable to save fingerprints to '%s': %s" % (FINGERPRINTS_FILE, exc))
 
