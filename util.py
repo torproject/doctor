@@ -16,6 +16,14 @@ TO_ADDRESS = 'atagar@torproject.org'
 PASSWORD = None
 
 
+def get_path(*comp):
+  """
+  Provides a path relative of these scripts.
+  """
+
+  return os.path.abspath(os.path.join(os.path.dirname(__file__), *comp))
+
+
 def get_logger(name):
   """
   Provides a logger configured to write to our local 'logs' directory.
@@ -25,7 +33,7 @@ def get_logger(name):
   :returns: preconfigured logger
   """
 
-  log_dir = os.path.abspath('logs')
+  log_dir = get_path('logs')
 
   if not os.path.exists(log_dir):
     os.mkdir(log_dir)

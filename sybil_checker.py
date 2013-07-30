@@ -26,7 +26,7 @@ RELAY_ENTRY = """\
   Exit Policy: %s
 """
 
-FINGERPRINTS_FILE = os.path.abspath('data/fingerprints')
+FINGERPRINTS_FILE = util.get_path('data', 'fingerprints')
 
 log = util.get_logger('sybil_checker')
 
@@ -99,7 +99,7 @@ def load_fingerprints():
 
 
 def save_fingerprints(fingerprints):
-  data_dir = os.path.dirname(FINGERPRINTS_FILE)
+  data_dir = util.get_path('data')
 
   try:
     if not os.path.exists(data_dir):
