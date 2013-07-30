@@ -6,6 +6,7 @@ relays. If so then this sends an email notification.
 """
 
 import os
+import traceback
 
 import util
 
@@ -115,4 +116,7 @@ def save_fingerprints(fingerprints):
 
 
 if __name__ == '__main__':
-  main()
+  try:
+    main()
+  except:
+    log.error("Script failed:\n%s" % traceback.format_exc())

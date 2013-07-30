@@ -9,6 +9,7 @@ issues an email notification when a problem is discovered.
 
 import datetime
 import os
+import traceback
 
 import util
 
@@ -85,4 +86,7 @@ def send_email(descriptor_type, query):
 
 
 if __name__ == '__main__':
-  main()
+  try:
+    main()
+  except:
+    log.error("Script failed:\n%s" % traceback.format_exc())
