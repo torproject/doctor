@@ -11,6 +11,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.MIMEBase import MIMEBase
 
+import stem.util.log
+
 FROM_ADDRESS = 'verelsa@gmail.com'
 TO_ADDRESS = 'atagar@torproject.org'
 PASSWORD = None
@@ -51,6 +53,28 @@ def get_logger(name):
   log.addHandler(handler)
 
   return log
+
+
+def log_stem_debugging(name):
+  """
+  Logs trace level stem output to the given log file.
+
+  :param str name: prefix name for our log file
+  """
+
+  log_dir = get_path('logs')
+
+  if not os.path.exists(log_dir):
+    os.mkdir(log_dir)
+
+  handler = logging.FileHandler(os.path.join(log_dir, name + '.stem_debug'))
+  handler.setFormatter(logging.Formatter(
+    fmt = '%(asctime)s [%(levelname)s] %(message)s',
+    datefmt = '%m/%d/%Y %H:%M:%S',
+  ))
+
+  log = stem.util.log.get_logger()
+  log.addHandler(handler)
 
 
 def send(subject, body_text = None, body_html = None, attachment = None):

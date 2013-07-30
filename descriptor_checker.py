@@ -27,6 +27,7 @@ error: %s
 """
 
 log = util.get_logger('descriptor_checker')
+util.log_stem_debugging('descriptor_checker')
 
 
 def main():

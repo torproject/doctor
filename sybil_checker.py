@@ -52,7 +52,7 @@ def main():
   new_fingerprints = current_fingerprints.difference(prior_fingerprints)
   log.debug("%i new relays found" % len(new_fingerprints))
 
-  if prior_fingerprints and len(new_fingerprints) > 50:
+  if prior_fingerprints and len(new_fingerprints) >= 50:
     log.debug("Sending a notification...")
     send_email([relays[fp] for fp in new_fingerprints])
 
