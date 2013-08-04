@@ -34,8 +34,8 @@ def main():
   # retrieve the server and extrainfo descriptors from any authority
 
   targets = [
-    ('server descriptors', '/tor/server/all.z'),
-    ('extrainfo descriptors', '/tor/extra/all.z'),
+    ('server descriptors', '/tor/server/all'),
+    ('extrainfo descriptors', '/tor/extra/all'),
   ]
 
   for descriptor_type, resource in targets:
@@ -60,7 +60,7 @@ def main():
     log.debug("Downloading the consensus from %s..." % authority)
 
     query = stem.descriptor.remote.Query(
-      '/tor/status-vote/current/consensus.z',
+      '/tor/status-vote/current/consensus',
       block = True,
       timeout = 60,
       endpoints = [endpoint],
