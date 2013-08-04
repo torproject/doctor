@@ -43,10 +43,9 @@ def main():
 
     query = stem.descriptor.remote.Query(
       resource,
+      block = True,
       timeout = 60,
     )
-
-    query.run(True)
 
     if not query.error:
       count = len(list(query))
@@ -62,12 +61,11 @@ def main():
 
     query = stem.descriptor.remote.Query(
       '/tor/status-vote/current/consensus.z',
+      block = True,
       timeout = 60,
       endpoints = [endpoint],
       document_handler = stem.descriptor.DocumentHandler.DOCUMENT,
     )
-
-    query.run(True)
 
     if not query.error:
       count = len(list(query)[0].routers)
