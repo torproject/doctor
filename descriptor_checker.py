@@ -64,7 +64,6 @@ def main():
       '/tor/status-vote/current/consensus.z',
       timeout = 60,
       endpoints = [endpoint],
-      fall_back_to_authority = False,
       document_handler = stem.descriptor.DocumentHandler.DOCUMENT,
     )
 
