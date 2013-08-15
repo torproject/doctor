@@ -52,7 +52,7 @@ def main():
       log.debug("  %i descriptors retrieved from %s in %0.2fs" % (count, query.download_url, query.runtime))
     else:
       log.warn("Unable to retrieve the %s: %s" % (descriptor_type, query.error))
-      send_email(descriptor_type, query)
+      send_email(EMAIL_SUBJECT, descriptor_type, query)
 
   # download the consensus from each authority
 
@@ -72,13 +72,15 @@ def main():
       log.debug("  %i descriptors retrieved from %s in %0.2fs" % (count, query.download_url, query.runtime))
     else:
       log.warn("Unable to retrieve the consensus from %s: %s" % (authority, query.error))
-      send_email('consensus', query)
+
+      subject = EMAIL_SUBJECT + ' (%s)' % authority
+      send_email(subject, 'consensus', query)
 
 
-def send_email(descriptor_type, query):
+def send_email(subject, descriptor_type, query):
   try:
     timestamp = datetime.datetime.now().strftime("%m/%d/%Y %H:%M")
-    util.send(EMAIL_SUBJECT, body_text = EMAIL_BODY % (descriptor_type, query.download_url, timestamp, query.error))
+    util.send(subject, body_text = EMAIL_BODY % (descriptor_type, query.download_url, timestamp, query.error))
   except Exception, exc:
     log.warn("Unable to send email: %s" % exc)
 
