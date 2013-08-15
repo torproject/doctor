@@ -56,6 +56,9 @@ consensus: %s"""
 UNKNOWN_CONSENSUS_PARAMETERS_MSG = """\
 The following directory authorities set unknown consensus parameters: %s"""
 
+MISMATCH_CONSENSUS_PARAMETERS_MSG = """\
+The following directory authorities set conflicting consensus parameters: %s"""
+
 log = util.get_logger('consensus_health_checker')
 util.log_stem_debugging('consensus_health_checker')
 
@@ -130,6 +133,7 @@ def run_checks(consensuses, votes):
     different_recommended_client_version,
     different_recommended_server_version,
     unknown_consensus_parameteres,
+    vote_parameters_mismatch_consensus,
   )
 
   issues = []
@@ -241,6 +245,25 @@ def unknown_consensus_parameteres(latest_consensus, consensuses, votes):
     return Issue(Runlevel.NOTICE, UNKNOWN_CONSENSUS_PARAMETERS_MSG % ', '.join(unknown_entries))
 
 
+def vote_parameters_mismatch_consensus(latest_consensus, consensuses, votes):
+  "Check that all vote parameters appear in the consensus."
+
+  mismatching_entries = []
+
+  for authority, vote in votes.items():
+    mismatching_params = []
+
+    for param_key, param_value in vote.params.items():
+      if latest_consensus.params.get(param_key) != param_value:
+        mismatching_params.append('%s=%s' % (param_key, param_value))
+
+    if mismatching_params:
+      mismatching_entries.append('%s %s' % (authority, ' '.join(mismatching_params)))
+
+  if mismatching_entries:
+    return Issue(Runlevel.NOTICE, MISMATCH_CONSENSUS_PARAMETERS_MSG % ', '.join(mismatching_entries))
+
+
 def get_consensuses(authorities = None):
   """
   Provides a mapping of directory authority nicknames to their present consensus.
@@ -277,6 +300,7 @@ def _get_documents(authorities, label, resource):
     queries[authority] = downloader.query(
       resource,
       endpoints = [endpoint],
+      default_params = False,
     )
 
   for authority, query in queries.items():
