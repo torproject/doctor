@@ -85,14 +85,19 @@ class Issue(object):
 def main():
   start_time = time.time()
 
-  try:
-    consensuses = get_consensuses()
-    votes = get_votes()
+  # Downloading the consensus and vote from all authorities, then running our
+  # checks over them. If we fail to download a consensus then we skip
+  # downloading a vote from that authority. If all votes can't be fetched then
+  # our checks are skipped.
 
-    issues = run_checks(consensuses, votes)
-  except IOError, exc:
-    log.info(exc)
-    issues = [Issue(Runlevel.ERROR, str(exc))]
+  consensuses, consensus_fetching_issues = get_consensuses()
+  votes, vote_fetching_issues = get_votes(consensuses.keys())
+  issues = consensus_fetching_issues + vote_fetching_issues
+
+  if votes:
+    issues += run_checks(consensuses, votes)
+  else:
+    log.warn("Unable to retrieve any votes. Skipping checks.")
 
   if issues:
     log.debug("Sending notification for issues")
@@ -236,28 +241,39 @@ def unknown_consensus_parameteres(latest_consensus, consensuses, votes):
     return Issue(Runlevel.NOTICE, UNKNOWN_CONSENSUS_PARAMETERS_MSG % ', '.join(unknown_entries))
 
 
-def get_consensuses():
+def get_consensuses(authorities = None):
   """
-  Provides a dictionary of authority nicknames to their present consensus. This
-  raises an IOError if any of the consensuses cannot be retrieved.
-  """
+  Provides a mapping of directory authority nicknames to their present consensus.
 
-  return _get_documents('consensus', '/tor/status-vote/current/consensus')
+  :param list authorities: optional list of authority nicknames, if present
+    then only these authorities will be queried
 
-
-def get_votes():
-  """
-  Provides a dictionary of authority nicknames to their present vote. This
-  raises an IOError if any of the votes cannot be retrieved.
+  :returns: tuple of the form ({authority => consensus}, issues)
   """
 
-  return _get_documents('vote', '/tor/status-vote/current/authority')
+  return _get_documents(authorities, 'consensus', '/tor/status-vote/current/consensus')
 
 
-def _get_documents(label, resource):
-  queries, documents = {}, {}
+def get_votes(authorities = None):
+  """
+  Provides a mapping of directory authority nicknames to their present vote.
+
+  :param list authorities: optional list of authority nicknames, if present
+    then only these authorities will be queried
+
+  :returns: tuple of the form ({authority => vote}, issues)
+  """
+
+  return _get_documents(authorities, 'vote', '/tor/status-vote/current/authority')
+
+
+def _get_documents(authorities, label, resource):
+  queries, documents, issues = {}, {}, []
 
   for authority, endpoint in stem.descriptor.remote.DIRECTORY_AUTHORITIES.items():
+    if authorities is not None and not authority in authorities:
+      continue
+
     queries[authority] = downloader.query(
       resource,
       endpoints = [endpoint],
@@ -267,9 +283,12 @@ def _get_documents(label, resource):
     try:
       documents[authority] = list(query)[0]
     except Exception, exc:
-      raise IOError("Unable to retrieve the %s from %s (%s): %s" % (label, authority, query.download_url, exc))
+      msg = "Unable to retrieve the %s from %s (%s): %s" % (label, authority, query.download_url, exc)
 
-  return documents
+      log.info(msg)
+      issues.append(Issue(Runlevel.ERROR, msg))
+
+  return documents, issues
 
 
 if __name__ == '__main__':
