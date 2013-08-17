@@ -59,17 +59,9 @@ The following directory authorities set unknown consensus parameters: %s"""
 MISMATCH_CONSENSUS_PARAMETERS_MSG = """\
 The following directory authorities set conflicting consensus parameters: %s"""
 
-CERT_EXPIRES_IN_THREE_MONTHS_MSG = """\
+CERTIFICATE_ABOUT_TO_EXPIRE_MSG = """\
 The certificate of the following directory authority expires within the \
-next three months: %s"""
-
-CERT_EXPIRES_IN_TWO_MONTHS_MSG = """\
-The certificate of the following directory authority expires within the \
-next two months: %s"""
-
-CERT_EXPIRES_IN_TWO_WEEKS_MSG = """\
-The certificate of the following directory authority expires within the \
-next two weeks: %s"""
+next %s: %s"""
 
 log = util.get_logger('consensus_health_checker')
 util.log_stem_debugging('consensus_health_checker')
@@ -126,7 +118,7 @@ def run_checks(consensuses, votes):
   Performs our checks against the given consensus and vote documents. Checker
   functions are expected to be of the form...
 
-    my_check(latest_consensus, consensuses, votes) => Issue
+    my_check(latest_consensus, consensuses, votes) => Issue or list of Issues
 
   :param dict consensuses: mapping of authorities to their consensus
   :param dict votes: mapping of authorities to their votes
@@ -297,11 +289,11 @@ def certificate_expiration(latest_consensus, consensuses, votes):
     cert_expiration = vote.directory_authorities[0].key_certificate.expires
 
     if (current_time - cert_expiration) > datetime.timedelta(days = 14):
-      issues.append(Issue(Runlevel.WARNING, CERT_EXPIRES_IN_TWO_WEEKS_MSG % authority))
+      issues.append(Issue(Runlevel.WARNING, CERTIFICATE_ABOUT_TO_EXPIRE_MSG % ('two weeks', authority)))
     elif (current_time - cert_expiration) > datetime.timedelta(days = 60):
-      issues.append(Issue(Runlevel.WARNING, CERT_EXPIRES_IN_TWO_MONTHS_MSG % authority))
+      issues.append(Issue(Runlevel.NOTICE, CERTIFICATE_ABOUT_TO_EXPIRE_MSG % ('two months', authority)))
     elif (current_time - cert_expiration) > datetime.timedelta(days = 90):
-      issues.append(Issue(Runlevel.WARNING, CERT_EXPIRES_IN_THREE_MONTHS_MSG % authority))
+      issues.append(Issue(Runlevel.NOTICE, CERTIFICATE_ABOUT_TO_EXPIRE_MSG % ('three months', authority)))
 
   return issues
 
