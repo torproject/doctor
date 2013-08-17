@@ -59,6 +59,18 @@ The following directory authorities set unknown consensus parameters: %s"""
 MISMATCH_CONSENSUS_PARAMETERS_MSG = """\
 The following directory authorities set conflicting consensus parameters: %s"""
 
+CERT_EXPIRES_IN_THREE_MONTHS_MSG = """\
+The certificate of the following directory authority expires within the \
+next three months: %s"""
+
+CERT_EXPIRES_IN_TWO_MONTHS_MSG = """\
+The certificate of the following directory authority expires within the \
+next two months: %s"""
+
+CERT_EXPIRES_IN_TWO_WEEKS_MSG = """\
+The certificate of the following directory authority expires within the \
+next two weeks: %s"""
+
 log = util.get_logger('consensus_health_checker')
 util.log_stem_debugging('consensus_health_checker')
 
@@ -134,16 +146,21 @@ def run_checks(consensuses, votes):
     different_recommended_server_version,
     unknown_consensus_parameteres,
     vote_parameters_mismatch_consensus,
+    certificate_expiration,
   )
 
-  issues = []
+  all_issues = []
 
   for checker in checker_functions:
-    issue = checker(latest_consensus, consensuses, votes)
+    issues = checker(latest_consensus, consensuses, votes)
 
-    if issue:
-      log.debug(issue)
-      issues.append(issue)
+    if issues:
+      if isinstance(issues, Issue):
+        issues = [issues]
+
+      for issue in issues:
+        log.debug(issue)
+        all_issues.append(issue)
 
   return issues
 
@@ -262,6 +279,31 @@ def vote_parameters_mismatch_consensus(latest_consensus, consensuses, votes):
 
   if mismatching_entries:
     return Issue(Runlevel.NOTICE, MISMATCH_CONSENSUS_PARAMETERS_MSG % ', '.join(mismatching_entries))
+
+
+def certificate_expiration(latest_consensus, consensuses, votes):
+  "Check if an authority's certificate is about to expire."
+
+  issues = []
+  current_time = datetime.datetime.now()
+
+  for authority, vote in votes.items():
+    # votes should only have a single authority entry (the one that issued this vote)
+
+    if len(vote.directory_authorities) != 1:
+      msg = "Vote for %s should only contain an authority entry for it: %s" % (authority, vote)
+      return Issue(Runlevel.WARN, msg)
+
+    cert_expiration = vote.directory_authorities[0].key_certificate.expires
+
+    if (current_time - cert_expiration) > datetime.timedelta(days = 14):
+      issues.append(Issue(Runlevel.WARNING, CERT_EXPIRES_IN_TWO_WEEKS_MSG % authority))
+    elif (current_time - cert_expiration) > datetime.timedelta(days = 60):
+      issues.append(Issue(Runlevel.WARNING, CERT_EXPIRES_IN_TWO_MONTHS_MSG % authority))
+    elif (current_time - cert_expiration) > datetime.timedelta(days = 90):
+      issues.append(Issue(Runlevel.WARNING, CERT_EXPIRES_IN_THREE_MONTHS_MSG % authority))
+
+  return issues
 
 
 def get_consensuses(authorities = None):
