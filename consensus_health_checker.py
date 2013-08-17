@@ -13,55 +13,17 @@ import util
 
 import stem.descriptor
 import stem.descriptor.remote
+import stem.util.conf
 import stem.util.enum
 
 Runlevel = stem.util.enum.UppercaseEnum("NOTICE", "WARNING", "ERROR")
 
 EMAIL_SUBJECT = 'Consensus issues'
 
-KNOWN_PARAMS = (
-  'bwweightscale',
-  'circwindow',
-  'CircuitPriorityHalflifeMsec',
-  'refuseunknownexits',
-  'cbtdisabled',
-  'cbtnummodes',
-  'cbtrecentcount',
-  'cbtmaxtimeouts',
-  'cbtmincircs',
-  'cbtquantile',
-  'cbtclosequantile',
-  'cbttestfreq',
-  'cbtmintimeout',
-  'cbtinitialtimeout',
-  'perconnbwburst',
-  'perconnbwrate',
-  'UseOptimisticData',
-  'pb_disablepct',
-  'UseNTorHandshake',
-)
-
-MISSING_LATEST_CONSENSUS_MSG = """\
-The consensuses published by the following directory authorities are more than \
-one hour old and therefore not fresh anymore: %s"""
-
-CONSENSUS_METHOD_UNSUPPORTED_MSG = """\
-The following directory authorities do not support the consensus method that \
-the consensus uses: %s"""
-
-DIFFERENT_RECOMMENDED_VERSION_MSG = """\
-The following directory authorities recommend other %s versions than the \
-consensus: %s"""
-
-UNKNOWN_CONSENSUS_PARAMETERS_MSG = """\
-The following directory authorities set unknown consensus parameters: %s"""
-
-MISMATCH_CONSENSUS_PARAMETERS_MSG = """\
-The following directory authorities set conflicting consensus parameters: %s"""
-
-CERTIFICATE_ABOUT_TO_EXPIRE_MSG = """\
-The certificate of the following directory authority expires within the \
-next %s: %s"""
+CONFIG = stem.util.conf.config_dict("consensus_health", {
+  'msg': {},
+  'known_params': [],
+})
 
 log = util.get_logger('consensus_health_checker')
 util.log_stem_debugging('consensus_health_checker')
@@ -85,12 +47,38 @@ class Issue(object):
     self.runlevel = runlevel
     self.msg = msg
 
+  @staticmethod
+  def for_msg(runlevel, template, *attr):
+    """
+    Provides an Issue for the given message from our config with any formatted
+    string arguments inserted.
+
+    :var str runlevel: runlevel of the issue
+    :param str template: base string to fetch from our config
+    :param list attr: formatted string arguments
+    """
+
+    if template in CONFIG['msg']:
+      try:
+        return Issue(runlevel, CONFIG['msg'][template] % attr)
+      except:
+        log.error("Unable to apply formatted string attributes to msg.%s: %s" % (template, attr))
+    else:
+      log.error("Missing configuration value: msg.%s" % template)
+
+    return Issue(runlevel, '')
+
   def __str__(self):
     return "%s: %s" % (self.runlevel, self.msg)
 
 
 def main():
   start_time = time.time()
+
+  # loads configuration data
+
+  config = stem.util.conf.get_config("consensus_health")
+  config.load(util.get_path('data', 'consensus_health.cfg'))
 
   # Downloading the consensus and vote from all authorities, then running our
   # checks over them. If we fail to download a consensus then we skip
@@ -169,7 +157,7 @@ def missing_latest_consensus(latest_consensus, consensuses, votes):
 
   if stale_authorities:
     runlevel = Runlevel.ERROR if len(stale_authorities) > 3 else Runlevel.WARNING
-    return Issue(runlevel, MISSING_LATEST_CONSENSUS_MSG % ', '.join(stale_authorities))
+    return Issue.for_msg(runlevel, 'MISSING_LATEST_CONSENSUS', ', '.join(stale_authorities))
 
 
 def consensus_method_unsupported(latest_consensus, consensuses, votes):
@@ -182,7 +170,7 @@ def consensus_method_unsupported(latest_consensus, consensuses, votes):
       incompatable_authorities.append(authority)
 
   if incompatable_authorities:
-    return Issue(Runlevel.WARNING, CONSENSUS_METHOD_UNSUPPORTED_MSG % ', '.join(incompatable_authorities))
+    return Issue.for_msg(Runlevel.WARNING, 'CONSENSUS_METHOD_UNSUPPORTED', ', '.join(incompatable_authorities))
 
 
 def different_recommended_client_version(latest_consensus, consensuses, votes):
@@ -196,7 +184,7 @@ def different_recommended_client_version(latest_consensus, consensuses, votes):
       differences.append(msg)
 
   if differences:
-    return Issue(Runlevel.NOTICE, DIFFERENT_RECOMMENDED_VERSION_MSG % ('client', ', '.join(differences)))
+    return Issue.for_msg(Runlevel.NOTICE, 'DIFFERENT_RECOMMENDED_VERSION', 'client', ', '.join(differences))
 
 
 def different_recommended_server_version(latest_consensus, consensuses, votes):
@@ -210,7 +198,7 @@ def different_recommended_server_version(latest_consensus, consensuses, votes):
       differences.append(msg)
 
   if differences:
-    return Issue(Runlevel.NOTICE, DIFFERENT_RECOMMENDED_VERSION_MSG % ('server', ', '.join(differences)))
+    return Issue.for_msg(Runlevel.NOTICE, 'DIFFERENT_RECOMMENDED_VERSION', 'server', ', '.join(differences))
 
 
 def _version_difference_str(authority, consensus_versions, vote_versions):
@@ -244,14 +232,14 @@ def unknown_consensus_parameteres(latest_consensus, consensuses, votes):
     unknown_params = []
 
     for param_key, param_value in vote.params.items():
-      if not param_key in KNOWN_PARAMS and not param_key.startswith('bwauth'):
+      if not param_key in CONFIG['known_params'] and not param_key.startswith('bwauth'):
         unknown_params.append('%s=%s' % (param_key, param_value))
 
     if unknown_params:
       unknown_entries.append('%s %s' % (authority, ' '.join(unknown_params)))
 
   if unknown_entries:
-    return Issue(Runlevel.NOTICE, UNKNOWN_CONSENSUS_PARAMETERS_MSG % ', '.join(unknown_entries))
+    return Issue.for_msg(Runlevel.NOTICE, 'UNKNOWN_CONSENSUS_PARAMETERS', ', '.join(unknown_entries))
 
 
 def vote_parameters_mismatch_consensus(latest_consensus, consensuses, votes):
@@ -270,7 +258,7 @@ def vote_parameters_mismatch_consensus(latest_consensus, consensuses, votes):
       mismatching_entries.append('%s %s' % (authority, ' '.join(mismatching_params)))
 
   if mismatching_entries:
-    return Issue(Runlevel.NOTICE, MISMATCH_CONSENSUS_PARAMETERS_MSG % ', '.join(mismatching_entries))
+    return Issue.for_msg(Runlevel.NOTICE, 'MISMATCH_CONSENSUS_PARAMETERS', ', '.join(mismatching_entries))
 
 
 def certificate_expiration(latest_consensus, consensuses, votes):
@@ -289,11 +277,11 @@ def certificate_expiration(latest_consensus, consensuses, votes):
     cert_expiration = vote.directory_authorities[0].key_certificate.expires
 
     if (current_time - cert_expiration) > datetime.timedelta(days = 14):
-      issues.append(Issue(Runlevel.WARNING, CERTIFICATE_ABOUT_TO_EXPIRE_MSG % ('two weeks', authority)))
+      issues.append(Issue.for_msg(Runlevel.WARNING, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'two weeks', authority))
     elif (current_time - cert_expiration) > datetime.timedelta(days = 60):
-      issues.append(Issue(Runlevel.NOTICE, CERTIFICATE_ABOUT_TO_EXPIRE_MSG % ('two months', authority)))
+      issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'two months', authority))
     elif (current_time - cert_expiration) > datetime.timedelta(days = 90):
-      issues.append(Issue(Runlevel.NOTICE, CERTIFICATE_ABOUT_TO_EXPIRE_MSG % ('three months', authority)))
+      issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'three months', authority))
 
   return issues
 
