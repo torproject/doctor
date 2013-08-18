@@ -397,7 +397,7 @@ public class Checker {
   /* Check if any bandwidth scanner results are missing. */
   private void checkBandwidthScanners() {
     SortedSet<String> missingBandwidthScanners = new TreeSet<String>(
-        Arrays.asList("turtles,moria1,gabelmoo,maatuska".
+        Arrays.asList("turtles,moria1,gabelmoo,maatuska,tor26".
         split(",")));
     for (RelayNetworkStatusVote vote : this.downloadedVotes) {
       boolean containsMeasuredBandwidths = false;
