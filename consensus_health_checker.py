@@ -395,7 +395,7 @@ def _get_documents(authorities, label, resource):
 
   for authority, query in queries.items():
     try:
-      documents[authority] = list(query)[0]
+      documents[authority] = query.run()[0]
     except Exception, exc:
       msg = "Unable to retrieve the %s from %s (%s): %s" % (label, authority, query.download_url, exc)
 
