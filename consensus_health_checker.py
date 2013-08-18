@@ -22,6 +22,7 @@ EMAIL_SUBJECT = 'Consensus issues'
 
 CONFIG = stem.util.conf.config_dict("consensus_health", {
   'msg': {},
+  'bandwidth_authorities': [],
   'known_params': [],
 })
 
@@ -160,6 +161,7 @@ def run_checks(consensuses, votes):
     unknown_consensus_parameteres,
     vote_parameters_mismatch_consensus,
     certificate_expiration,
+    voting_bandwidth_scanners,
   )
 
   all_issues = []
@@ -318,6 +320,36 @@ def certificate_expiration(latest_consensus, consensuses, votes):
     elif (cert_expiration - current_time) <= datetime.timedelta(days = 90):
       if rate_limit_notice('cert_expiration.three_months.%s' % authority, days = 90):
         issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'three months', authority))
+
+  return issues
+
+
+def voting_bandwidth_scanners(latest_consensus, consensuses, votes):
+  "Checks that we have bandwidth scanner results from the authorities that vote on it."
+
+  missing_authorities, extra_authorities = [], []
+
+  for authority, vote in votes.items():
+    contains_measured_bandwidth = False
+
+    for desc in vote.routers.values():
+      if desc.measured:
+        contains_measured_bandwidth = True
+        break
+
+    if authority in CONFIG['bandwidth_authorities'] and not contains_measured_bandwidth:
+      missing_authorities.append(authority)
+    if authority not in CONFIG['bandwidth_authorities'] and contains_measured_bandwidth:
+      extra_authorities.append(authority)
+
+  issues = []
+
+  if missing_authorities:
+    runlevel = Runlevel.ERROR if len(missing_authorities) > 1 else Runlevel.WARNING
+    issues.append(Issue.for_msg(runlevel, 'MISSING_BANDWIDTH_SCANNERS', ', '.join(missing_authorities)))
+
+  if extra_authorities:
+    issues.append(Issue.for_msg(Runlevel.NOTICE, 'EXTRA_BANDWIDTH_SCANNERS', ', '.join(extra_authorities)))
 
   return issues
 
