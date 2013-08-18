@@ -16,6 +16,8 @@ import stem.descriptor.remote
 import stem.util.conf
 import stem.util.enum
 
+from stem import Flag
+
 Runlevel = stem.util.enum.UppercaseEnum("NOTICE", "WARNING", "ERROR")
 
 EMAIL_SUBJECT = 'Consensus issues'
@@ -162,6 +164,7 @@ def run_checks(consensuses, votes):
     vote_parameters_mismatch_consensus,
     certificate_expiration,
     voting_bandwidth_scanners,
+    has_authority_flag,
   )
 
   all_issues = []
@@ -354,6 +357,37 @@ def voting_bandwidth_scanners(latest_consensus, consensuses, votes):
   return issues
 
 
+def has_authority_flag(latest_consensus, consensuses, votes):
+  "Checks that the authorities have the 'authority' flag in the present consensus."
+
+  seen_authorities = set()
+
+  for desc in latest_consensus.routers.values():
+    if Flag.AUTHORITY in desc.flags:
+      seen_authorities.add(desc.nickname)
+
+  # Tonga lacks a v3ident so the remote descriptor module doesn't include it,
+  # but it's still an authority.
+
+  known_authorities = set(stem.descriptor.remote.DIRECTORY_AUTHORITIES.keys())
+  known_authorities.add('Tonga')
+
+  missing_authorities = known_authorities.difference(seen_authorities)
+  extra_authorities = seen_authorities.difference(known_authorities)
+
+  issues = []
+
+  if missing_authorities:
+    if rate_limit_notice('missing_authorities.%s' % '.'.join(missing_authorities), days = 7):
+      issues.append(Issue.for_msg(Runlevel.WARNING, 'MISSING_AUTHORITIES', ', '.join(missing_authorities)))
+
+  if extra_authorities:
+    if rate_limit_notice('extra_authorities.%s' % '.'.join(extra_authorities), days = 7):
+      issues.append(Issue.for_msg(Runlevel.NOTICE, 'EXTRA_AUTHORITIES', ', '.join(extra_authorities)))
+
+  return issues
+
+
 def get_consensuses(authorities = None):
   """
   Provides a mapping of directory authority nicknames to their present consensus.
@@ -409,6 +443,6 @@ if __name__ == '__main__':
   try:
     main()
   except:
-    msg = "consensus_health_checker.py failed with:\n%s" % traceback.format_exc()
+    msg = "consensus_health_checker.py failed with:\n\n%s" % traceback.format_exc()
     log.error(msg)
     util.send("Script Error", body_text = msg)
