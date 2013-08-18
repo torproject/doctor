@@ -24,6 +24,7 @@ EMAIL_SUBJECT = 'Consensus issues'
 
 CONFIG = stem.util.conf.config_dict("consensus_health", {
   'msg': {},
+  'authority_fingerprints': {},
   'bandwidth_authorities': [],
   'known_params': [],
 })
@@ -384,6 +385,21 @@ def has_authority_flag(latest_consensus, consensuses, votes):
   if extra_authorities:
     if rate_limit_notice('extra_authorities.%s' % '.'.join(extra_authorities), days = 7):
       issues.append(Issue.for_msg(Runlevel.NOTICE, 'EXTRA_AUTHORITIES', ', '.join(extra_authorities)))
+
+  return issues
+
+
+def has_expected_fingerprints(latest_consensus, consensuses, votes):
+  "Checks that the authorities have the fingerprints that we expect."
+
+  issues = []
+
+  for desc in latest_consensus.routers.values():
+    if desc.nickname in CONFIG['authority_fingerprints']:
+      expected_fingerprint = CONFIG['authority_fingerprints'][desc.nickname]
+
+      if desc.fingerprint != expected_fingerprint:
+        issues.append(Issue.for_msg(Runlevel.ERROR, 'FINGERPRINT_MISMATCH', desc.nickname, desc.fingerprint, expected_fingerprint))
 
   return issues
 
