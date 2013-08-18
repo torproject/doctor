@@ -72,6 +72,39 @@ class Issue(object):
     return "%s: %s" % (self.runlevel, self.msg)
 
 
+def rate_limit_notice(key, hours = 0, days = 0):
+  """
+  Check if we have sent a notice with this key within a given period of time.
+  If we have then this returns **False**, otherwise this records the fact that
+  we're sending the message now and returns **True**.
+
+  :param str key: unique identifier for this notification
+  :param int hours: number of hours to suppress this message for after being sent
+  :param int days: number of days to suppress this message for after being sent
+  """
+
+  config = stem.util.conf.get_config("last_notified")
+  config_path = util.get_path('data', 'last_notified.cfg')
+
+  try:
+    config.load(config_path)
+  except:
+    pass
+
+  current_time = int(time.time())
+  last_seen = config.get(key, 0)
+  suppression_time = (3600 * hours) + (86400 * days)
+  suppression_time_remaining = suppression_time - (current_time - last_seen)
+
+  if suppression_time_remaining <= 0:
+    config.set(key, str(current_time), overwrite = True)
+    config.save(config_path)
+    return True
+  else:
+    log.info("Suppressing %s, time remaining is %is" % (key, suppression_time_remaining))
+    return False
+
+
 def main():
   start_time = time.time()
 
@@ -271,17 +304,20 @@ def certificate_expiration(latest_consensus, consensuses, votes):
     # votes should only have a single authority entry (the one that issued this vote)
 
     if len(vote.directory_authorities) != 1:
-      msg = "Vote for %s should only contain an authority entry for it: %s" % (authority, vote)
-      return Issue(Runlevel.WARN, msg)
+      issues.append(Issue.for_msg(Runlevel.WARNING, 'VOTE_HAS_MULTIPLE_AUTHORITIES', authority, vote))
+      continue
 
     cert_expiration = vote.directory_authorities[0].key_certificate.expires
 
-    if (current_time - cert_expiration) > datetime.timedelta(days = 14):
-      issues.append(Issue.for_msg(Runlevel.WARNING, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'two weeks', authority))
-    elif (current_time - cert_expiration) > datetime.timedelta(days = 60):
-      issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'two months', authority))
-    elif (current_time - cert_expiration) > datetime.timedelta(days = 90):
-      issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'three months', authority))
+    if (cert_expiration - current_time) <= datetime.timedelta(days = 14):
+      if rate_limit_notice('cert_expiration.two_weeks.%s' % authority, days = 14):
+        issues.append(Issue.for_msg(Runlevel.WARNING, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'two weeks', authority))
+    elif (cert_expiration - current_time) <= datetime.timedelta(days = 60):
+      if rate_limit_notice('cert_expiration.two_months.%s' % authority, days = 60):
+        issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'two months', authority))
+    elif (cert_expiration - current_time) <= datetime.timedelta(days = 90):
+      if rate_limit_notice('cert_expiration.three_months.%s' % authority, days = 90):
+        issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'three months', authority))
 
   return issues
 
