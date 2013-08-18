@@ -119,4 +119,6 @@ if __name__ == '__main__':
   try:
     main()
   except:
-    log.error("Script failed:\n%s" % traceback.format_exc())
+    msg = "sybil_checker.py failed with:\n%s" % traceback.format_exc()
+    log.error(msg)
+    util.send("Script Error", body_text = msg)
