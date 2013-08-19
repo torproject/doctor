@@ -168,6 +168,7 @@ def run_checks(consensuses, votes):
     has_authority_flag,
     is_recommended_versions,
     bad_exits_in_sync,
+    bandwidth_authorities_in_sync,
   )
 
   all_issues = []
@@ -427,7 +428,7 @@ def is_recommended_versions(latest_consensus, consensuses, votes):
 def bad_exits_in_sync(latest_consensus, consensuses, votes):
   "Checks that the authorities that vote on the BadExit flag are in agreement."
 
-  bad_exits = {}  # mapping of authority to the fingerprints with the BadExit flag
+  bad_exits = {}  # mapping of authorities to the fingerprints with the BadExit flag
 
   for authority, vote in votes.items():
     flagged = [desc.fingerprint for desc in vote.routers.values() if Flag.BADEXIT in desc.flags]
@@ -449,6 +450,32 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
 
   if issues and rate_limit_notice('bad_exits_in_sync', days = 1):
     return issues
+
+
+def bandwidth_authorities_in_sync(latest_consensus, consensuses, votes):
+  """
+  Checks that the bandwidth authorities are reporting roughly the same number
+  of measurements. This is in alarm if any of the authorities deviate by more
+  than 20% from the average.
+  """
+
+  measurement_counts = {}  # mapping of authorities to the number of fingerprints with a measurement
+
+  for authority, vote in votes.items():
+    measured = [desc.fingerprint for desc in vote.routers.values() if desc.measured is not None]
+
+    if measured:
+      measurement_counts[authority] = len(measured)
+
+  average = sum(measurement_counts.values()) / len(measurement_counts)
+
+  for authority, count in measurement_counts.items():
+    if count > (1.2 * average) or count < (0.8 * average):
+      if rate_limit_notice('bandwidth_authorities_in_sync', days = 1):
+        entries = ['%s (%s)' % (authority, count) for authority, count in measurement_counts.items()]
+        return Issue.for_msg(Runlevel.NOTICE, 'BANDWIDTH_AUTHORITIES_OUT_OF_SYNC', ', '.join(entries))
+
+      break
 
 
 def get_consensuses(authorities = None):
