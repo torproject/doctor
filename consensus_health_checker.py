@@ -109,7 +109,7 @@ def rate_limit_notice(key, hours = 0, days = 0):
     config.save(config_path)
     return True
   else:
-    log.info("Suppressing %s, time remaining is %is" % (key, suppression_time_remaining))
+    log.info("Suppressing %s, time remaining is %i hours" % (key, (suppression_time_remaining / 3600) + 1))
     return False
 
 
