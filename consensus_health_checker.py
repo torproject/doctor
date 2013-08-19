@@ -93,6 +93,7 @@ def rate_limit_notice(key, hours = 0, days = 0):
   config_path = util.get_path('data', 'last_notified.cfg')
 
   try:
+    config.clear()
     config.load(config_path)
   except:
     pass
