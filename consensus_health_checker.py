@@ -167,6 +167,7 @@ def run_checks(consensuses, votes):
     voting_bandwidth_scanners,
     has_authority_flag,
     is_recommended_versions,
+    bad_exits_in_sync,
   )
 
   all_issues = []
@@ -421,6 +422,33 @@ def is_recommended_versions(latest_consensus, consensuses, votes):
     if rate_limit_notice('tor_out_of_date.%s' % '.'.join(outdated_authorities.keys()), days = 7):
       entries = ['%s (%s)' % (k, v) for k, v in outdated_authorities.items()]
       return Issue.for_msg(Runlevel.WARNING, 'TOR_OUT_OF_DATE', ', '.join(entries))
+
+
+def bad_exits_in_sync(latest_consensus, consensuses, votes):
+  "Checks that the authorities that vote on the BadExit flag are in agreement."
+
+  bad_exits = {}  # mapping of authority to the fingerprints with the BadExit flag
+
+  for authority, vote in votes.items():
+    flagged = [desc.fingerprint for desc in vote.routers.values() if Flag.BADEXIT in desc.flags]
+
+    if flagged:
+      bad_exits[authority] = set(flagged)
+
+  voting_authorities = set(bad_exits.keys())
+  agreed_bad_exits = set.intersection(*bad_exits.values())
+  disagreed_bad_exits = set.union(*bad_exits.values()).difference(agreed_bad_exits)
+
+  issues = []
+
+  for fingerprint in disagreed_bad_exits:
+    with_flag = set([authority for autority, flagged in bad_exits.items() if fingerprint in flagged])
+    without_flag = voting_authorities.difference(with_flag)
+
+    issues.append(Issue.for_msg(Runlevel.NOTICE, 'BADEXIT_OUT_OF_SYNC', fingerprint, ', '.join(with_flag), ', '.join(without_flag)))
+
+  if issues and rate_limit_notice('bad_exits_in_sync', days = 1):
+    return issues
 
 
 def get_consensuses(authorities = None):
