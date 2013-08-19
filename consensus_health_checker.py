@@ -166,6 +166,7 @@ def run_checks(consensuses, votes):
     certificate_expiration,
     voting_bandwidth_scanners,
     has_authority_flag,
+    is_recommended_versions,
   )
 
   all_issues = []
@@ -181,7 +182,7 @@ def run_checks(consensuses, votes):
         log.debug(issue)
         all_issues.append(issue)
 
-  return issues
+  return all_issues
 
 
 def missing_latest_consensus(latest_consensus, consensuses, votes):
@@ -402,6 +403,24 @@ def has_expected_fingerprints(latest_consensus, consensuses, votes):
         issues.append(Issue.for_msg(Runlevel.ERROR, 'FINGERPRINT_MISMATCH', desc.nickname, desc.fingerprint, expected_fingerprint))
 
   return issues
+
+
+def is_recommended_versions(latest_consensus, consensuses, votes):
+  "Checks that the authorities are running a recommended version or higher."
+
+  outdated_authorities = {}
+  min_version = min(latest_consensus.server_versions)
+
+  for authority, fingerprint in CONFIG['authority_fingerprints'].items():
+    desc = latest_consensus.routers.get(fingerprint)
+
+    if desc and desc.version and desc.version < min_version:
+      outdated_authorities[authority] = desc.version
+
+  if outdated_authorities:
+    if rate_limit_notice('tor_out_of_date.%s' % '.'.join(outdated_authorities.keys()), days = 7):
+      entries = ['%s (%s)' % (k, v) for k, v in outdated_authorities.items()]
+      return Issue.for_msg(Runlevel.WARNING, 'TOR_OUT_OF_DATE', ', '.join(entries))
 
 
 def get_consensuses(authorities = None):
