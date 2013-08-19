@@ -100,6 +100,7 @@ def rate_limit_notice(key, hours = 0, days = 0):
   current_time = int(time.time())
   last_seen = config.get(key, 0)
   suppression_time = (3600 * hours) + (86400 * days)
+  suppression_time += 1800  # adding a half hour so timing doesn't coinside with our hourly cron
   suppression_time_remaining = suppression_time - (current_time - last_seen)
 
   if suppression_time_remaining <= 0:
