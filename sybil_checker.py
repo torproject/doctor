@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# Copyright 2013 The Tor Project
+# See LICENSE for licensing information
+
 
 """
 Simple script that checks to see if there has been a sudden influx of new
