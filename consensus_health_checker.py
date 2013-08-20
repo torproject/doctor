@@ -164,6 +164,7 @@ def run_checks(consensuses, votes):
     unknown_consensus_parameters,
     vote_parameters_mismatch_consensus,
     certificate_expiration,
+    has_all_signatures,
     voting_bandwidth_scanners,
     has_authority_flag,
     is_recommended_versions,
@@ -325,6 +326,20 @@ def certificate_expiration(latest_consensus, consensuses, votes):
         issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'three months', authority))
 
   return issues
+
+
+def has_all_signatures(latest_consensus, consensuses, votes):
+  "Check that the consensuses have signatures for authorities that voted on it."
+
+  missing_signatures = set()
+
+  for consensus in consensuses.values():
+    authority_fingerprints = set([authority.fingerprint for authority in consensus.directory_authorities])
+    signature_fingerprints = set([sig.identity for sig in consensus.signatures])
+    missing_signatures.update(authority_fingerprints.difference(signature_fingerprints))
+
+  if missing_signatures:
+    return Issue.for_msg(Runlevel.NOTICE, 'MISSING_SIGNATURE', ', '.join(missing_signatures))
 
 
 def voting_bandwidth_scanners(latest_consensus, consensuses, votes):
