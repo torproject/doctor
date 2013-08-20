@@ -312,10 +312,6 @@ def certificate_expiration(latest_consensus, consensuses, votes):
   for authority, vote in votes.items():
     # votes should only have a single authority entry (the one that issued this vote)
 
-    if len(vote.directory_authorities) != 1:
-      issues.append(Issue.for_msg(Runlevel.WARNING, 'VOTE_HAS_MULTIPLE_AUTHORITIES', authority, vote))
-      continue
-
     cert_expiration = vote.directory_authorities[0].key_certificate.expires
 
     if (cert_expiration - current_time) <= datetime.timedelta(days = 14):
