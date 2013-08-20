@@ -164,6 +164,7 @@ def run_checks(consensuses, votes):
     unknown_consensus_parameters,
     vote_parameters_mismatch_consensus,
     certificate_expiration,
+    consensuses_have_same_votes,
     has_all_signatures,
     voting_bandwidth_scanners,
     has_authority_flag,
@@ -326,6 +327,27 @@ def certificate_expiration(latest_consensus, consensuses, votes):
         issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'three months', authority))
 
   return issues
+
+
+def consensuses_have_same_votes(latest_consensus, consensuses, votes):
+  "Checks that all fresh consensuses are made up of the same votes."
+
+  current_time = datetime.datetime.now()
+  fresh_consensuses = dict((k, v) for k, v in consensuses.items() if ((current_time - v.valid_after) < datetime.timedelta(hours = 1)))
+
+  all_votes = set()
+
+  for consensus in fresh_consensuses.values():
+    all_votes.update(set([auth.fingerprint for auth in consensus.directory_authorities]))
+
+  authorities_missing_votes = []
+
+  for authority, consensus in fresh_consensuses.items():
+    if set([auth.fingerprint for auth in consensus.directory_authorities]) != all_votes:
+      authorities_missing_votes.append(authority)
+
+  if authorities_missing_votes:
+    return Issue.for_msg(Runlevel.NOTICE, 'MISSING_VOTES', ', '.join(authorities_missing_votes))
 
 
 def has_all_signatures(latest_consensus, consensuses, votes):
