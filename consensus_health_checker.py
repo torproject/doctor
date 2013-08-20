@@ -27,6 +27,7 @@ EMAIL_SUBJECT = 'Consensus issues'
 CONFIG = stem.util.conf.config_dict("consensus_health", {
   'msg': {},
   'authority_fingerprints': {},
+  'authority_v3ident': {},
   'bandwidth_authorities': [],
   'known_params': [],
 })
@@ -121,16 +122,11 @@ def main():
   config = stem.util.conf.get_config("consensus_health")
   config.load(util.get_path('data', 'consensus_health.cfg'))
 
-  # Downloading the consensus and vote from all authorities, then running our
-  # checks over them. If we fail to download a consensus then we skip
-  # downloading a vote from that authority. If all votes can't be fetched then
-  # our checks are skipped.
-
   consensuses, consensus_fetching_issues = get_consensuses()
-  votes, vote_fetching_issues = get_votes(consensuses.keys())
+  votes, vote_fetching_issues = get_votes()
   issues = consensus_fetching_issues + vote_fetching_issues
 
-  if votes:
+  if consensuses and votes:
     issues += run_checks(consensuses, votes)
   else:
     log.warn("Unable to retrieve any votes. Skipping checks.")
@@ -482,39 +478,30 @@ def bandwidth_authorities_in_sync(latest_consensus, consensuses, votes):
       break
 
 
-def get_consensuses(authorities = None):
+def get_consensuses():
   """
   Provides a mapping of directory authority nicknames to their present consensus.
-
-  :param list authorities: optional list of authority nicknames, if present
-    then only these authorities will be queried
 
   :returns: tuple of the form ({authority => consensus}, issues)
   """
 
-  return _get_documents(authorities, 'consensus', '/tor/status-vote/current/consensus')
+  return _get_documents('consensus', '/tor/status-vote/current/consensus')
 
 
-def get_votes(authorities = None):
+def get_votes():
   """
   Provides a mapping of directory authority nicknames to their present vote.
-
-  :param list authorities: optional list of authority nicknames, if present
-    then only these authorities will be queried
 
   :returns: tuple of the form ({authority => vote}, issues)
   """
 
-  return _get_documents(authorities, 'vote', '/tor/status-vote/current/authority')
+  return _get_documents('vote', '/tor/status-vote/current/authority')
 
 
-def _get_documents(authorities, label, resource):
+def _get_documents(label, resource):
   queries, documents, issues = {}, {}, []
 
   for authority, endpoint in stem.descriptor.remote.DIRECTORY_AUTHORITIES.items():
-    if authorities is not None and not authority in authorities:
-      continue
-
     queries[authority] = downloader.query(
       resource,
       endpoints = [endpoint],
@@ -525,6 +512,20 @@ def _get_documents(authorities, label, resource):
     try:
       documents[authority] = query.run()[0]
     except Exception, exc:
+      if label == 'vote' and authority in CONFIG['authority_v3ident']:
+        # try to download the vote via the other authorities
+
+        query = downloader.query(
+          '/tor/status-vote/current/%s' % CONFIG['authority_v3ident'][authority],
+          default_params = False,
+        )
+
+        query.run(True)
+
+        if not query.error:
+          documents[authority] = list(query)[0]
+          continue
+
       msg = "Unable to retrieve the %s from %s (%s): %s" % (label, authority, query.download_url, exc)
 
       log.info(msg)
