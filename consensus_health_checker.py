@@ -161,7 +161,7 @@ def run_checks(consensuses, votes):
     consensus_method_unsupported,
     different_recommended_client_version,
     different_recommended_server_version,
-    unknown_consensus_parameteres,
+    unknown_consensus_parameters,
     vote_parameters_mismatch_consensus,
     certificate_expiration,
     voting_bandwidth_scanners,
@@ -205,14 +205,14 @@ def missing_latest_consensus(latest_consensus, consensuses, votes):
 def consensus_method_unsupported(latest_consensus, consensuses, votes):
   "Checks that all of the votes support the present consensus method."
 
-  incompatable_authorities = []
+  incompatible_authorities = []
 
   for authority, vote in votes.items():
     if not latest_consensus.consensus_method in vote.consensus_methods:
-      incompatable_authorities.append(authority)
+      incompatible_authorities.append(authority)
 
-  if incompatable_authorities:
-    return Issue.for_msg(Runlevel.WARNING, 'CONSENSUS_METHOD_UNSUPPORTED', ', '.join(incompatable_authorities))
+  if incompatible_authorities:
+    return Issue.for_msg(Runlevel.WARNING, 'CONSENSUS_METHOD_UNSUPPORTED', ', '.join(incompatible_authorities))
 
 
 def different_recommended_client_version(latest_consensus, consensuses, votes):
@@ -265,7 +265,7 @@ def _version_difference_str(authority, consensus_versions, vote_versions):
   return msg
 
 
-def unknown_consensus_parameteres(latest_consensus, consensuses, votes):
+def unknown_consensus_parameters(latest_consensus, consensuses, votes):
   "Checks that votes don't contain any parameters that we don't recognize."
 
   unknown_entries = []
