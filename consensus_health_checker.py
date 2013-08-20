@@ -394,7 +394,7 @@ def has_expected_fingerprints(latest_consensus, consensuses, votes):
   issues = []
 
   for desc in latest_consensus.routers.values():
-    if desc.nickname in CONFIG['authority_fingerprints']:
+    if desc.nickname in CONFIG['authority_fingerprints'] and Flag.NAMED in desc.flags:
       expected_fingerprint = CONFIG['authority_fingerprints'][desc.nickname]
 
       if desc.fingerprint != expected_fingerprint:
