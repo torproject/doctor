@@ -476,7 +476,7 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
   issues = []
 
   for fingerprint in disagreed_bad_exits:
-    with_flag = set([authority for autority, flagged in bad_exits.items() if fingerprint in flagged])
+    with_flag = set([authority for authority, flagged in bad_exits.items() if fingerprint in flagged])
     without_flag = voting_authorities.difference(with_flag)
 
     issues.append(Issue.for_msg(Runlevel.NOTICE, 'BADEXIT_OUT_OF_SYNC', fingerprint, ', '.join(with_flag), ', '.join(without_flag)))
