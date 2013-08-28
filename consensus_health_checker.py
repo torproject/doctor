@@ -19,6 +19,7 @@ import stem.util.conf
 import stem.util.enum
 
 from stem import Flag
+from stem.descriptor.remote import DIRECTORY_AUTHORITIES
 
 Runlevel = stem.util.enum.UppercaseEnum("NOTICE", "WARNING", "ERROR")
 
@@ -26,8 +27,6 @@ EMAIL_SUBJECT = 'Consensus issues'
 
 CONFIG = stem.util.conf.config_dict("consensus_health", {
   'msg': {},
-  'authority_fingerprints': {},
-  'authority_v3ident': {},
   'bandwidth_authorities': [],
   'known_params': [],
 })
@@ -403,12 +402,7 @@ def has_authority_flag(latest_consensus, consensuses, votes):
     if Flag.AUTHORITY in desc.flags:
       seen_authorities.add(desc.nickname)
 
-  # Tonga lacks a v3ident so the remote descriptor module doesn't include it,
-  # but it's still an authority.
-
-  known_authorities = set(stem.descriptor.remote.DIRECTORY_AUTHORITIES.keys())
-  known_authorities.add('Tonga')
-
+  known_authorities = set(DIRECTORY_AUTHORITIES.keys())
   missing_authorities = known_authorities.difference(seen_authorities)
   extra_authorities = seen_authorities.difference(known_authorities)
 
@@ -429,10 +423,9 @@ def has_expected_fingerprints(latest_consensus, consensuses, votes):
   "Checks that the authorities have the fingerprints that we expect."
 
   issues = []
-
   for desc in latest_consensus.routers.values():
-    if desc.nickname in CONFIG['authority_fingerprints'] and Flag.NAMED in desc.flags:
-      expected_fingerprint = CONFIG['authority_fingerprints'][desc.nickname]
+    if desc.nickname in DIRECTORY_AUTHORITIES and Flag.NAMED in desc.flags:
+      expected_fingerprint = DIRECTORY_AUTHORITIES[desc.nickname].fingerprint
 
       if desc.fingerprint != expected_fingerprint:
         issues.append(Issue.for_msg(Runlevel.ERROR, 'FINGERPRINT_MISMATCH', desc.nickname, desc.fingerprint, expected_fingerprint))
@@ -446,11 +439,11 @@ def is_recommended_versions(latest_consensus, consensuses, votes):
   outdated_authorities = {}
   min_version = min(latest_consensus.server_versions)
 
-  for authority, fingerprint in CONFIG['authority_fingerprints'].items():
-    desc = latest_consensus.routers.get(fingerprint)
+  for authority in DIRECTORY_AUTHORITIES.values():
+    desc = latest_consensus.routers.get(authority.fingerprint)
 
     if desc and desc.version and desc.version < min_version:
-      outdated_authorities[authority] = desc.version
+      outdated_authorities[authority.nickname] = desc.version
 
   if outdated_authorities:
     if rate_limit_notice('tor_out_of_date.%s' % '.'.join(outdated_authorities.keys()), days = 7):
@@ -534,10 +527,10 @@ def get_votes():
 def _get_documents(label, resource):
   queries, documents, issues = {}, {}, []
 
-  for authority, endpoint in stem.descriptor.remote.DIRECTORY_AUTHORITIES.items():
-    queries[authority] = downloader.query(
+  for authority in DIRECTORY_AUTHORITIES.values():
+    queries[authority.nickname] = downloader.query(
       resource,
-      endpoints = [endpoint],
+      endpoints = [(authority.address, authority.dir_port)],
       default_params = False,
     )
 
@@ -545,11 +538,16 @@ def _get_documents(label, resource):
     try:
       documents[authority] = query.run()[0]
     except Exception, exc:
-      if label == 'vote' and authority in CONFIG['authority_v3ident']:
+      if label == 'vote' and authority in DIRECTORY_AUTHORITIES:
         # try to download the vote via the other authorities
 
+        v3ident = DIRECTORY_AUTHORITIES[authority].v3ident
+
+        if v3ident is None:
+          continue  # not a voting authority
+
         query = downloader.query(
-          '/tor/status-vote/current/%s' % CONFIG['authority_v3ident'][authority],
+          '/tor/status-vote/current/%s' % v3ident,
           default_params = False,
         )
 
