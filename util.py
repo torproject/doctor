@@ -14,7 +14,7 @@ from email.MIMEBase import MIMEBase
 import stem.util.log
 
 FROM_ADDRESS = 'verelsa@gmail.com'
-TO_ADDRESS = 'atagar@torproject.org'
+TO_ADDRESS = 'tor-consensus-health@lists.torproject.org'
 PASSWORD = None
 
 
