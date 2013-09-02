@@ -19,10 +19,10 @@ import stem.util.conf
 import stem.util.enum
 
 from stem import Flag
-from stem.descriptor.remote import DIRECTORY_AUTHORITIES
 
 Runlevel = stem.util.enum.UppercaseEnum("NOTICE", "WARNING", "ERROR")
 
+DIRECTORY_AUTHORITIES = stem.descriptor.remote.get_authorities()
 EMAIL_SUBJECT = 'Consensus issues'
 
 CONFIG = stem.util.conf.config_dict("consensus_health", {
