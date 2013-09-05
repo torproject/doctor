@@ -15,6 +15,7 @@ import stem.util.log
 
 FROM_ADDRESS = 'verelsa@gmail.com'
 TO_ADDRESS = 'tor-consensus-health@lists.torproject.org'
+ERROR_ADDRESS = 'atagar@torproject.org'
 PASSWORD = None
 
 
@@ -77,7 +78,7 @@ def log_stem_debugging(name):
   log.addHandler(handler)
 
 
-def send(subject, body_text = None, body_html = None, attachment = None):
+def send(subject, body_text = None, body_html = None, attachment = None, destination = TO_ADDRESS):
   """
   Sends an email notification via gmail.
 
@@ -92,7 +93,7 @@ def send(subject, body_text = None, body_html = None, attachment = None):
   msg = MIMEMultipart('alternative')
   msg['Subject'] = subject
   msg['From'] = FROM_ADDRESS
-  msg['To'] = TO_ADDRESS
+  msg['To'] = destination
 
   if body_text:
     msg.attach(MIMEText(body_text, 'plain'))

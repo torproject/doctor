@@ -97,4 +97,4 @@ if __name__ == '__main__':
   except:
     msg = "descriptor_checker.py failed with:\n\n%s" % traceback.format_exc()
     log.error(msg)
-    util.send("Script Error", body_text = msg)
+    util.send("Script Error", body_text = msg, destination = util.ERROR_ADDRESS)
