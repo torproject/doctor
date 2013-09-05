@@ -58,14 +58,18 @@ def main():
 
   # download the consensus from each authority
 
-  for authority, endpoint in stem.descriptor.remote.DIRECTORY_AUTHORITIES.items():
-    log.debug("Downloading the consensus from %s..." % authority)
+  for authority in stem.descriptor.remote.get_authorities().values():
+    # skip authorities that don't vote in the consensus
+    if authority.v3ident is None:
+      continue
+
+    log.debug("Downloading the consensus from %s..." % authority.nickname)
 
     query = stem.descriptor.remote.Query(
       '/tor/status-vote/current/consensus',
       block = True,
       timeout = 60,
-      endpoints = [endpoint],
+      endpoints = [(authority.address, authority.dir_port)],
       document_handler = stem.descriptor.DocumentHandler.DOCUMENT,
     )
 
@@ -73,9 +77,9 @@ def main():
       count = len(list(query)[0].routers)
       log.debug("  %i descriptors retrieved from %s in %0.2fs" % (count, query.download_url, query.runtime))
     else:
-      log.warn("Unable to retrieve the consensus from %s: %s" % (authority, query.error))
+      log.warn("Unable to retrieve the consensus from %s: %s" % (authority.nickname, query.error))
 
-      subject = EMAIL_SUBJECT + ' (%s)' % authority
+      subject = EMAIL_SUBJECT + ' (%s)' % authority.nickname
       send_email(subject, 'consensus', query)
 
 
