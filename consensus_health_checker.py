@@ -3,8 +3,7 @@
 # See LICENSE for licensing information
 
 """
-Performs a variety of checks against the present votes and consensus, similar
-to DocTor (https://gitweb.torproject.org/doctor.git).
+Performs a variety of checks against the present votes and consensus.
 """
 
 import datetime
