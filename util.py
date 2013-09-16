@@ -90,7 +90,13 @@ def send(subject, body_text = None, destination = TO_ADDRESS):
   :raises: **Exception** if the email fails to be sent
   """
 
-  process = subprocess.Popen(['mail', '-E', '-s', subject, destination], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+  process = subprocess.Popen(
+    ['mail', '-E', '-s', subject, destination],
+    stdout = subprocess.PIPE,
+    stdout = subprocess.PIPE,
+    stderr = subprocess.PIPE,
+  )
+
   stdout, stderr = process.communicate(body_text)
   exit_code = process.poll()
 
