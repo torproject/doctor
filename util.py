@@ -92,7 +92,7 @@ def send(subject, body_text = None, destination = TO_ADDRESS):
 
   process = subprocess.Popen(
     ['mail', '-E', '-s', subject, destination],
-    stdout = subprocess.PIPE,
+    stdin = subprocess.PIPE,
     stdout = subprocess.PIPE,
     stderr = subprocess.PIPE,
   )
