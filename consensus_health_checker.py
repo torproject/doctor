@@ -133,6 +133,10 @@ def main():
     log.debug("Sending notification for issues")
     util.send(EMAIL_SUBJECT, body_text = '\n'.join(map(str, issues)))
 
+    # notification for #tor-bots
+
+    util.send('Announce or', body_text = '\n'.join(['[consensus-health] %s' % issue for issue in issues]), destination = 'tor-misc@commit.noreply.org')
+
   log.debug("Checks finished, runtime was %0.2f seconds" % (time.time() - start_time))
 
 
