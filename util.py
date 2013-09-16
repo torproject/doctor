@@ -5,6 +5,7 @@ Module for issuing email notifications to me via gmail.
 import logging
 import os
 import smtplib
+import subprocess
 
 from email import Encoders
 from email.mime.multipart import MIMEMultipart
@@ -78,7 +79,26 @@ def log_stem_debugging(name):
   log.addHandler(handler)
 
 
-def send(subject, body_text = None, body_html = None, attachment = None, destination = TO_ADDRESS):
+def send(subject, body_text = None, destination = TO_ADDRESS):
+  """
+  Sends an email notification via the local mail application.
+
+  :param str subject: subject of the email
+  :param str body_text: plaintext body of the email
+  :param str destination: location to send the email to
+
+  :raises: **Exception** if the email fails to be sent
+  """
+
+  process = subprocess.Popen(['mail', '-E', '-s', subject, destination], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+  stdout, stderr = process.communicate(body_text)
+  exit_code = process.poll()
+
+  if exit_code != 0:
+    raise ValueError("Unable to send email: %s" % stderr.strip())
+
+
+def send_via_gmail(subject, body_text = None, body_html = None, attachment = None, destination = TO_ADDRESS):
   """
   Sends an email notification via gmail.
 
@@ -86,6 +106,7 @@ def send(subject, body_text = None, body_html = None, attachment = None, destina
   :param str body_text: plaintext body of the email
   :param str body_html: html body of the email
   :param str attachment: path of a file to attach
+  :param str destination: location to send the email to
 
   :raises: **Exception** if the email fails to be sent
   """
