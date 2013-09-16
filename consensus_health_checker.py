@@ -395,11 +395,13 @@ def voting_bandwidth_scanners(latest_consensus, consensuses, votes):
   issues = []
 
   if missing_authorities:
-    runlevel = Runlevel.ERROR if len(missing_authorities) > 1 else Runlevel.WARNING
-    issues.append(Issue.for_msg(runlevel, 'MISSING_BANDWIDTH_SCANNERS', ', '.join(missing_authorities)))
+    if rate_limit_notice('missing_bw_scanners.%s' % '.'.join(missing_authorities), days = 1):
+      runlevel = Runlevel.ERROR if len(missing_authorities) > 1 else Runlevel.WARNING
+      issues.append(Issue.for_msg(runlevel, 'MISSING_BANDWIDTH_SCANNERS', ', '.join(missing_authorities)))
 
   if extra_authorities:
-    issues.append(Issue.for_msg(Runlevel.NOTICE, 'EXTRA_BANDWIDTH_SCANNERS', ', '.join(extra_authorities)))
+    if rate_limit_notice('extra_bw_scanners.%s' % '.'.join(extra_authorities), days = 1):
+      issues.append(Issue.for_msg(Runlevel.NOTICE, 'EXTRA_BANDWIDTH_SCANNERS', ', '.join(extra_authorities)))
 
   return issues
 
