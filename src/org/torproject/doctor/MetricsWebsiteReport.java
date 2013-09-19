@@ -86,10 +86,7 @@ public class MetricsWebsiteReport {
         writeAuthorityVersions();
         writeDownloadStatistics();
         writeRelayFlagsSummary();
-        /* Temporarily removed relay flags table to see if anybody cares.
-         * It's making the website really huge, and it's unclear if people
-         * actually need it.  -KL 2013-08-12 */
-        //writeRelayFlagsTable();
+        writeRelayFlagsTable();
         writePageFooter();
         this.bw.close();
       } catch (IOException e) {
