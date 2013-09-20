@@ -577,7 +577,9 @@ def _get_documents(label, resource):
       msg = "Unable to retrieve the %s from %s (%s): %s" % (label, authority, query.download_url, exc)
 
       log.info(msg)
-      issues.append(Issue(Runlevel.ERROR, msg))
+
+      if rate_limit_notice('authority_unavailable.%s' % authority, days = 1):
+        issues.append(Issue(Runlevel.ERROR, msg))
 
   return documents, issues
 
