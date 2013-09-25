@@ -317,16 +317,17 @@ def certificate_expiration(latest_consensus, consensuses, votes):
     # votes should only have a single authority entry (the one that issued this vote)
 
     cert_expiration = vote.directory_authorities[0].key_certificate.expires
+    expiration_label = '%s (%s)' % (authority, cert_expiration.strftime('%Y-%m-%d %H-%M-%S'))
 
     if (cert_expiration - current_time) <= datetime.timedelta(days = 14):
       if rate_limit_notice('cert_expiration.two_weeks.%s' % authority, days = 14):
-        issues.append(Issue.for_msg(Runlevel.WARNING, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'two weeks', authority))
+        issues.append(Issue.for_msg(Runlevel.WARNING, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'two weeks', expiration_label))
     elif (cert_expiration - current_time) <= datetime.timedelta(days = 60):
       if rate_limit_notice('cert_expiration.two_months.%s' % authority, days = 60):
-        issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'two months', authority))
+        issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'two months', expiration_label))
     elif (cert_expiration - current_time) <= datetime.timedelta(days = 90):
       if rate_limit_notice('cert_expiration.three_months.%s' % authority, days = 90):
-        issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'three months', authority))
+        issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', 'three months', expiration_label))
 
   return issues
 
