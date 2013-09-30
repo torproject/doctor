@@ -8,6 +8,7 @@ relays. If so then this sends an email notification.
 """
 
 import os
+import time
 import traceback
 
 import util
@@ -37,8 +38,20 @@ def main():
   prior_fingerprints = load_fingerprints()
   downloader = DescriptorDownloader(timeout = 60)
 
+  dry_run = False
+
   if not prior_fingerprints:
     log.debug("We don't have any existing fingerprints so this will be a dry-run. No notifications will be sent.")
+    dry_run = True
+  else:
+    last_modified = os.stat(FINGERPRINTS_FILE).st_mtime  # unix timestamp for when it was last modified
+    seconds_ago = int(time.time() - last_modified)
+
+    log.debug("Our fingerprint was last modified at %s (%i seconds ago)." % (time.ctime(last_modified), seconds_ago))
+
+    if seconds_ago > (3 * 60 * 60):
+      log.debug("Fingerprint file was last modified over three hours ago. No notifications will be sent for this run.")
+      dry_run = True
 
   query = downloader.get_consensus()
   query.run(True)
@@ -54,7 +67,7 @@ def main():
   new_fingerprints = current_fingerprints.difference(prior_fingerprints)
   log.debug("%i new relays found" % len(new_fingerprints))
 
-  if prior_fingerprints and len(new_fingerprints) >= 50:
+  if not dry_run and len(new_fingerprints) >= 50:
     log.debug("Sending a notification...")
     send_email([relays[fp] for fp in new_fingerprints])
 
