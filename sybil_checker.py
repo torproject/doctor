@@ -62,14 +62,19 @@ def main():
 
 
 def send_email(new_relays):
-  # constructs a mapping of nicknames to router status entries so we can provide a listing that's sorted by nicknames
+  # Constructs a mapping of nicknames to router status entries so we can
+  # provide a listing that's sorted by nicknames.
 
-  nickname_to_relay = dict((entry.nickname, entry) for entry in new_relays)
+  nickname_to_relay = {}
+
+  for entry in new_relays:
+    nickname_to_relay.setdefault(entry.nickname, []).append(entry)
+
   relay_entries = []
 
   for nickname in sorted(nickname_to_relay.keys()):
-    relay = nickname_to_relay[nickname]
-    relay_entries.append(RELAY_ENTRY % (relay.nickname, relay.fingerprint, relay.address, relay.or_port, relay.version, relay.exit_policy))
+    for relay in nickname_to_relay[nickname]:
+      relay_entries.append(RELAY_ENTRY % (relay.nickname, relay.fingerprint, relay.address, relay.or_port, relay.version, relay.exit_policy))
 
   try:
     body = EMAIL_BODY % len(new_relays)
