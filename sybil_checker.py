@@ -78,15 +78,15 @@ def send_email(new_relays):
   # Constructs a mapping of nicknames to router status entries so we can
   # provide a listing that's sorted by nicknames.
 
-  nickname_to_relay = {}
+  nickname_to_relays = {}
 
   for entry in new_relays:
-    nickname_to_relay.setdefault(entry.nickname, []).append(entry)
+    nickname_to_relays.setdefault(entry.nickname, []).append(entry)
 
   relay_entries = []
 
-  for nickname in sorted(nickname_to_relay.keys()):
-    for relay in nickname_to_relay[nickname]:
+  for nickname in sorted(nickname_to_relays.keys()):
+    for relay in nickname_to_relays[nickname]:
       relay_entries.append(RELAY_ENTRY % (relay.nickname, relay.fingerprint, relay.address, relay.or_port, relay.version, relay.exit_policy))
 
   try:
