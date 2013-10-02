@@ -230,7 +230,8 @@ def different_recommended_client_version(latest_consensus, consensuses, votes):
       differences.append(msg)
 
   if differences:
-    return Issue.for_msg(Runlevel.NOTICE, 'DIFFERENT_RECOMMENDED_VERSION', 'client', ', '.join(differences))
+    if rate_limit_notice('different_recommended_versions.client', days = 1):
+      return Issue.for_msg(Runlevel.NOTICE, 'DIFFERENT_RECOMMENDED_VERSION', 'client', ', '.join(differences))
 
 
 def different_recommended_server_version(latest_consensus, consensuses, votes):
@@ -244,7 +245,8 @@ def different_recommended_server_version(latest_consensus, consensuses, votes):
       differences.append(msg)
 
   if differences:
-    return Issue.for_msg(Runlevel.NOTICE, 'DIFFERENT_RECOMMENDED_VERSION', 'server', ', '.join(differences))
+    if rate_limit_notice('different_recommended_versions.server', days = 1):
+      return Issue.for_msg(Runlevel.NOTICE, 'DIFFERENT_RECOMMENDED_VERSION', 'server', ', '.join(differences))
 
 
 def _version_difference_str(authority, consensus_versions, vote_versions):
