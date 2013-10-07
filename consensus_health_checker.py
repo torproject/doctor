@@ -18,6 +18,7 @@ import stem.util.conf
 import stem.util.enum
 
 from stem import Flag
+from stem.util.lru_cache import lru_cache
 
 Runlevel = stem.util.enum.UppercaseEnum("NOTICE", "WARNING", "ERROR")
 
@@ -51,9 +52,7 @@ class Issue(object):
     self._template = template
     self._attr = attr
 
-    self._msg = None
-    self._suppression_duration = None
-
+  @lru_cache()
   def get_message(self):
     """
     Provides the description of the problem.
@@ -61,18 +60,15 @@ class Issue(object):
     :returns: **str** with a description of the issue
     """
 
-    if self._msg is None:
-      if self._template in CONFIG['msg']:
-        try:
-          self._msg = CONFIG['msg'][self._template].format(**self._attr)
-        except:
-          self._msg = ''
-          log.error("Unable to apply formatted string attributes to msg.%s: %s" % (self._template, self._attr))
-      else:
-        self._msg = ''
-        log.error("Missing configuration value: msg.%s" % self._template)
+    if self._template in CONFIG['msg']:
+      try:
+        return CONFIG['msg'][self._template].format(**self._attr)
+      except:
+        log.error("Unable to apply formatted string attributes to msg.%s: %s" % (self._template, self._attr))
+    else:
+      log.error("Missing configuration value: msg.%s" % self._template)
 
-    return self._msg
+    return ''
 
   def get_runlevel(self):
     """
@@ -83,6 +79,7 @@ class Issue(object):
 
     return self._runlevel
 
+  @lru_cache()
   def get_suppression_duration(self):
     """
     Provides the number of hours we should suppress this message after it has
@@ -92,19 +89,15 @@ class Issue(object):
       after its been shown
     """
 
-    if self._suppression_duration is None:
-      if self._template in CONFIG['suppression']:
-        suppression_duration = CONFIG['suppression'][self._template]
+    if self._template in CONFIG['suppression']:
+      suppression_duration = CONFIG['suppression'][self._template]
 
-        try:
-          self._suppression_duration = int(suppression_duration)
-        except ValueError:
-          log.error("Non-numic suppression time (%s): %s" % (self._template, suppression_duration))
-          self._suppression_duration = 0
-      else:
-        self._suppression_duration = 0
+      try:
+        return int(suppression_duration)
+      except ValueError:
+        log.error("Non-numic suppression time (%s): %s" % (self._template, suppression_duration))
 
-    return self._suppression_duration
+    return 0
 
   def __str__(self):
     return "%s: %s" % (self.get_runlevel(), self.get_message())
