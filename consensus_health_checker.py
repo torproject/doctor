@@ -26,6 +26,7 @@ EMAIL_SUBJECT = 'Consensus issues'
 
 CONFIG = stem.util.conf.config_dict("consensus_health", {
   'msg': {},
+  'suppression': {},
   'bandwidth_authorities': [],
   'known_params': [],
 })
@@ -43,38 +44,70 @@ downloader = stem.descriptor.remote.DescriptorDownloader(
 class Issue(object):
   """
   Problem to be reported at the end of the run.
-
-  :var str runlevel: runlevel of the issue
-  :var str msg: description of the problem
   """
 
-  def __init__(self, runlevel, msg):
-    self.runlevel = runlevel
-    self.msg = msg
+  def __init__(self, runlevel, template, **attr):
+    self._runlevel = runlevel
+    self._template = template
+    self._attr = attr
 
-  @staticmethod
-  def for_msg(runlevel, template, **attr):
+    self._msg = None
+    self._suppression_duration = None
+
+  def get_message(self):
     """
-    Provides an Issue for the given message from our config with any formatted
-    string arguments inserted.
+    Provides the description of the problem.
 
-    :var str runlevel: runlevel of the issue
-    :param str template: base string to fetch from our config
-    :param dict attr: formatted string arguments
+    :returns: **str** with a description of the issue
     """
 
-    if template in CONFIG['msg']:
-      try:
-        return Issue(runlevel, CONFIG['msg'][template].format(**attr))
-      except:
-        log.error("Unable to apply formatted string attributes to msg.%s: %s" % (template, attr))
-    else:
-      log.error("Missing configuration value: msg.%s" % template)
+    if self._msg is None:
+      if self._template in CONFIG['msg']:
+        try:
+          self._msg = CONFIG['msg'][self._template].format(**self._attr)
+        except:
+          self._msg = ''
+          log.error("Unable to apply formatted string attributes to msg.%s: %s" % (self._template, self._attr))
+      else:
+        self._msg = ''
+        log.error("Missing configuration value: msg.%s" % self._template)
 
-    return Issue(runlevel, '')
+    return self._msg
+
+  def get_runlevel(self):
+    """
+    Provides the runlevel of this issue.
+
+    :reutrns: **Runlevel** for the runlevel of the issue
+    """
+
+    return self._runlevel
+
+  def get_suppression_duration(self):
+    """
+    Provides the number of hours we should suppress this message after it has
+    been shown. This is zero if the message shouldn't be suppressed.
+
+    :returns: **int** for the number of hours the message should be suppressed
+      after its been shown
+    """
+
+    if self._suppression_duration is None:
+      if self._template in CONFIG['suppression']:
+        suppression_duration = CONFIG['suppression'][self._template]
+
+        try:
+          self._suppression_duration = int(suppression_duration)
+        except ValueError:
+          log.error("Non-numic suppression time (%s): %s" % (self._template, suppression_duration))
+          self._suppression_duration = 0
+      else:
+        self._suppression_duration = 0
+
+    return self._suppression_duration
 
   def __str__(self):
-    return "%s: %s" % (self.runlevel, self.msg)
+    return "%s: %s" % (self.get_runlevel(), self.get_message())
 
 
 def rate_limit_notice(key, hours = 0, days = 0):
@@ -87,6 +120,9 @@ def rate_limit_notice(key, hours = 0, days = 0):
   :param int hours: number of hours to suppress this message for after being sent
   :param int days: number of days to suppress this message for after being sent
   """
+
+  if hours == 0 and days == 0:
+    return True
 
   config = stem.util.conf.get_config("last_notified")
   config_path = util.get_path('data', 'last_notified.cfg')
@@ -129,13 +165,27 @@ def main():
   else:
     log.warn("Unable to retrieve any votes. Skipping checks.")
 
-  if issues:
+  is_all_suppressed = True  # either no issues or they're all already suppressed
+
+  for issue in issues:
+    key = issue.get_message().replace(' ', '_')
+    duration = issue.get_suppression_duration()
+
+    if rate_limit_notice(key, duration):
+      is_all_suppressed = False
+
+  if not is_all_suppressed:
     log.debug("Sending notification for issues")
     util.send(EMAIL_SUBJECT, body_text = '\n'.join(map(str, issues)))
 
     # notification for #tor-bots
 
     util.send('Announce or', body_text = '\n'.join(['[consensus-health] %s' % issue for issue in issues]), destination = 'tor-misc@commit.noreply.org')
+  else:
+    if issues:
+      log.info("All %i issues were suppressed. Not sending a notification." % len(issues))
+    else:
+      log.info("No issues found.")
 
   log.debug("Checks finished, runtime was %0.2f seconds" % (time.time() - start_time))
 
@@ -203,7 +253,7 @@ def missing_latest_consensus(latest_consensus, consensuses, votes):
 
   if stale_authorities:
     runlevel = Runlevel.ERROR if len(stale_authorities) > 3 else Runlevel.WARNING
-    return Issue.for_msg(runlevel, 'MISSING_LATEST_CONSENSUS', authorities = ', '.join(stale_authorities))
+    return Issue(runlevel, 'MISSING_LATEST_CONSENSUS', authorities = ', '.join(stale_authorities))
 
 
 def consensus_method_unsupported(latest_consensus, consensuses, votes):
@@ -216,7 +266,7 @@ def consensus_method_unsupported(latest_consensus, consensuses, votes):
       incompatible_authorities.append(authority)
 
   if incompatible_authorities:
-    return Issue.for_msg(Runlevel.WARNING, 'CONSENSUS_METHOD_UNSUPPORTED', authorities = ', '.join(incompatible_authorities))
+    return Issue(Runlevel.WARNING, 'CONSENSUS_METHOD_UNSUPPORTED', authorities = ', '.join(incompatible_authorities))
 
 
 def different_recommended_client_version(latest_consensus, consensuses, votes):
@@ -230,8 +280,7 @@ def different_recommended_client_version(latest_consensus, consensuses, votes):
       differences.append(msg)
 
   if differences:
-    if rate_limit_notice('different_recommended_versions.client', days = 1):
-      return Issue.for_msg(Runlevel.NOTICE, 'DIFFERENT_RECOMMENDED_VERSION', type = 'client', differences = ', '.join(differences))
+    return Issue(Runlevel.NOTICE, 'DIFFERENT_RECOMMENDED_VERSION', type = 'client', differences = ', '.join(differences))
 
 
 def different_recommended_server_version(latest_consensus, consensuses, votes):
@@ -245,8 +294,7 @@ def different_recommended_server_version(latest_consensus, consensuses, votes):
       differences.append(msg)
 
   if differences:
-    if rate_limit_notice('different_recommended_versions.server', days = 1):
-      return Issue.for_msg(Runlevel.NOTICE, 'DIFFERENT_RECOMMENDED_VERSION', type = 'server', differences = ', '.join(differences))
+    return Issue(Runlevel.NOTICE, 'DIFFERENT_RECOMMENDED_VERSION', type = 'server', differences = ', '.join(differences))
 
 
 def _version_difference_str(authority, consensus_versions, vote_versions):
@@ -287,7 +335,7 @@ def unknown_consensus_parameters(latest_consensus, consensuses, votes):
       unknown_entries.append('%s %s' % (authority, ' '.join(unknown_params)))
 
   if unknown_entries:
-    return Issue.for_msg(Runlevel.NOTICE, 'UNKNOWN_CONSENSUS_PARAMETERS', parameters = ', '.join(unknown_entries))
+    return Issue(Runlevel.NOTICE, 'UNKNOWN_CONSENSUS_PARAMETERS', parameters = ', '.join(unknown_entries))
 
 
 def vote_parameters_mismatch_consensus(latest_consensus, consensuses, votes):
@@ -306,7 +354,7 @@ def vote_parameters_mismatch_consensus(latest_consensus, consensuses, votes):
       mismatching_entries.append('%s %s' % (authority, ' '.join(mismatching_params)))
 
   if mismatching_entries:
-    return Issue.for_msg(Runlevel.NOTICE, 'MISMATCH_CONSENSUS_PARAMETERS', parameters = ', '.join(mismatching_entries))
+    return Issue(Runlevel.NOTICE, 'MISMATCH_CONSENSUS_PARAMETERS', parameters = ', '.join(mismatching_entries))
 
 
 def certificate_expiration(latest_consensus, consensuses, votes):
@@ -322,14 +370,11 @@ def certificate_expiration(latest_consensus, consensuses, votes):
     expiration_label = '%s (%s)' % (authority, cert_expiration.strftime('%Y-%m-%d %H-%M-%S'))
 
     if (cert_expiration - current_time) <= datetime.timedelta(days = 14):
-      if rate_limit_notice('cert_expiration.two_weeks.%s' % authority, days = 14):
-        issues.append(Issue.for_msg(Runlevel.WARNING, 'CERTIFICATE_ABOUT_TO_EXPIRE', duration = 'two weeks', authority = expiration_label))
+      issues.append(Issue(Runlevel.WARNING, 'CERTIFICATE_ABOUT_TO_EXPIRE', duration = 'two weeks', authority = expiration_label))
     elif (cert_expiration - current_time) <= datetime.timedelta(days = 60):
-      if rate_limit_notice('cert_expiration.two_months.%s' % authority, days = 60):
-        issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', duration = 'two months', authority = expiration_label))
+      issues.append(Issue(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', duration = 'two months', authority = expiration_label))
     elif (cert_expiration - current_time) <= datetime.timedelta(days = 90):
-      if rate_limit_notice('cert_expiration.three_months.%s' % authority, days = 90):
-        issues.append(Issue.for_msg(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', duration = 'three months', authority = expiration_label))
+      issues.append(Issue(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', duration = 'three months', authority = expiration_label))
 
   return issues
 
@@ -352,7 +397,7 @@ def consensuses_have_same_votes(latest_consensus, consensuses, votes):
       authorities_missing_votes.append(authority)
 
   if authorities_missing_votes:
-    return Issue.for_msg(Runlevel.NOTICE, 'MISSING_VOTES', authorities = ', '.join(authorities_missing_votes))
+    return Issue(Runlevel.NOTICE, 'MISSING_VOTES', authorities = ', '.join(authorities_missing_votes))
 
 
 def has_all_signatures(latest_consensus, consensuses, votes):
@@ -378,7 +423,7 @@ def has_all_signatures(latest_consensus, consensuses, votes):
       missing_authorities.add(missing_authority)
 
   if missing_authorities:
-    return Issue.for_msg(Runlevel.NOTICE, 'MISSING_SIGNATURE', authorities = ', '.join(missing_authorities))
+    return Issue(Runlevel.NOTICE, 'MISSING_SIGNATURE', authorities = ', '.join(missing_authorities))
 
 
 def voting_bandwidth_scanners(latest_consensus, consensuses, votes):
@@ -402,13 +447,11 @@ def voting_bandwidth_scanners(latest_consensus, consensuses, votes):
   issues = []
 
   if missing_authorities:
-    if rate_limit_notice('missing_bw_scanners.%s' % '.'.join(missing_authorities), days = 1):
-      runlevel = Runlevel.ERROR if len(missing_authorities) > 1 else Runlevel.WARNING
-      issues.append(Issue.for_msg(runlevel, 'MISSING_BANDWIDTH_SCANNERS', authorities = ', '.join(missing_authorities)))
+    runlevel = Runlevel.ERROR if len(missing_authorities) > 1 else Runlevel.WARNING
+    issues.append(Issue(runlevel, 'MISSING_BANDWIDTH_SCANNERS', authorities = ', '.join(missing_authorities)))
 
   if extra_authorities:
-    if rate_limit_notice('extra_bw_scanners.%s' % '.'.join(extra_authorities), days = 1):
-      issues.append(Issue.for_msg(Runlevel.NOTICE, 'EXTRA_BANDWIDTH_SCANNERS', authorities = ', '.join(extra_authorities)))
+    issues.append(Issue(Runlevel.NOTICE, 'EXTRA_BANDWIDTH_SCANNERS', authorities = ', '.join(extra_authorities)))
 
   return issues
 
@@ -429,12 +472,10 @@ def has_authority_flag(latest_consensus, consensuses, votes):
   issues = []
 
   if missing_authorities:
-    if rate_limit_notice('missing_authorities.%s' % '.'.join(missing_authorities), days = 7):
-      issues.append(Issue.for_msg(Runlevel.WARNING, 'MISSING_AUTHORITIES', authorities = ', '.join(missing_authorities)))
+    issues.append(Issue(Runlevel.WARNING, 'MISSING_AUTHORITIES', authorities = ', '.join(missing_authorities)))
 
   if extra_authorities:
-    if rate_limit_notice('extra_authorities.%s' % '.'.join(extra_authorities), days = 7):
-      issues.append(Issue.for_msg(Runlevel.NOTICE, 'EXTRA_AUTHORITIES', authorities = ', '.join(extra_authorities)))
+    issues.append(Issue(Runlevel.NOTICE, 'EXTRA_AUTHORITIES', authorities = ', '.join(extra_authorities)))
 
   return issues
 
@@ -448,7 +489,7 @@ def has_expected_fingerprints(latest_consensus, consensuses, votes):
       expected_fingerprint = DIRECTORY_AUTHORITIES[desc.nickname].fingerprint
 
       if desc.fingerprint != expected_fingerprint:
-        issues.append(Issue.for_msg(Runlevel.ERROR, 'FINGERPRINT_MISMATCH', authority = desc.nickname, expected = desc.fingerprint, actual = expected_fingerprint))
+        issues.append(Issue(Runlevel.ERROR, 'FINGERPRINT_MISMATCH', authority = desc.nickname, expected = desc.fingerprint, actual = expected_fingerprint))
 
   return issues
 
@@ -466,9 +507,8 @@ def is_recommended_versions(latest_consensus, consensuses, votes):
       outdated_authorities[authority.nickname] = desc.version
 
   if outdated_authorities:
-    if rate_limit_notice('tor_out_of_date.%s' % '.'.join(outdated_authorities.keys()), days = 7):
-      entries = ['%s (%s)' % (k, v) for k, v in outdated_authorities.items()]
-      return Issue.for_msg(Runlevel.WARNING, 'TOR_OUT_OF_DATE', authorities = ', '.join(entries))
+    entries = ['%s (%s)' % (k, v) for k, v in outdated_authorities.items()]
+    return Issue(Runlevel.WARNING, 'TOR_OUT_OF_DATE', authorities = ', '.join(entries))
 
 
 def bad_exits_in_sync(latest_consensus, consensuses, votes):
@@ -492,10 +532,7 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
     with_flag = set([authority for authority, flagged in bad_exits.items() if fingerprint in flagged])
     without_flag = voting_authorities.difference(with_flag)
 
-    issues.append(Issue.for_msg(Runlevel.NOTICE, 'BADEXIT_OUT_OF_SYNC', fingerprint = fingerprint, with_flag = ', '.join(with_flag), without_flag = ', '.join(without_flag)))
-
-  if issues and rate_limit_notice('bad_exits_in_sync', days = 1):
-    return issues
+    issues.append(Issue(Runlevel.NOTICE, 'BADEXIT_OUT_OF_SYNC', fingerprint = fingerprint, with_flag = ', '.join(with_flag), without_flag = ', '.join(without_flag)))
 
 
 def bandwidth_authorities_in_sync(latest_consensus, consensuses, votes):
@@ -517,11 +554,8 @@ def bandwidth_authorities_in_sync(latest_consensus, consensuses, votes):
 
   for authority, count in measurement_counts.items():
     if count > (1.2 * average) or count < (0.8 * average):
-      if rate_limit_notice('bandwidth_authorities_in_sync', days = 1):
-        entries = ['%s (%s)' % (authority, count) for authority, count in measurement_counts.items()]
-        return Issue.for_msg(Runlevel.NOTICE, 'BANDWIDTH_AUTHORITIES_OUT_OF_SYNC', authorities = ', '.join(entries))
-
-      break
+      entries = ['%s (%s)' % (authority, count) for authority, count in measurement_counts.items()]
+      return Issue(Runlevel.NOTICE, 'BANDWIDTH_AUTHORITIES_OUT_OF_SYNC', authorities = ', '.join(entries))
 
 
 def get_consensuses():
@@ -577,12 +611,7 @@ def _get_documents(label, resource):
           documents[authority] = list(query)[0]
           continue
 
-      msg = "Unable to retrieve the %s from %s (%s): %s" % (label, authority, query.download_url, exc)
-
-      log.info(msg)
-
-      if rate_limit_notice('authority_unavailable.%s' % authority, days = 1):
-        issues.append(Issue(Runlevel.ERROR, msg))
+      issues.append(Issue(Runlevel.ERROR, 'AUTHORITY_UNAVAILABLE', fetch_type = label, authority = authority, url = query.download_url, error = exc))
 
   return documents, issues
 
