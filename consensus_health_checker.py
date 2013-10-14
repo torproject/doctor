@@ -575,6 +575,9 @@ def _get_documents(label, resource):
   queries, documents, issues = {}, {}, []
 
   for authority in DIRECTORY_AUTHORITIES.values():
+    if label == 'vote' and authority.v3ident is None:
+      continue  # not a voting authority
+
     queries[authority.nickname] = downloader.query(
       resource,
       endpoints = [(authority.address, authority.dir_port)],
@@ -585,13 +588,10 @@ def _get_documents(label, resource):
     try:
       documents[authority] = query.run()[0]
     except Exception, exc:
-      if label == 'vote' and authority in DIRECTORY_AUTHORITIES:
+      if label == 'vote':
         # try to download the vote via the other authorities
 
         v3ident = DIRECTORY_AUTHORITIES[authority].v3ident
-
-        if v3ident is None:
-          continue  # not a voting authority
 
         query = downloader.query(
           '/tor/status-vote/current/%s' % v3ident,
