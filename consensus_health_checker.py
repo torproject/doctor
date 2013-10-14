@@ -575,7 +575,7 @@ def _get_documents(label, resource):
   queries, documents, issues = {}, {}, []
 
   for authority in DIRECTORY_AUTHORITIES.values():
-    if label == 'vote' and authority.v3ident is None:
+    if authority.v3ident is None:
       continue  # not a voting authority
 
     queries[authority.nickname] = downloader.query(
