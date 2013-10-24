@@ -362,12 +362,12 @@ def certificate_expiration(latest_consensus, consensuses, votes):
     cert_expiration = vote.directory_authorities[0].key_certificate.expires
     expiration_label = '%s (%s)' % (authority, cert_expiration.strftime('%Y-%m-%d %H-%M-%S'))
 
-    if (cert_expiration - current_time) <= datetime.timedelta(days = 14):
+    if (cert_expiration - current_time) <= datetime.timedelta(days = 7):
+      issues.append(Issue(Runlevel.WARNING, 'CERTIFICATE_ABOUT_TO_EXPIRE', duration = 'one week', authority = expiration_label))
+    elif (cert_expiration - current_time) <= datetime.timedelta(days = 14):
       issues.append(Issue(Runlevel.WARNING, 'CERTIFICATE_ABOUT_TO_EXPIRE', duration = 'two weeks', authority = expiration_label))
-    elif (cert_expiration - current_time) <= datetime.timedelta(days = 60):
-      issues.append(Issue(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', duration = 'two months', authority = expiration_label))
-    elif (cert_expiration - current_time) <= datetime.timedelta(days = 90):
-      issues.append(Issue(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', duration = 'three months', authority = expiration_label))
+    elif (cert_expiration - current_time) <= datetime.timedelta(days = 21):
+      issues.append(Issue(Runlevel.NOTICE, 'CERTIFICATE_ABOUT_TO_EXPIRE', duration = 'three weeks', authority = expiration_label))
 
   return issues
 
