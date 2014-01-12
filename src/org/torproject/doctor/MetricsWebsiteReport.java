@@ -230,9 +230,7 @@ public class MetricsWebsiteReport {
     this.bw.write("          <tr>\n"
         + "            <td><font color=\"blue\">consensus</font>"
           + "</td>\n"
-        + "            <td><font color=\"blue\">"
-          + this.downloadedConsensus.getStatusEntries().size()
-          + " total</font></td>\n"
+        + "            <td/>\n"
         + "            <td><font color=\"blue\">" + runningRelays
           + " Running</font></td>\n"
         + "          </tr>\n"
