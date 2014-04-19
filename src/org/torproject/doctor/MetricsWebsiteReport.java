@@ -116,6 +116,20 @@ public class MetricsWebsiteReport {
         + "    tr:nth-child(2n) {\n"
         + "      background-color:#eeeeee;\n"
         + "    }\n"
+        + "    .oiv {\n"
+        + "      color:red;\n"
+        + "    }\n"
+        + "    .oic {\n"
+        + "      color:gray;\n"
+        + "      text-decoration:line-through;\n"
+        + "    }\n"
+        + "    .ic {\n"
+        + "      color:blue;\n"
+        + "    }\n"
+        + "    .tbl-hdr {\n"
+        + "      height:3em;\n"
+        + "      vertical-align:bottom;\n"
+        + "    }\n"
         + "  </style>\n"
         + "    <div class=\"center\">\n"
         + "      <div class=\"main-column\">\n"
@@ -136,9 +150,9 @@ public class MetricsWebsiteReport {
         + "        <p>Consensus was published ");
     if (this.downloadedConsensus.getValidAfterMillis() <
         System.currentTimeMillis() - 3L * 60L * 60L * 1000L) {
-      this.bw.write("<font color=\"red\">"
+      this.bw.write("<span class=\"oiv\">"
           + dateTimeFormat.format(
-          this.downloadedConsensus.getValidAfterMillis()) + "</font>");
+          this.downloadedConsensus.getValidAfterMillis()) + "</span>");
     } else {
       this.bw.write(dateTimeFormat.format(
           this.downloadedConsensus.getValidAfterMillis()));
@@ -175,13 +189,12 @@ public class MetricsWebsiteReport {
       }
     }
     this.bw.write("          <tr>\n"
-        + "            <td><font color=\"blue\">consensus</font>"
-          + "</td>\n"
-        + "            <td><font color=\"blue\">known-flags");
+        + "            <td class=\"ic\">consensus</td>\n"
+        + "            <td class=\"ic\">known-flags");
     for (String knownFlag : this.downloadedConsensus.getKnownFlags()) {
       this.bw.write(" " + knownFlag);
     }
-    this.bw.write("</font></td>\n"
+    this.bw.write("</td>\n"
         + "          </tr>\n"
         + "        </table>\n");
   }
@@ -228,11 +241,10 @@ public class MetricsWebsiteReport {
       }
     }
     this.bw.write("          <tr>\n"
-        + "            <td><font color=\"blue\">consensus</font>"
-          + "</td>\n"
+        + "            <td class=\"ic\">consensus</td>\n"
         + "            <td/>\n"
-        + "            <td><font color=\"blue\">" + runningRelays
-          + " Running</font></td>\n"
+        + "            <td class=\"ic\">" + runningRelays
+          + " Running</td>\n"
         + "          </tr>\n"
         + "        </table>\n");
   }
@@ -268,24 +280,23 @@ public class MetricsWebsiteReport {
                + "          </tr>\n");
         } else {
           this.bw.write("          <tr>\n"
-              + "            <td><font color=\"red\">"
-                + vote.getNickname() + "</font></td>\n"
-              + "            <td><font color=\"red\">"
+              + "            <td><span class=\"oiv\">"
+                + vote.getNickname() + "</span></td>\n"
+              + "            <td><span class=\"oiv\">"
                 + "consensus-methods");
           for (int consensusMethod : consensusMethods) {
             this.bw.write(" " + String.valueOf(consensusMethod));
           }
-          this.bw.write("</font></td>\n"
+          this.bw.write("</span></td>\n"
             + "          </tr>\n");
         }
       }
     }
     this.bw.write("          <tr>\n"
-        + "            <td><font color=\"blue\">consensus</font>"
-          + "</td>\n"
-        + "            <td><font color=\"blue\">consensus-method "
+        + "            <td class=\"ic\">consensus</td>\n"
+        + "            <td class=\"ic\">consensus-method "
           + this.downloadedConsensus.getConsensusMethod()
-          + "</font></td>\n"
+          + "</td>\n"
         + "          </tr>\n"
         + "        </table>\n");
   }
@@ -323,15 +334,15 @@ public class MetricsWebsiteReport {
                 + "          </tr>\n");
           } else {
             this.bw.write("          <tr>\n"
-                + "            <td><font color=\"red\">"
+                + "            <td><span class=\"oiv\">"
                   + vote.getNickname()
-                  + "</font></td>\n"
-                + "            <td><font color=\"red\">client-versions ");
+                  + "</span></td>\n"
+                + "            <td><span class=\"oiv\">client-versions ");
             int i = 0;
             for (String version : voteRecommendedClientVersions) {
               this.bw.write((i++ > 0 ? "," : "") + version);
             }
-            this.bw.write("</font></td>\n"
+            this.bw.write("</span></td>\n"
                 + "          </tr>\n");
           }
         }
@@ -352,37 +363,36 @@ public class MetricsWebsiteReport {
           } else {
             this.bw.write("          <tr>\n"
                 + "            <td></td>\n"
-                + "            <td><font color=\"red\">server-versions ");
+                + "            <td><span class=\"oiv\">server-versions ");
             int i = 0;
             for (String version : voteRecommendedServerVersions) {
               this.bw.write((i++ > 0 ? "," : "") + version);
             }
-            this.bw.write("</font></td>\n"
+            this.bw.write("</span></td>\n"
                 + "          </tr>\n");
           }
         }
       }
     }
     this.bw.write("          <tr>\n"
-        + "            <td><font color=\"blue\">consensus</font>"
-        + "</td>\n"
-        + "            <td><font color=\"blue\">client-versions ");
+        + "            <td class=\"ic\">consensus</td>\n"
+        + "            <td class=\"ic\">client-versions ");
     int i = 0;
     for (String version :
         downloadedConsensus.getRecommendedClientVersions()) {
       this.bw.write((i++ > 0 ? "," : "") + version);
     }
-    this.bw.write("</font></td>\n"
+    this.bw.write("</td>\n"
         + "          </tr>\n"
         + "          <tr>\n"
         + "            <td></td>\n"
-        + "            <td><font color=\"blue\">server-versions ");
+        + "            <td class=\"ic\">server-versions ");
     i = 0;
     for (String version :
         downloadedConsensus.getRecommendedServerVersions()) {
       this.bw.write((i++ > 0 ? "," : "") + version);
     }
-    this.bw.write("</font></td>\n"
+    this.bw.write("</td>\n"
       + "          </tr>\n"
       + "        </table>\n");
   }
@@ -431,14 +441,14 @@ public class MetricsWebsiteReport {
         }
         if (conflictOrInvalid) {
           this.bw.write("          <tr>\n"
-              + "            <td><font color=\"red\">"
-                + vote.getNickname() + "</font></td>\n"
-              + "            <td><font color=\"red\">params");
+              + "            <td><span class=\"oiv\">"
+                + vote.getNickname() + "</span></td>\n"
+              + "            <td><span class=\"oiv\">params");
           for (Map.Entry<String, Integer> e :
               voteConsensusParams.entrySet()) {
             this.bw.write(" " + e.getKey() + "=" + e.getValue());
           }
-          this.bw.write("</font></td>\n"
+          this.bw.write("</span></td>\n"
               + "          </tr>\n");
         } else {
           this.bw.write("          <tr>\n"
@@ -454,14 +464,13 @@ public class MetricsWebsiteReport {
       }
     }
     this.bw.write("          <tr>\n"
-        + "            <td><font color=\"blue\">consensus</font>"
-          + "</td>\n"
-        + "            <td><font color=\"blue\">params");
+        + "            <td class=\"ic\">consensus</td>\n"
+        + "            <td class=\"ic\">params");
     for (Map.Entry<String, Integer> e :
         this.downloadedConsensus.getConsensusParams().entrySet()) {
       this.bw.write(" " + e.getKey() + "=" + e.getValue());
     }
-    this.bw.write("</font></td>\n"
+    this.bw.write("</td>\n"
         + "          </tr>\n"
         + "        </table>\n");
   }
@@ -487,11 +496,11 @@ public class MetricsWebsiteReport {
         if (voteDirKeyExpiresMillis - 14L * 24L * 60L * 60L * 1000L <
             System.currentTimeMillis()) {
           this.bw.write("          <tr>\n"
-              + "            <td><font color=\"red\">"
-                + vote.getNickname() + "</font></td>\n"
-              + "            <td><font color=\"red\">dir-key-expires "
+              + "            <td><span class=\"oiv\">"
+                + vote.getNickname() + "</span></td>\n"
+              + "            <td><span class=\"oiv\">dir-key-expires "
                 + dateTimeFormat.format(voteDirKeyExpiresMillis)
-                + "</font></td>\n"
+                + "</span></td>\n"
               + "          </tr>\n");
         } else {
           this.bw.write("          <tr>\n"
@@ -614,13 +623,13 @@ public class MetricsWebsiteReport {
         + "            <col width=\"100\">\n"
         + "            <col width=\"100\">\n"
         + "          </colgroup>\n"
-        + "          <tr><td><b>Authority</b></td>"
-          + "<td><b>Minimum</b></td>"
-          + "<td><b>1st Quartile</b></td>"
-          + "<td><b>Median</b></td>"
-          + "<td><b>3rd Quartile</b></td>"
-          + "<td><b>Maximum</b></td>"
-          + "<td><b>Timeouts</b></td></tr>\n");
+        + "          <tr><th>Authority</th>"
+          + "<th>Minimum</th>"
+          + "<th>1st Quartile</th>"
+          + "<th>Median</th>"
+          + "<th>3rd Quartile</th>"
+          + "<th>Maximum</th>"
+          + "<th>Timeouts</th></tr>\n");
     for (String authority : knownAuthorities) {
       this.bw.write("          <tr>\n"
           + "            <td>" + authority + "</td>\n"
@@ -655,17 +664,17 @@ public class MetricsWebsiteReport {
           + "matches flag in consensus, or relay is not listed in "
           + "consensus (because it doesn't have the Running "
           + "flag)</li>\n"
-        + "          <li><b><font color=\"red\">Only in "
-          + "vote:</font></b> Flag in vote, but missing in the "
+        + "          <li><b><span class=\"oiv\">Only in "
+          + "vote:</span></b> Flag in vote, but missing in the "
           + "consensus, because there was no majority for the flag or "
           + "the flag was invalidated (e.g., Named gets invalidated by "
           + "Unnamed)</li>\n"
-        + "          <li><b><font color=\"gray\"><s>Only in "
-          + "consensus:</s></font></b> Flag in consensus, but missing "
+        + "          <li><b><span class=\"oic\">Only in "
+          + "consensus:</span></b> Flag in consensus, but missing "
           + "in a vote of a directory authority voting on this "
           + "flag</li>\n"
-        + "          <li><b><font color=\"blue\">In "
-          + "consensus:</font></b> Flag in consensus</li>\n"
+        + "          <li><b><span class=\"ic\">In "
+          + "consensus:</span></b> Flag in consensus</li>\n"
         + "        </ul>\n"
         + "        <br>\n"
         + "        <table border=\"0\" cellpadding=\"4\" "
@@ -706,15 +715,15 @@ public class MetricsWebsiteReport {
   /* Write the table header that is repeated every ten relays and that
    * contains the directory authority names. */
   private void writeRelayFlagsTableHeader() throws IOException {
-    this.bw.write("          <tr><td><br><b>Fingerprint</b></td>"
-        + "<td><br><b>Nickname</b></td>\n");
+    this.bw.write("          <tr class=\"tbl-hdr\"><th>Fingerprint</th>"
+        + "<th>Nickname</th>\n");
     for (RelayNetworkStatusVote vote : this.downloadedVotes.values()) {
       String shortDirName = vote.getNickname().length() > 6 ?
           vote.getNickname().substring(0, 5) + "." :
           vote.getNickname();
-      this.bw.write("<td><br><b>" + shortDirName + "</b></td>");
+      this.bw.write("<th>" + shortDirName + "</th>");
     }
-    this.bw.write("<td><br><b>consensus</b></td></tr>\n");
+    this.bw.write("<th>consensus</th></tr>\n");
   }
 
   /* Write a single row in the table of relay flags. */
@@ -756,13 +765,13 @@ public class MetricsWebsiteReport {
               consensusFlags.contains(flag)) {
               this.bw.write(flag);
             } else {
-              this.bw.write("<font color=\"red\">" + flag + "</font>");
+              this.bw.write("<span class=\"oiv\">" + flag + "</span>");
             }
           } else if (consensusFlags != null &&
               vote.getKnownFlags().contains(flag) &&
               consensusFlags.contains(flag)) {
-            this.bw.write("<font color=\"gray\"><s>" + flag
-                + "</s></font>");
+            this.bw.write("<span class=\"oic\">" + flag
+                + "</span>");
           }
         }
         this.bw.write("</td>\n");
@@ -771,12 +780,12 @@ public class MetricsWebsiteReport {
       }
     }
     if (consensusFlags != null) {
-      this.bw.write("            <td>");
+      this.bw.write("            <td class=\"ic\">");
       int flagsWritten = 0;
       for (String flag : relevantFlags) {
         this.bw.write(flagsWritten++ > 0 ? "<br>" : "");
         if (consensusFlags.contains(flag)) {
-          this.bw.write("<font color=\"blue\">" + flag + "</font>");
+          this.bw.write(flag);
         }
       }
       this.bw.write("</td>\n");
@@ -799,13 +808,13 @@ public class MetricsWebsiteReport {
           + "matches flag in consensus, or relay is not listed in "
           + "consensus (because it doesn't have the Running "
           + "flag)</li>\n"
-        + "          <li><b><font color=\"red\">Only in "
-          + "vote:</font></b> Flag in vote, but missing in the "
+        + "          <li><b><span class=\"oiv\">Only in "
+          + "vote:</span></b> Flag in vote, but missing in the "
           + "consensus, because there was no majority for the flag or "
           + "the flag was invalidated (e.g., Named gets invalidated by "
           + "Unnamed)</li>\n"
-        + "          <li><b><font color=\"gray\"><s>Only in "
-          + "consensus:</s></font></b> Flag in consensus, but missing "
+        + "          <li><b><span class=\"oic\">Only in "
+          + "consensus:</span></b> Flag in consensus, but missing "
           + "in a vote of a directory authority voting on this "
           + "flag</li>\n"
         + "        </ul>\n"
@@ -881,9 +890,9 @@ public class MetricsWebsiteReport {
               + "</td>\n");
         if (flagsLost.containsKey(dir) &&
             flagsLost.get(dir).containsKey(flag)) {
-          this.bw.write("            <td><font color=\"red\"> "
+          this.bw.write("            <td><span class=\"oiv\"> "
                 + flagsLost.get(dir).get(flag) + " " + flag
-                + "</font></td>\n");
+                + "</span></td>\n");
         } else {
           this.bw.write("            <td></td>\n");
         }
@@ -896,9 +905,9 @@ public class MetricsWebsiteReport {
         }
         if (flagsMissing.containsKey(dir) &&
             flagsMissing.get(dir).containsKey(flag)) {
-          this.bw.write("            <td><font color=\"gray\"><s>"
+          this.bw.write("            <td><span class=\"oic\">"
                 + flagsMissing.get(dir).get(flag) + " " + flag
-                + "</s></font></td>\n");
+                + "</span></td>\n");
         } else {
           this.bw.write("            <td></td>\n");
         }
