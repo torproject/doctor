@@ -130,6 +130,9 @@ public class MetricsWebsiteReport {
         +       "height:3em;\n"
         +       "vertical-align:bottom;\n"
         +     "}\n"
+        +     "#relay-list td {\n"
+        +       "white-space:pre;\n"
+        +     "}\n"
         +   "</style>\n"
         +     "<div class=\"center\">\n"
         +       "<div class=\"main-column\">\n"
@@ -678,7 +681,7 @@ public class MetricsWebsiteReport {
         +         "</ul>\n"
         +         "<br>\n"
         +         "<table border=\"0\" cellpadding=\"4\" "
-        + "cellspacing=\"0\" summary=\"\">\n"
+        + "cellspacing=\"0\" id=\"relay-list\" summary=\"\">\n"
         +           "<colgroup>\n"
         +             "<col width=\"120\">\n"
         +             "<col width=\"80\">\n");
@@ -759,7 +762,7 @@ public class MetricsWebsiteReport {
         this.bw.write("<td>");
         int flagsWritten = 0;
         for (String flag : relevantFlags) {
-          this.bw.write(flagsWritten++ > 0 ? "<br>" : "");
+          this.bw.write(flagsWritten++ > 0 ? "\n" : "");
           if (flags.contains(flag)) {
             if (consensusFlags == null ||
               consensusFlags.contains(flag)) {
