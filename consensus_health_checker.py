@@ -20,6 +20,10 @@ import stem.util.enum
 from stem import Flag
 from stem.util.lru_cache import lru_cache
 
+# Set this flag to print results rather than email them.
+
+TEST_RUN = False
+
 Runlevel = stem.util.enum.UppercaseEnum("NOTICE", "WARNING", "ERROR")
 
 DIRECTORY_AUTHORITIES = stem.descriptor.remote.get_authorities()
@@ -169,11 +173,15 @@ def main():
 
   if not is_all_suppressed:
     log.debug("Sending notification for issues")
-    util.send(EMAIL_SUBJECT, body_text = '\n'.join(map(str, issues)))
 
-    # notification for #tor-bots
+    if TEST_RUN:
+      print '\n'.join(map(str, issues))
+    else:
+      util.send(EMAIL_SUBJECT, body_text = '\n'.join(map(str, issues)))
 
-    util.send('Announce or', body_text = '\n'.join(['[consensus-health] %s' % issue for issue in issues]), destination = 'tor-misc@commit.noreply.org')
+      # notification for #tor-bots
+
+      util.send('Announce or', body_text = '\n'.join(['[consensus-health] %s' % issue for issue in issues]), destination = 'tor-misc@commit.noreply.org')
   else:
     if issues:
       log.info("All %i issues were suppressed. Not sending a notification." % len(issues))
@@ -615,4 +623,8 @@ if __name__ == '__main__':
   except:
     msg = "consensus_health_checker.py failed with:\n\n%s" % traceback.format_exc()
     log.error(msg)
-    util.send("Script Error", body_text = msg, destination = util.ERROR_ADDRESS)
+
+    if TEST_RUN:
+      print "Error: %s" % msg
+    else:
+      util.send("Script Error", body_text = msg, destination = util.ERROR_ADDRESS)
