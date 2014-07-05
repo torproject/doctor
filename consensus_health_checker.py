@@ -474,7 +474,7 @@ def has_authority_flag(latest_consensus, consensuses, votes):
 
   known_authorities = set(directory_authorities().keys())
   missing_authorities = known_authorities.difference(seen_authorities)
-  extra_authorities = seen_authorities.difference(known_authorities - set(CONFIG['ignored_authorities']))
+  extra_authorities = seen_authorities.difference(known_authorities) - set(CONFIG['ignored_authorities'])
 
   issues = []
 
