@@ -410,27 +410,30 @@ def consensuses_have_same_votes(latest_consensus, consensuses, votes):
 def has_all_signatures(latest_consensus, consensuses, votes):
   "Check that the consensuses have signatures for authorities that voted on it."
 
-  missing_authorities = set()
+  issues = []
 
-  for consensus in consensuses.values():
-    authority_signatures = set([authority.fingerprint for authority in consensus.directory_authorities])
-    signature_signatures = set([sig.identity for sig in consensus.signatures])
+  for consensus_of, consensus in consensuses.items():
+    voting_authorities = set([authority.fingerprint for authority in consensus.directory_authorities])
+    signing_authorities = set([sig.identity for sig in consensus.signatures])
+    missing_authorities = set()
 
-    for missing_signature in authority_signatures.difference(signature_signatures):
+    for missing_signature in voting_authorities.difference(signing_authorities):
       # Attempt to translate the missing v3ident signatures into authority
       # nicknames, falling back to just notifying of the v3ident if not found.
 
       missing_authority = missing_signature
 
-      for authority in directory_authorities().values():
+      for authority in DIRECTORY_AUTHORITIES.values():
         if authority.v3ident == missing_signature:
           missing_authority = authority.nickname
           break
 
       missing_authorities.add(missing_authority)
 
-  if missing_authorities:
-    return Issue(Runlevel.NOTICE, 'MISSING_SIGNATURE', authorities = ', '.join(missing_authorities))
+    if missing_authorities:
+      issues.append(Issue(Runlevel.NOTICE, 'MISSING_SIGNATURE', consensus_of = consensus_of, authorities = ', '.join(missing_authorities)))
+
+  return issues
 
 
 def voting_bandwidth_scanners(latest_consensus, consensuses, votes):
