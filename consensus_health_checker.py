@@ -221,6 +221,7 @@ def run_checks(consensuses, votes):
     different_recommended_client_version,
     different_recommended_server_version,
     unknown_consensus_parameters,
+    vote_parameters_mismatch_consensus,
     certificate_expiration,
     consensuses_have_same_votes,
     has_all_signatures,
@@ -342,6 +343,25 @@ def unknown_consensus_parameters(latest_consensus, consensuses, votes):
 
   if unknown_entries:
     return Issue(Runlevel.NOTICE, 'UNKNOWN_CONSENSUS_PARAMETERS', parameters = ', '.join(unknown_entries))
+
+
+def vote_parameters_mismatch_consensus(latest_consensus, consensuses, votes):
+  "Check that all vote parameters appear in the consensus."
+
+  mismatching_entries = []
+
+  for authority, vote in votes.items():
+    mismatching_params = []
+
+    for param_key, param_value in vote.params.items():
+      if latest_consensus.params.get(param_key) != param_value:
+        mismatching_params.append('%s=%s' % (param_key, param_value))
+
+    if mismatching_params:
+      mismatching_entries.append('%s %s' % (authority, ' '.join(mismatching_params)))
+
+  if mismatching_entries:
+    return Issue(Runlevel.NOTICE, 'MISMATCH_CONSENSUS_PARAMETERS', parameters = ', '.join(mismatching_entries))
 
 
 def certificate_expiration(latest_consensus, consensuses, votes):
