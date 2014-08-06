@@ -102,7 +102,14 @@ class Issue(object):
       except ValueError:
         log.error("Non-numic suppression time (%s): %s" % (self._template, suppression_duration))
 
-    return 0
+    # Default to suppression based on the severity of the issue.
+
+    if self.get_runlevel() == Runlevel.NOTICE:
+      return 24  # 1 day
+    elif self.get_runlevel() == Runlevel.WARN:
+      return 4  # 4 hours
+    else:
+      return 0  # no suppression for errors
 
   def __str__(self):
     return "%s: %s" % (self.get_runlevel(), self.get_message())
