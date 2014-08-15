@@ -106,7 +106,7 @@ class Issue(object):
 
     if self.get_runlevel() == Runlevel.NOTICE:
       return 24  # 1 day
-    elif self.get_runlevel() == Runlevel.WARN:
+    elif self.get_runlevel() == Runlevel.WARNING:
       return 4  # 4 hours
     else:
       return 0  # no suppression for errors
