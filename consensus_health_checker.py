@@ -233,6 +233,8 @@ def run_checks(consensuses, votes):
     consensuses_have_same_votes,
     has_all_signatures,
     voting_bandwidth_scanners,
+    # TODO: enable when the bandwidth scanners are fixed (#12989)
+    #unmeasured_relays,
     has_authority_flag,
     is_recommended_versions,
     bad_exits_in_sync,
@@ -469,6 +471,28 @@ def voting_bandwidth_scanners(latest_consensus, consensuses, votes):
 
   if extra_authorities:
     issues.append(Issue(Runlevel.NOTICE, 'EXTRA_BANDWIDTH_SCANNERS', authorities = ', '.join(extra_authorities)))
+
+  return issues
+
+
+def unmeasured_relays(latest_consensus, consensuses, votes):
+  "Checks that the bandwidth authorities have all formed an opinion about at least 90% of the relays."
+
+  issues = []
+
+  for authority, vote in votes.items():
+    if authority in CONFIG['bandwidth_authorities']:
+      unmeasured = 0
+
+      for desc in vote.routers.values():
+        if not desc.measured:
+          unmeasured += 1
+
+      total = len(vote.routers)
+      percentage = 100 * unmeasured / total
+
+      if percentage >= 10:
+        issues.append(Issue(Runlevel.NOTICE, 'TOO_MANY_UNMEASURED_RELAYS', authority = authority, unmeasured = unmeasured, total = total, percentage = percentage))
 
   return issues
 
