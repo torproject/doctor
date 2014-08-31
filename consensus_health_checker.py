@@ -178,7 +178,18 @@ def main():
   is_all_suppressed = True  # either no issues or they're all already suppressed
 
   for issue in issues:
-    key = issue.get_message().replace(' ', '_')
+    if issue._template == 'TOO_MANY_UNMEASURED_RELAYS':
+      # Hack because this message has too much dynamic data to be effectively
+      # suppressed. Hate doing this here, so better would be to make this a
+      # config property.
+
+      attr = dict(issue._attr)
+      attr.update({'unmeasured': 0, 'total': 0, 'percentage': 0})
+
+      key = CONFIG['msg'][issue._template].format(**attr).replace(' ', '_')
+    else:
+      key = issue.get_message().replace(' ', '_')
+
     duration = issue.get_suppression_duration()
 
     if rate_limit_notice(key, duration):
