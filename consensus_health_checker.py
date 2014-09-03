@@ -489,16 +489,20 @@ def unmeasured_relays(latest_consensus, consensuses, votes):
   "Checks that the bandwidth authorities have all formed an opinion about at least 90% of the relays."
 
   issues = []
+  consensus_fingerprints = set([desc.fingerprint for desc in latest_consensus.routers.values()])
 
   for authority, vote in votes.items():
     if authority in CONFIG['bandwidth_authorities']:
-      unmeasured = 0
+      measured, unmeasured = 0, 0
 
       for desc in vote.routers.values():
-        if not desc.measured:
-          unmeasured += 1
+        if desc.fingerprint in consensus_fingerprints:
+          if desc.measured:
+            measured += 1
+          else:
+            unmeasured += 1
 
-      total = len(vote.routers)
+      total = measured + unmeasured
       percentage = 100 * unmeasured / total
 
       if percentage >= 5:
