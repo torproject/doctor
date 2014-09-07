@@ -244,7 +244,7 @@ def run_checks(consensuses, votes):
     consensuses_have_same_votes,
     has_all_signatures,
     voting_bandwidth_scanners,
-    unmeasured_relays,
+    #unmeasured_relays,
     has_authority_flag,
     is_recommended_versions,
     bad_exits_in_sync,
