@@ -442,7 +442,7 @@ def has_all_signatures(latest_consensus, consensuses, votes):
 
       missing_authority = missing_signature
 
-      for authority in DIRECTORY_AUTHORITIES.values():
+      for authority in directory_authorities().values():
         if authority.v3ident == missing_signature:
           missing_authority = authority.nickname
           break
