@@ -85,6 +85,27 @@ class Issue(object):
     return self._runlevel
 
   @lru_cache()
+  def get_suppression_key(self):
+    """
+    Provides the key used for issue suppression.
+
+    :returns: **str** used for the configuration key of this issue in the
+      suppressions file
+    """
+
+    if self._template == 'TOO_MANY_UNMEASURED_RELAYS':
+      # Hack because this message has too much dynamic data to be effectively
+      # suppressed. Hate doing this here, so better would be to make this a
+      # config property.
+
+      attr = dict(self._attr)
+      attr.update({'unmeasured': 0, 'total': 0, 'percentage': 0})
+
+      return CONFIG['msg'][self._template].format(**attr).replace(' ', '_')
+    else:
+      return self.get_message().replace(' ', '_')
+
+  @lru_cache()
   def get_suppression_duration(self):
     """
     Provides the number of hours we should suppress this message after it has
@@ -115,42 +136,49 @@ class Issue(object):
     return "%s: %s" % (self.get_runlevel(), self.get_message())
 
 
-def rate_limit_notice(key, hours = 0, days = 0):
+def is_rate_limited(issue):
   """
   Check if we have sent a notice with this key within a given period of time.
-  If we have then this returns **False**, otherwise this records the fact that
-  we're sending the message now and returns **True**.
 
-  :param str key: unique identifier for this notification
-  :param int hours: number of hours to suppress this message for after being sent
-  :param int days: number of days to suppress this message for after being sent
+  :param Issue issue: issue to check the suppression status for
   """
 
-  if hours == 0 and days == 0:
+  key = issue.get_suppression_key()
+  hours = issue.get_suppression_duration()
+
+  if hours == 0:
     return True
 
-  config = stem.util.conf.get_config('last_notified')
-  config_path = util.get_path('data', 'last_notified.cfg')
-
-  try:
-    config.clear()
-    config.load(config_path)
-  except:
-    pass
-
   current_time = int(time.time())
-  last_seen = config.get(key, 0)
-  suppression_time = (3600 * hours) + (86400 * days)
+  last_seen = stem.util.conf.get_config('last_notified').get(key, 0)
+  suppression_time = 3600 * hours
   suppression_time += 1800  # adding a half hour so timing doesn't coinside with our hourly cron
   suppression_time_remaining = suppression_time - (current_time - last_seen)
 
   if suppression_time_remaining <= 0:
-    config.set(key, str(current_time), overwrite = True)
-    config.save(config_path)
-    return True
+    return False
   else:
     log.info("Suppressing %s, time remaining is %i hours" % (key, (suppression_time_remaining / 3600) + 1))
-    return False
+    return True
+
+
+def rate_limit_notice(issue):
+  """
+  Record that this notice is being sent, so further runs will take this into
+  account for rate limitation.
+
+  :param Issue issue: issue to update the suppression status for
+  """
+
+  key = issue.get_suppression_key()
+  hours = issue.get_suppression_duration()
+
+  if hours == 0:
+    return
+
+  config = stem.util.conf.get_config('last_notified')
+  config.set(key, str(int(time.time())), overwrite = True)
+  config.save()
 
 
 @lru_cache()
@@ -166,6 +194,9 @@ def main():
   config = stem.util.conf.get_config("consensus_health")
   config.load(util.get_path('data', 'consensus_health.cfg'))
 
+  config = stem.util.conf.get_config('last_notified')
+  config.load(util.get_path('data', 'last_notified.cfg'))
+
   consensuses, consensus_fetching_issues = get_consensuses()
   votes, vote_fetching_issues = get_votes()
   issues = consensus_fetching_issues + vote_fetching_issues
@@ -178,25 +209,15 @@ def main():
   is_all_suppressed = True  # either no issues or they're all already suppressed
 
   for issue in issues:
-    if issue._template == 'TOO_MANY_UNMEASURED_RELAYS':
-      # Hack because this message has too much dynamic data to be effectively
-      # suppressed. Hate doing this here, so better would be to make this a
-      # config property.
-
-      attr = dict(issue._attr)
-      attr.update({'unmeasured': 0, 'total': 0, 'percentage': 0})
-
-      key = CONFIG['msg'][issue._template].format(**attr).replace(' ', '_')
-    else:
-      key = issue.get_message().replace(' ', '_')
-
-    duration = issue.get_suppression_duration()
-
-    if rate_limit_notice(key, duration):
+    if not is_rate_limited(issue):
       is_all_suppressed = False
+      break
 
   if not is_all_suppressed:
     log.debug("Sending notification for issues")
+
+    for issue in issues:
+      rate_limit_notice(issue)
 
     if TEST_RUN:
       print '\n'.join(map(str, issues))
