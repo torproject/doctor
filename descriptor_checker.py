@@ -60,7 +60,13 @@ def main():
 
   for authority in stem.descriptor.remote.get_authorities().values():
     # skip authorities that don't vote in the consensus
+
     if authority.v3ident is None:
+      continue
+
+    # skip turtles, it's unmaintained
+
+    if authority.nickname == 'turtles':
       continue
 
     log.debug("Downloading the consensus from %s..." % authority.nickname)
