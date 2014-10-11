@@ -608,6 +608,9 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
     if flagged:
       bad_exits[authority] = set(flagged)
 
+  if not bad_exits:
+    return
+
   voting_authorities = set(bad_exits.keys())
   agreed_bad_exits = set.intersection(*bad_exits.values())
   disagreed_bad_exits = set.union(*bad_exits.values()).difference(agreed_bad_exits)
