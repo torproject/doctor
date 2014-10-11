@@ -641,6 +641,9 @@ def bandwidth_authorities_in_sync(latest_consensus, consensuses, votes):
     if measured:
       measurement_counts[authority] = len(measured)
 
+  if not measurement_counts:
+    return
+
   average = sum(measurement_counts.values()) / len(measurement_counts)
 
   for authority, count in measurement_counts.items():
