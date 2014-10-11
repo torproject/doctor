@@ -7,6 +7,7 @@ Performs a variety of checks against the present votes and consensus.
 """
 
 import datetime
+import gc
 import time
 import traceback
 
@@ -218,6 +219,15 @@ def main():
 
     for issue in issues:
       rate_limit_notice(issue)
+
+    # Reclaim memory of the consensus documents. This is ebecause sending an
+    # email forks our process, doubling memory usage. This can easily be a
+    # trigger of an OOM if we're still gobbling tons of memory for the
+    # descriptor content.
+
+    del consensuses
+    del votes
+    gc.collect()
 
     if TEST_RUN:
       print '\n'.join(map(str, issues))
