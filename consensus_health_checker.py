@@ -620,6 +620,8 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
 
     issues.append(Issue(Runlevel.NOTICE, 'BADEXIT_OUT_OF_SYNC', fingerprint = fingerprint, with_flag = ', '.join(with_flag), without_flag = ', '.join(without_flag)))
 
+  return issues
+
 
 def bandwidth_authorities_in_sync(latest_consensus, consensuses, votes):
   """
