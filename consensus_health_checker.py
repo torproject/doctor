@@ -7,7 +7,7 @@ Performs a variety of checks against the present votes and consensus.
 """
 
 import datetime
-import gc
+import subprocess
 import time
 import traceback
 
@@ -190,6 +190,19 @@ def directory_authorities():
 def main():
   start_time = time.time()
 
+  if not TEST_RUN:
+    # Spawning a shell to run mail. We're doing this early because
+    # subprocess.Popen() calls fork which doubles the memory usage of our
+    # process. Hence we risk an OOM if this is done after loading gobs of
+    # descriptor data into memory.
+
+    mail_process = subprocess.Popen(
+      ['mail', '-E', '-s', EMAIL_SUBJECT, util.TO_ADDRESS],
+      stdin = subprocess.PIPE,
+      stdout = subprocess.PIPE,
+      stderr = subprocess.PIPE,
+    )
+
   # loads configuration data
 
   config = stem.util.conf.get_config("consensus_health")
@@ -220,19 +233,14 @@ def main():
     for issue in issues:
       rate_limit_notice(issue)
 
-    # Reclaim memory of the consensus documents. This is ebecause sending an
-    # email forks our process, doubling memory usage. This can easily be a
-    # trigger of an OOM if we're still gobbling tons of memory for the
-    # descriptor content.
-
-    del consensuses
-    del votes
-    gc.collect()
-
     if TEST_RUN:
       print '\n'.join(map(str, issues))
     else:
-      util.send(EMAIL_SUBJECT, body_text = '\n'.join(map(str, issues)))
+      stdout, stderr = mail_process.communicate('\n'.join(map(str, issues)))
+      exit_code = mail_process.poll()
+
+      if exit_code != 0:
+        raise ValueError("Unable to send email: %s" % stderr.strip())
 
       # notification for #tor-bots
 
