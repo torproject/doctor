@@ -203,6 +203,13 @@ def main():
       stderr = subprocess.PIPE,
     )
 
+    bot_notice_process = subprocess.Popen(
+      ['mail', '-E', '-s', 'Announce or', 'tor-misc@commit.noreply.org'],
+      stdin = subprocess.PIPE,
+      stdout = subprocess.PIPE,
+      stderr = subprocess.PIPE,
+    )
+
   # loads configuration data
 
   config = stem.util.conf.get_config("consensus_health")
@@ -244,7 +251,11 @@ def main():
 
       # notification for #tor-bots
 
-      util.send('Announce or', body_text = '\n'.join(['[consensus-health] %s' % issue for issue in issues]), destination = 'tor-misc@commit.noreply.org')
+      stdout, stderr = bot_notice_process.communicate('\n'.join(['[consensus-health] %s' % issue for issue in issues]))
+      exit_code = mail_process.poll()
+
+      if exit_code != 0:
+        raise ValueError("Unable to send email: %s" % stderr.strip())
   else:
     if issues:
       log.info("All %i issues were suppressed. Not sending a notification." % len(issues))
