@@ -289,7 +289,7 @@ def run_checks(consensuses, votes):
     different_recommended_client_version,
     different_recommended_server_version,
     unknown_consensus_parameters,
-    vote_parameters_mismatch_consensus,
+    #vote_parameters_mismatch_consensus,
     certificate_expiration,
     consensuses_have_same_votes,
     has_all_signatures,
