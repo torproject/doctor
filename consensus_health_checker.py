@@ -33,7 +33,6 @@ EMAIL_SUBJECT = 'Consensus issues'
 CONFIG = stem.util.conf.config_dict('consensus_health', {
   'msg': {},
   'suppression': {},
-  'ignored_authorities': [],
   'bandwidth_authorities': [],
   'known_params': [],
 })
@@ -180,11 +179,6 @@ def rate_limit_notice(issue):
   config = stem.util.conf.get_config('last_notified')
   config.set(key, str(int(time.time())), overwrite = True)
   config.save()
-
-
-@lru_cache()
-def directory_authorities():
-  return dict((k, v) for (k, v) in DIRECTORY_AUTHORITIES.items() if k not in CONFIG['ignored_authorities'])
 
 
 def main():
@@ -492,7 +486,7 @@ def has_all_signatures(latest_consensus, consensuses, votes):
 
       missing_authority = missing_signature
 
-      for authority in directory_authorities().values():
+      for authority in DIRECTORY_AUTHORITIES.values():
         if authority.v3ident == missing_signature:
           missing_authority = authority.nickname
           break
@@ -570,9 +564,9 @@ def has_authority_flag(latest_consensus, consensuses, votes):
     if Flag.AUTHORITY in desc.flags:
       seen_authorities.add(desc.nickname)
 
-  known_authorities = set(directory_authorities().keys())
+  known_authorities = set(DIRECTORY_AUTHORITIES.keys())
   missing_authorities = known_authorities.difference(seen_authorities)
-  extra_authorities = seen_authorities.difference(known_authorities) - set(CONFIG['ignored_authorities'])
+  extra_authorities = seen_authorities.difference(known_authorities)
 
   issues = []
 
@@ -590,8 +584,8 @@ def has_expected_fingerprints(latest_consensus, consensuses, votes):
 
   issues = []
   for desc in latest_consensus.routers.values():
-    if desc.nickname in directory_authorities() and Flag.NAMED in desc.flags:
-      expected_fingerprint = directory_authorities()[desc.nickname].fingerprint
+    if desc.nickname in DIRECTORY_AUTHORITIES and Flag.NAMED in desc.flags:
+      expected_fingerprint = DIRECTORY_AUTHORITIES[desc.nickname].fingerprint
 
       if desc.fingerprint != expected_fingerprint:
         issues.append(Issue(Runlevel.ERROR, 'FINGERPRINT_MISMATCH', authority = desc.nickname, expected = desc.fingerprint, actual = expected_fingerprint))
@@ -605,7 +599,7 @@ def is_recommended_versions(latest_consensus, consensuses, votes):
   outdated_authorities = {}
   min_version = min(latest_consensus.server_versions)
 
-  for authority in directory_authorities().values():
+  for authority in DIRECTORY_AUTHORITIES.values():
     desc = latest_consensus.routers.get(authority.fingerprint)
 
     if desc and desc.version and desc.version < min_version:
@@ -694,7 +688,7 @@ def get_votes():
 def _get_documents(label, resource):
   queries, documents, issues = {}, {}, []
 
-  for authority in directory_authorities().values():
+  for authority in DIRECTORY_AUTHORITIES.values():
     if authority.v3ident is None:
       continue  # not a voting authority
 
@@ -711,7 +705,7 @@ def _get_documents(label, resource):
       if label == 'vote':
         # try to download the vote via the other authorities
 
-        v3ident = directory_authorities()[authority].v3ident
+        v3ident = DIRECTORY_AUTHORITIES[authority].v3ident
 
         query = downloader.query(
           '/tor/status-vote/current/%s' % v3ident,
