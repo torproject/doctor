@@ -1,6 +1,7 @@
 *.pyc
 *.swp
 logs/
+data/contact_information.cfg
 data/fingerprints
 data/last_notified.cfg
 stem

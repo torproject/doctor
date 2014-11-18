@@ -79,24 +79,30 @@ def log_stem_debugging(name):
   log.addHandler(handler)
 
 
-def send(subject, body_text = None, destination = TO_ADDRESS):
+def send(subject, body_text = None, destination = TO_ADDRESS, cc_destinations = None, bcc_destinations = None):
   """
   Sends an email notification via the local mail application.
 
   :param str subject: subject of the email
   :param str body_text: plaintext body of the email
   :param str destination: location to send the email to
+  :param list cc_destinations: addresses for the cc field
+  :param list bcc_destinations: addresses for the bcc field
 
   :raises: **Exception** if the email fails to be sent
   """
 
-  process = subprocess.Popen(
-    ['mail', '-E', '-s', subject, destination],
-    stdin = subprocess.PIPE,
-    stdout = subprocess.PIPE,
-    stderr = subprocess.PIPE,
-  )
+  args = ['mail', '-E', '-s', subject]
 
+  if cc_destinations:
+    args += ['-c', ','.join(cc_destinations)]
+
+  if bcc_destinations:
+    args += ['-b', ','.join(bcc_destinations)]
+
+  args.append(destination)
+
+  process = subprocess.Popen(args, stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
   stdout, stderr = process.communicate(body_text)
   exit_code = process.poll()
 
