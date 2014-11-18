@@ -303,7 +303,7 @@ def main():
       cc_addresses = [d.address for d in destinations.values() if d and not d.bcc]
       bcc_addresses = [d.address for d in destinations.values() if d and d.bcc]
 
-      util.send(EMAIL_SUBJECT, body_text = '\n'.join(map(str, issues)), cc_destionations = cc_addresses, bcc_destionations = bcc_addresses)
+      util.send(EMAIL_SUBJECT, body_text = '\n'.join(map(str, issues)), cc_destinations = cc_addresses, bcc_destinations = bcc_addresses)
 
       # notification for #tor-bots
 
