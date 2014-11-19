@@ -93,7 +93,7 @@ def send_email(new_relays):
     body = EMAIL_BODY % len(new_relays)
     body += "\n".join(relay_entries)
 
-    util.send(EMAIL_SUBJECT, body_text = body)
+    util.send(EMAIL_SUBJECT, body = body)
   except Exception, exc:
     log.warn("Unable to send email: %s" % exc)
 
@@ -141,4 +141,4 @@ if __name__ == '__main__':
   except:
     msg = "sybil_checker.py failed with:\n\n%s" % traceback.format_exc()
     log.error(msg)
-    util.send("Script Error", body_text = msg, destination = util.ERROR_ADDRESS)
+    util.send("Script Error", body = msg, to = [util.ERROR_ADDRESS])

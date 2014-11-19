@@ -9,7 +9,6 @@ Performs a variety of checks against the present votes and consensus.
 import collections
 import datetime
 import os
-import subprocess
 import time
 import traceback
 
@@ -214,30 +213,6 @@ def rate_limit_notice(issue):
 def main():
   start_time = time.time()
 
-  if not TEST_RUN:
-    # Spawning a shell to run mail. We're doing this early because
-    # subprocess.Popen() calls fork which doubles the memory usage of our
-    # process. Hence we risk an OOM if this is done after loading gobs of
-    # descriptor data into memory.
-
-    # TODO: The following doesn't work now that we're dynamically picking
-    # destionations based on the issues. We'll need to come up with another
-    # idea if this continues to bite us...
-
-    #mail_process = subprocess.Popen(
-    #  ['mail', '-E', '-s', EMAIL_SUBJECT, util.TO_ADDRESS],
-    #  stdin = subprocess.PIPE,
-    #  stdout = subprocess.PIPE,
-    #  stderr = subprocess.PIPE,
-    #)
-
-    bot_notice_process = subprocess.Popen(
-      ['mail', '-E', '-s', 'Announce or', 'tor-misc@commit.noreply.org'],
-      stdin = subprocess.PIPE,
-      stdout = subprocess.PIPE,
-      stderr = subprocess.PIPE,
-    )
-
   # loads configuration data
 
   config = stem.util.conf.get_config("consensus_health")
@@ -294,24 +269,16 @@ def main():
     if TEST_RUN:
       print '\n'.join(map(str, issues))
     else:
-      #stdout, stderr = mail_process.communicate('\n'.join(map(str, issues)))
-      #exit_code = mail_process.poll()
+      body = '\n'.join(map(str, issues))
+      cc = [d.address for d in destinations.values() if d and not d.bcc]
+      bcc = [d.address for d in destinations.values() if d and d.bcc]
 
-      #if exit_code != 0:
-      #  raise ValueError("Unable to send email: %s" % stderr.strip())
-
-      cc_addresses = [d.address for d in destinations.values() if d and not d.bcc]
-      bcc_addresses = [d.address for d in destinations.values() if d and d.bcc]
-
-      util.send(EMAIL_SUBJECT, body_text = '\n'.join(map(str, issues)), cc_destinations = cc_addresses, bcc_destinations = bcc_addresses)
+      util.send(EMAIL_SUBJECT, body = body, cc = cc, bcc = bcc)
 
       # notification for #tor-bots
 
-      stdout, stderr = bot_notice_process.communicate('\n'.join(['[consensus-health] %s' % issue for issue in issues]))
-      exit_code = bot_notice_process.poll()
-
-      if exit_code != 0:
-        raise ValueError("Unable to send notice to #tor-bots: %s" % stderr.strip())
+      body = '\n'.join(['[consensus-health] %s' % issue for issue in issues])
+      util.send('Announce or', body = body, to = ['tor-misc@commit.noreply.org'])
   else:
     if issues:
       log.info("All %i issues were suppressed. Not sending a notification." % len(issues))

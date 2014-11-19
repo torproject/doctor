@@ -92,7 +92,7 @@ def main():
 def send_email(subject, descriptor_type, query):
   try:
     timestamp = datetime.datetime.now().strftime("%m/%d/%Y %H:%M")
-    util.send(subject, body_text = EMAIL_BODY % (descriptor_type, query.download_url, timestamp, query.error), destination = util.ERROR_ADDRESS)
+    util.send(subject, body = EMAIL_BODY % (descriptor_type, query.download_url, timestamp, query.error), to = [util.ERROR_ADDRESS])
   except Exception, exc:
     log.warn("Unable to send email: %s" % exc)
 
@@ -103,4 +103,4 @@ if __name__ == '__main__':
   except:
     msg = "descriptor_checker.py failed with:\n\n%s" % traceback.format_exc()
     log.error(msg)
-    util.send("Script Error", body_text = msg, destination = util.ERROR_ADDRESS)
+    util.send("Script Error", body = msg, to = [util.ERROR_ADDRESS])
