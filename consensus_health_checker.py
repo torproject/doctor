@@ -34,7 +34,6 @@ EMAIL_SUBJECT = 'Consensus issues'
 CONFIG = stem.util.conf.config_dict('consensus_health', {
   'msg': {},
   'suppression': {},
-  'bandwidth_authorities': [],
   'known_params': [],
   'contact_address': {},
   'contact_via_bcc': [],
@@ -539,9 +538,9 @@ def voting_bandwidth_scanners(latest_consensus, consensuses, votes):
         contains_measured_bandwidth = True
         break
 
-    if authority in CONFIG['bandwidth_authorities'] and not contains_measured_bandwidth:
+    if authority.is_bandwidth_authority and not contains_measured_bandwidth:
       missing_authorities.append(authority)
-    if authority not in CONFIG['bandwidth_authorities'] and contains_measured_bandwidth:
+    if not authority.is_bandwidth_authority and contains_measured_bandwidth:
       extra_authorities.append(authority)
 
   issues = []
@@ -563,7 +562,7 @@ def unmeasured_relays(latest_consensus, consensuses, votes):
   consensus_fingerprints = set([desc.fingerprint for desc in latest_consensus.routers.values()])
 
   for authority, vote in votes.items():
-    if authority in CONFIG['bandwidth_authorities']:
+    if authority.is_bandwidth_authority:
       measured, unmeasured = 0, 0
 
       for desc in vote.routers.values():
