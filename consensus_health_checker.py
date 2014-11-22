@@ -538,9 +538,9 @@ def voting_bandwidth_scanners(latest_consensus, consensuses, votes):
         contains_measured_bandwidth = True
         break
 
-    if authority.is_bandwidth_authority and not contains_measured_bandwidth:
+    if DIRECTORY_AUTHORITIES[authority].is_bandwidth_authority and not contains_measured_bandwidth:
       missing_authorities.append(authority)
-    if not authority.is_bandwidth_authority and contains_measured_bandwidth:
+    if not DIRECTORY_AUTHORITIES[authority].is_bandwidth_authority and contains_measured_bandwidth:
       extra_authorities.append(authority)
 
   issues = []
@@ -562,7 +562,7 @@ def unmeasured_relays(latest_consensus, consensuses, votes):
   consensus_fingerprints = set([desc.fingerprint for desc in latest_consensus.routers.values()])
 
   for authority, vote in votes.items():
-    if authority.is_bandwidth_authority:
+    if DIRECTORY_AUTHORITIES[authority].is_bandwidth_authority:
       measured, unmeasured = 0, 0
 
       for desc in vote.routers.values():
