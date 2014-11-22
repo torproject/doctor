@@ -759,4 +759,4 @@ if __name__ == '__main__':
     if TEST_RUN:
       print "Error: %s" % msg
     else:
-      util.send("Script Error", body_text = msg, destination = util.ERROR_ADDRESS)
+      util.send("Script Error", body = msg, to = [util.ERROR_ADDRESS])
