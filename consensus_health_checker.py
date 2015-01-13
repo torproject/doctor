@@ -50,6 +50,8 @@ downloader = stem.descriptor.remote.DescriptorDownloader(
 
 Destination = collections.namedtuple('Destination', ('address', 'bcc'))
 
+DIRECTORY_AUTHORITIES['maatuska'].is_bandwidth_authority = False
+
 
 class Issue(object):
   """
