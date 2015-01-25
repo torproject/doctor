@@ -47,6 +47,7 @@ def main():
       resource,
       block = True,
       timeout = 60,
+      validate = True,
     )
 
     if not query.error:
@@ -77,6 +78,7 @@ def main():
       timeout = 60,
       endpoints = [(authority.address, authority.dir_port)],
       document_handler = stem.descriptor.DocumentHandler.DOCUMENT,
+      validate = True,
     )
 
     if not query.error:

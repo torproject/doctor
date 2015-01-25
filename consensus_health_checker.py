@@ -724,6 +724,7 @@ def _get_documents(label, resource):
       resource,
       endpoints = [(authority.address, authority.dir_port)],
       default_params = False,
+      validate = True,
     )
 
   for authority, query in queries.items():
@@ -738,6 +739,7 @@ def _get_documents(label, resource):
         query = downloader.query(
           '/tor/status-vote/current/%s' % v3ident,
           default_params = False,
+          validate = True,
         )
 
         query.run(True)

@@ -36,7 +36,7 @@ log = util.get_logger('sybil_checker')
 
 def main():
   prior_fingerprints = load_fingerprints()
-  downloader = DescriptorDownloader(timeout = 60)
+  downloader = DescriptorDownloader(timeout = 60, validate = True)
 
   dry_run = False
 
