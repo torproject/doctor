@@ -700,7 +700,7 @@ def get_consensuses():
   :returns: tuple of the form ({authority => consensus}, issues)
   """
 
-  return _get_documents('consensus', '/tor/status-vote/current/consensus')
+  return _get_documents('consensus', '/tor/status-vote/current/consensus.z')
 
 
 def get_votes():
@@ -710,7 +710,7 @@ def get_votes():
   :returns: tuple of the form ({authority => vote}, issues)
   """
 
-  return _get_documents('vote', '/tor/status-vote/current/authority')
+  return _get_documents('vote', '/tor/status-vote/current/authority.z')
 
 
 def _get_documents(label, resource):
@@ -737,7 +737,7 @@ def _get_documents(label, resource):
         v3ident = DIRECTORY_AUTHORITIES[authority].v3ident
 
         query = downloader.query(
-          '/tor/status-vote/current/%s' % v3ident,
+          '/tor/status-vote/current/%s.z' % v3ident,
           default_params = False,
           validate = True,
         )
