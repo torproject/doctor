@@ -132,6 +132,11 @@ class Issue(object):
       attr.update({'unmeasured': 0, 'total': 0, 'percentage': 0})
 
       return CONFIG['msg'][self._template].format(**attr).replace(' ', '_')
+    elif self._template == 'BANDWIDTH_AUTHORITIES_OUT_OF_SYNC':
+      attr = dict(self._attr)
+      attr.update({'authorities': ''})
+
+      return CONFIG['msg'][self._template].format(**attr).replace(' ', '_')
     else:
       return self.get_message().replace(' ', '_')
 
