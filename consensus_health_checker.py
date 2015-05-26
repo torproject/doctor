@@ -50,12 +50,8 @@ downloader = stem.descriptor.remote.DescriptorDownloader(
 
 Destination = collections.namedtuple('Destination', ('address', 'bcc'))
 
-# Bandwidth authorities have been having issues...
-#
-# maatuska: https://trac.torproject.org/projects/tor/ticket/14177
-# tor26: dir-auth@ notice 5/20/15
+# weasel gave a notice on 5/20/15 that tor26's bandwidth auth was having issues
 
-DIRECTORY_AUTHORITIES['maatuska'].is_bandwidth_authority = False
 DIRECTORY_AUTHORITIES['tor26'].is_bandwidth_authority = False
 
 
