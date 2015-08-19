@@ -65,11 +65,6 @@ def main():
     if authority.v3ident is None:
       continue
 
-    # skip turtles, it's unmaintained
-
-    if authority.nickname == 'turtles':
-      continue
-
     log.debug("Downloading the consensus from %s..." % authority.nickname)
 
     query = stem.descriptor.remote.Query(
