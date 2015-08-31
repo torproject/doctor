@@ -60,6 +60,11 @@ def main():
   # download the consensus from each authority
 
   for authority in stem.descriptor.remote.get_authorities().values():
+    # skip urras, it's having a long outage
+
+    if authority.nickname == 'urras':
+      continue
+
     # skip authorities that don't vote in the consensus
 
     if authority.v3ident is None:
