@@ -599,7 +599,7 @@ def has_authority_flag(latest_consensus, consensuses, votes):
     if Flag.AUTHORITY in desc.flags:
       seen_authorities.add(desc.nickname)
 
-  known_authorities = set(DIRECTORY_AUTHORITIES.keys()) - set(['urras'])
+  known_authorities = set(DIRECTORY_AUTHORITIES.keys())
   missing_authorities = known_authorities.difference(seen_authorities)
   extra_authorities = seen_authorities.difference(known_authorities)
 
@@ -724,11 +724,6 @@ def _get_documents(label, resource):
   queries, documents, issues = {}, {}, []
 
   for authority in DIRECTORY_AUTHORITIES.values():
-    # skip urras, it's having a long outage
-
-    if authority.nickname == 'urras':
-      continue
-
     if authority.v3ident is None:
       continue  # not a voting authority
 
