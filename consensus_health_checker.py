@@ -742,7 +742,7 @@ def _get_documents(label, resource):
   for authority, query in queries.items():
     try:
       documents[authority] = query.run()[0]
-    except Exception, exc:
+    except Exception as exc:
       if label == 'vote':
         # try to download the vote via the other authorities
 

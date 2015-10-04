@@ -3,6 +3,7 @@
 logs/
 data/contact_information.cfg
 data/fingerprints
+data/fingerprint_changes
 data/last_notified.cfg
 stem
 gmail_pw

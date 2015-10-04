@@ -95,7 +95,7 @@ def send_email(subject, descriptor_type, query):
   try:
     timestamp = datetime.datetime.now().strftime("%m/%d/%Y %H:%M")
     util.send(subject, body = EMAIL_BODY % (descriptor_type, query.download_url, timestamp, query.error), to = [util.ERROR_ADDRESS])
-  except Exception, exc:
+  except Exception as exc:
     log.warn("Unable to send email: %s" % exc)
 
 

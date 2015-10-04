@@ -94,7 +94,7 @@ def send_email(new_relays):
     body += "\n".join(relay_entries)
 
     util.send(EMAIL_SUBJECT, body = body)
-  except Exception, exc:
+  except Exception as exc:
     log.warn("Unable to send email: %s" % exc)
 
 
@@ -117,7 +117,7 @@ def load_fingerprints():
 
       log.debug("  %i fingerprints found" % len(fingerprints))
       return set(fingerprints)
-  except Exception, exc:
+  except Exception as exc:
     log.debug("  unable to read '%s': %s" % (FINGERPRINTS_FILE, exc))
     return set()
 
@@ -131,7 +131,7 @@ def save_fingerprints(fingerprints):
 
     with open(FINGERPRINTS_FILE, 'w') as fingerprint_file:
       fingerprint_file.write('\n'.join(fingerprints))
-  except Exception, exc:
+  except Exception as exc:
     log.debug("Unable to save fingerprints to '%s': %s" % (FINGERPRINTS_FILE, exc))
 
 
