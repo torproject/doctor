@@ -31,8 +31,8 @@ log = util.get_logger('fingerprint_change_checker')
 
 def main():
   fingerprint_changes = load_fingerprint_changes()
-  downloader = DescriptorDownloader(timeout = 60)
-  alarm_for = []
+  downloader = DescriptorDownloader(timeout = 15)
+  alarm_for = set()
 
   for relay in downloader.get_consensus():
     prior_fingerprints = fingerprint_changes.setdefault((relay.address, relay.or_port), {})
@@ -52,7 +52,7 @@ def main():
       # if we've changed more than three times in the last thirty days then alarm
 
       if len(prior_fingerprints) >= 3:
-        alarm_for.append((relay.address, relay.or_port))
+        alarm_for.add((relay.address, relay.or_port))
 
   if alarm_for:
     log.debug("Sending a notification for %i relays..." % len(alarm_for))
