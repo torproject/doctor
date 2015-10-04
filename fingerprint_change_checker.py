@@ -43,10 +43,11 @@ def main():
 
       # drop fingerprint changes that are over thirty days old
 
-      for fp in prior_fingerprints:
-        if time.time() - prior_fingerprints[fp] > THIRTY_DAYS:
-          log.debug("Removing fingerprint for %s:%s (%s) which was published %i days ago" % (relay.address, relay.or_port, fp, prior_fingerprints[fp] / 60 / 60 / 24))
-          del prior_fingerprints[fp]
+      old_fingerprints = [fp for fp in prior_fingerprints if (time.time() - prior_fingerprints[fp] > THIRTY_DAYS)]
+
+      for fp in old_fingerprints:
+        log.debug("Removing fingerprint for %s:%s (%s) which was published %i days ago" % (relay.address, relay.or_port, fp, prior_fingerprints[fp] / 60 / 60 / 24))
+        del prior_fingerprints[fp]
 
       # if we've changed more than three times in the last thirty days then alarm
 
