@@ -63,8 +63,8 @@ def main():
       log.debug("* %s:%s has had %i fingerprints: %s" % (address, or_port, len(fp_changes), ', '.join(fp_changes.keys())))
       body += "* %s:%s\n" % (address, or_port)
 
-      for fingerprint, published in fp_changes.items():
-        body += "  %s at %s\n" % (fingerprint, datetime.datetime.fromtimestamp(published).strftime('%Y-%m-%d %H:%M:%S'))
+      for fingerprint in sorted(fp_changes, reverse = True, key = lambda k: fp_changes[k]):
+        body += "  %s at %s\n" % (fingerprint, datetime.datetime.fromtimestamp(fp_changes[fingerprint]).strftime('%Y-%m-%d %H:%M:%S'))
 
       body += "\n"
 
