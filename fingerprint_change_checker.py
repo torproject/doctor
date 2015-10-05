@@ -8,6 +8,7 @@ This can indicate malicious intent toward hidden services.
 """
 
 import datetime
+import os
 import time
 import traceback
 
@@ -24,12 +25,21 @@ The following relays are frequently changing their fingerprints...
 """
 
 FINGERPRINT_CHANGES_FILE = util.get_path('data', 'fingerprint_changes')
+ONE_DAY = 24 * 60 * 60
 THIRTY_DAYS = 30 * 24 * 60 * 60
 
 log = util.get_logger('fingerprint_change_checker')
 
 
 def main():
+  last_notified_config = conf.get_config('last_notified')
+  last_notified_path = util.get_path('data', 'fingerprint_change_last_notified.cfg')
+
+  if os.path.exists(last_notified_path):
+    last_notified_config.load(last_notified_path)
+  else:
+    last_notified_config._path = last_notified_path
+
   fingerprint_changes = load_fingerprint_changes()
   downloader = DescriptorDownloader(timeout = 15)
   alarm_for = set()
@@ -54,7 +64,7 @@ def main():
       if len(prior_fingerprints) >= 3:
         alarm_for.add((relay.address, relay.or_port))
 
-  if alarm_for:
+  if alarm_for and not is_notification_suppressed(alarm_for):
     log.debug("Sending a notification for %i relays..." % len(alarm_for))
     body = EMAIL_BODY
 
@@ -129,6 +139,33 @@ def save_fingerprint_changes(fingerprint_changes):
     config.save(FINGERPRINT_CHANGES_FILE)
   except IOError as exc:
     log.debug("  unable to save '%s': %s" % (FINGERPRINT_CHANGES_FILE, exc))
+
+
+def is_notification_suppressed(fingerprint_changes):
+  """
+  Check to see if we've already notified for all these endpoints today. No
+  point in causing too much noise.
+  """
+
+  is_all_suppressed = True
+  log.debug("Checking if notification should be suppressed...")
+  last_notified_config = conf.get_config('last_notified')
+
+  for address, or_port in fingerprint_changes:
+    key = '%s:%s' % (address, or_port)
+    current_time = int(time.time())
+    suppression_time = ONE_DAY - (current_time - last_notified_config.get(key, 0))
+
+    if suppression_time < 0:
+      log.debug("* notification for %s isn't suppressed" % key)
+      is_all_suppressed = False
+    else:
+      log.debug("* we already notified for %s recently, suppressed for %i hours" % (key, suppression_time / 3600))
+
+    last_notified_config.set(key, str(current_time), overwrite = True)
+
+  last_notified_config.save()
+  return is_all_suppressed
 
 
 if __name__ == '__main__':
