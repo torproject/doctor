@@ -61,7 +61,7 @@ def main():
 
       # if we've changed more than three times in the last thirty days then alarm
 
-      if len(prior_fingerprints) >= 3:
+      if len(prior_fingerprints) > 3:
         alarm_for.add((relay.address, relay.or_port))
 
   if alarm_for and not is_notification_suppressed(alarm_for):
@@ -90,7 +90,7 @@ def main():
       body += "\n"
 
     try:
-      util.send(EMAIL_SUBJECT, body = body, to = ['atagar@torproject.org'])
+      util.send(EMAIL_SUBJECT, body = body, to = ['atagar@torproject.org', 'dgoulet@torproject.org'])
     except Exception as exc:
       log.warn("Unable to send email: %s" % exc)
 
