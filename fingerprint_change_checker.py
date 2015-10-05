@@ -62,9 +62,20 @@ def main():
       fp_changes = fingerprint_changes[(address, or_port)]
       log.debug("* %s:%s has had %i fingerprints: %s" % (address, or_port, len(fp_changes), ', '.join(fp_changes.keys())))
       body += "* %s:%s\n" % (address, or_port)
+      count = 0
 
       for fingerprint in sorted(fp_changes, reverse = True, key = lambda k: fp_changes[k]):
         body += "  %s at %s\n" % (fingerprint, datetime.datetime.fromtimestamp(fp_changes[fingerprint]).strftime('%Y-%m-%d %H:%M:%S'))
+        count += 1
+
+        # Relays frequently cycling their fringerprint can have thousands of
+        # entries. Enumerating them all is unimportant, so if too long then
+        # just give the count.
+
+        if count > 8:
+          oldest_timestamp = sorted(fp_changes.values())[0]
+          body += "  ... and %i more since %s\n" % (len(fp_changes) - 8, datetime.datetime.fromtimestamp(oldest_timestamp).strftime('%Y-%m-%d %H:%M:%S'))
+          break
 
       body += "\n"
 
