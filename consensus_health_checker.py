@@ -9,6 +9,7 @@ Performs a variety of checks against the present votes and consensus.
 import collections
 import datetime
 import os
+import socket
 import time
 import traceback
 
@@ -275,7 +276,7 @@ def main():
     log.debug('Sending notification for issues (%s)' % ', '.join(destination_labels))
 
     if TEST_RUN:
-      print '\n'.join(map(str, issues))
+      print('\n'.join(map(str, issues)))
     else:
       body = '\n'.join(map(str, issues))
       cc = [d.address for d in destinations.values() if d and not d.bcc]
@@ -700,6 +701,41 @@ def bandwidth_authorities_in_sync(latest_consensus, consensuses, votes):
       return Issue(Runlevel.NOTICE, 'BANDWIDTH_AUTHORITIES_OUT_OF_SYNC', authorities = ', '.join(entries), to = measurement_counts.keys())
 
 
+def is_ipv6_orport_reachable(latest_consensus, consensuses, votes):
+  """
+  Simple check to see if we can reach the authority's IPv6 ORPort when it has
+  one.
+  """
+
+  issues = []
+
+  for authority in DIRECTORY_AUTHORITIES.values():
+    desc = latest_consensus.routers.get(authority.fingerprint)
+
+    if not desc:
+      continue  # authority isn't in the consensus
+
+    for address, port, is_ipv6 in desc.or_addresses:
+      if is_ipv6:
+        # TODO: Ok, now for the bit I'm unfamiliar with. How do we ping
+        # this endpoint? On cappadocicum seems we're missing something...
+        #
+        #   % ping6 2001:858:2:2:aabb:0:563b:1526
+        #   connect: Network is unreachable
+        #
+        # Do we need a tunnel? 6to4 configuration?
+        #
+        #   https://wiki.debian.org/DebianIPv6#IPv6_6to4_Configuration
+        #
+        # Green to this space so lets ask...
+
+        orport_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        orport_socket.connect((address, port))
+        # ???
+
+  return issues
+
+
 def get_consensuses():
   """
   Provides a mapping of directory authority nicknames to their present consensus.
@@ -773,6 +809,6 @@ if __name__ == '__main__':
     log.error(msg)
 
     if TEST_RUN:
-      print "Error: %s" % msg
+      print("Error: %s" % msg)
     else:
       util.send("Script Error", body = msg, to = [util.ERROR_ADDRESS])
