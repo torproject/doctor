@@ -89,7 +89,7 @@ def send(subject, body, to = TO_ADDRESSES, cc = None, bcc = None):
   """
 
   msg = MIMEMultipart('alternative')
-  msg['Subject'] = subject
+  msg['Subject'] = '[DocTor] ' + subject
   msg['From'] = FROM_ADDRESS
   msg['To'] = ','.join(to)
 
