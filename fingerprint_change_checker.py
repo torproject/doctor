@@ -94,6 +94,15 @@ def main():
     except Exception as exc:
       log.warn("Unable to send email: %s" % exc)
 
+    # register that we've notified for these
+
+    current_time = str(int(time.time()))
+
+    for address, or_port in alarm_for:
+      last_notified_config.set('%s:%s' % (address, or_port), current_time)
+
+    last_notified_config.save()
+
   save_fingerprint_changes(fingerprint_changes)
 
 
@@ -153,8 +162,7 @@ def is_notification_suppressed(fingerprint_changes):
 
   for address, or_port in fingerprint_changes:
     key = '%s:%s' % (address, or_port)
-    current_time = int(time.time())
-    suppression_time = ONE_DAY - (current_time - last_notified_config.get(key, 0))
+    suppression_time = ONE_DAY - (int(time.time()) - last_notified_config.get(key, 0))
 
     if suppression_time < 0:
       log.debug("* notification for %s isn't suppressed" % key)
@@ -162,9 +170,6 @@ def is_notification_suppressed(fingerprint_changes):
     else:
       log.debug("* we already notified for %s recently, suppressed for %i hours" % (key, suppression_time / 3600))
 
-    last_notified_config.set(key, str(current_time), overwrite = True)
-
-  last_notified_config.save()
   return is_all_suppressed
 
 
