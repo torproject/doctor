@@ -140,6 +140,11 @@ class Issue(object):
       attr.update({'authorities': ''})
 
       return CONFIG['msg'][self._template].format(**attr).replace(' ', '_')
+    elif self._template == 'LATENCY':
+      attr = dict(self._attr)
+      attr.update({'authority': '', 'time_taken': '', 'median_time': '', 'authority_times': ''})
+
+      return CONFIG['msg'][self._template].format(**attr).replace(' ', '_')
     else:
       return self.get_message().replace(' ', '_')
 
@@ -775,9 +780,13 @@ def _get_documents(label, resource):
       validate = True,
     )
 
+  times_taken = {}
+
   for authority, query in queries.items():
     try:
+      start_time = time.time()
       documents[authority] = query.run()[0]
+      times_taken[authority] = time.time() - start_time
     except Exception as exc:
       if label == 'vote':
         # try to download the vote via the other authorities
@@ -797,6 +806,14 @@ def _get_documents(label, resource):
           continue
 
       issues.append(Issue(Runlevel.ERROR, 'AUTHORITY_UNAVAILABLE', fetch_type = label, authority = authority, url = query.download_url, error = exc, to = [authority]))
+
+  if label == 'consensus':
+    median_time = sorted(times_taken.values())[len(times_taken) / 2]
+    authority_times = ', '.join(['%s => %0.1fs' % (authority, time_taken) for authority, time_taken in times_taken.items()])
+
+    for authority, time_taken in times_taken.items():
+      if time_taken > median_time * 5:
+        issues.append(Issue(Runlevel.NOTICE, 'LATENCY', authority = authority, time_taken = '%0.1fs' % time_taken, median_time = '%0.1fs' % median_time, authority_times = authority_times, to = [authority]))
 
   return documents, issues
 
