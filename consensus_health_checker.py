@@ -762,7 +762,7 @@ def get_votes():
 
 
 def _get_documents(label, resource):
-  queries, documents, issues = {}, {}, []
+  documents, times_taken, issues = {}, {}, []
 
   for authority in DIRECTORY_AUTHORITIES.values():
     # skip urras, it's having a long outage
@@ -773,25 +773,22 @@ def _get_documents(label, resource):
     if authority.v3ident is None:
       continue  # not a voting authority
 
-    queries[authority.nickname] = downloader.query(
+    query = downloader.query(
       resource,
       endpoints = [(authority.address, authority.dir_port)],
       default_params = False,
       validate = True,
     )
 
-  times_taken = {}
-
-  for authority, query in queries.items():
     try:
       start_time = time.time()
-      documents[authority] = query.run()[0]
-      times_taken[authority] = time.time() - start_time
+      documents[authority.nickname] = query.run()[0]
+      times_taken[authority.nickname] = time.time() - start_time
     except Exception as exc:
       if label == 'vote':
         # try to download the vote via the other authorities
 
-        v3ident = DIRECTORY_AUTHORITIES[authority].v3ident
+        v3ident = DIRECTORY_AUTHORITIES[authority.nickname].v3ident
 
         query = downloader.query(
           '/tor/status-vote/current/%s.z' % v3ident,
@@ -802,10 +799,10 @@ def _get_documents(label, resource):
         query.run(True)
 
         if not query.error:
-          documents[authority] = list(query)[0]
+          documents[authority.nickname] = list(query)[0]
           continue
 
-      issues.append(Issue(Runlevel.ERROR, 'AUTHORITY_UNAVAILABLE', fetch_type = label, authority = authority, url = query.download_url, error = exc, to = [authority]))
+      issues.append(Issue(Runlevel.ERROR, 'AUTHORITY_UNAVAILABLE', fetch_type = label, authority = authority.nickname, url = query.download_url, error = exc, to = [authority.nickname]))
 
   if label == 'consensus':
     median_time = sorted(times_taken.values())[len(times_taken) / 2]
