@@ -26,7 +26,7 @@ The following relays are frequently changing their fingerprints...
 
 FINGERPRINT_CHANGES_FILE = util.get_path('data', 'fingerprint_changes')
 ONE_DAY = 24 * 60 * 60
-THIRTY_DAYS = 30 * 24 * 60 * 60
+TEN_DAYS = 10 * 24 * 60 * 60
 
 log = util.get_logger('fingerprint_change_checker')
 
@@ -53,15 +53,15 @@ def main():
 
       # drop fingerprint changes that are over thirty days old
 
-      old_fingerprints = [fp for fp in prior_fingerprints if (time.time() - prior_fingerprints[fp] > THIRTY_DAYS)]
+      old_fingerprints = [fp for fp in prior_fingerprints if (time.time() - prior_fingerprints[fp] > TEN_DAYS)]
 
       for fp in old_fingerprints:
         log.debug("Removing fingerprint for %s:%s (%s) which was published %i days ago" % (relay.address, relay.or_port, fp, prior_fingerprints[fp] / 60 / 60 / 24))
         del prior_fingerprints[fp]
 
-      # if we've changed more than three times in the last thirty days then alarm
+      # if we've changed more than ten times in the last ten days then alarm
 
-      if len(prior_fingerprints) > 3:
+      if len(prior_fingerprints) >= 10:
         alarm_for.add((relay.address, relay.or_port))
 
   if alarm_for and not is_notification_suppressed(alarm_for):
