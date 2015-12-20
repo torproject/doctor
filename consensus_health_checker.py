@@ -776,23 +776,6 @@ def _get_documents(label, resource):
       documents[authority.nickname] = query.run()[0]
       times_taken[authority.nickname] = time.time() - start_time
     except Exception as exc:
-      if label == 'vote':
-        # try to download the vote via the other authorities
-
-        v3ident = DIRECTORY_AUTHORITIES[authority.nickname].v3ident
-
-        query = downloader.query(
-          '/tor/status-vote/current/%s.z' % v3ident,
-          default_params = False,
-          validate = True,
-        )
-
-        query.run(True)
-
-        if not query.error:
-          documents[authority.nickname] = list(query)[0]
-          continue
-
       issues.append(Issue(Runlevel.ERROR, 'AUTHORITY_UNAVAILABLE', fetch_type = label, authority = authority.nickname, url = query.download_url, error = exc, to = [authority.nickname]))
 
   if label == 'consensus':
