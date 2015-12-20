@@ -511,9 +511,9 @@ def has_all_signatures(latest_consensus, consensuses, votes):
   "Check that the consensuses have signatures for authorities that voted on it."
 
   issues = []
+  voting_authorities = set([authority.v3ident for authority in DIRECTORY_AUTHORITIES.values() if authority.v3ident])
 
   for consensus_of, consensus in consensuses.items():
-    voting_authorities = set([authority.fingerprint for authority in consensus.directory_authorities])
     signing_authorities = set([sig.identity for sig in consensus.signatures])
     missing_authorities = set()
 
