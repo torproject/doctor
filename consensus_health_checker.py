@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright 2013, Damian Johnson and The Tor Project
+# Copyright 2013-2016, Damian Johnson and The Tor Project
 # See LICENSE for licensing information
 
 """
@@ -22,10 +22,6 @@ import stem.util.enum
 
 from stem import Flag
 from stem.util.lru_cache import lru_cache
-
-# Set this flag to print results rather than email them.
-
-TEST_RUN = False
 
 Runlevel = stem.util.enum.UppercaseEnum('NOTICE', 'WARNING', 'ERROR')
 
@@ -276,19 +272,16 @@ def main():
 
     log.debug('Sending notification for issues (%s)' % ', '.join(destination_labels))
 
-    if TEST_RUN:
-      print('\n'.join(map(str, issues)))
-    else:
-      body = '\n'.join(map(str, issues))
-      cc = [d.address for d in destinations.values() if d and not d.bcc]
-      bcc = [d.address for d in destinations.values() if d and d.bcc]
+    body = '\n'.join(map(str, issues))
+    cc = [d.address for d in destinations.values() if d and not d.bcc]
+    bcc = [d.address for d in destinations.values() if d and d.bcc]
 
-      util.send(EMAIL_SUBJECT, body = body, cc = cc, bcc = bcc)
+    util.send(EMAIL_SUBJECT, body = body, cc = cc, bcc = bcc)
 
-      # notification for #tor-bots
+    # notification for #tor-bots
 
-      body = '\n'.join(['[consensus-health] %s' % issue for issue in issues])
-      util.send('Announce or', body = body, to = ['tor-misc@commit.noreply.org'])
+    body = '\n'.join(['[consensus-health] %s' % issue for issue in issues])
+    util.send('Announce or', body = body, to = ['tor-misc@commit.noreply.org'])
   else:
     if issues:
       log.info("All %i issues were suppressed. Not sending a notification." % len(issues))
@@ -795,8 +788,4 @@ if __name__ == '__main__':
   except:
     msg = "consensus_health_checker.py failed with:\n\n%s" % traceback.format_exc()
     log.error(msg)
-
-    if TEST_RUN:
-      print("Error: %s" % msg)
-    else:
-      util.send("Script Error", body = msg, to = [util.ERROR_ADDRESS])
+    util.send("Script Error", body = msg, to = [util.ERROR_ADDRESS])

@@ -15,6 +15,8 @@ FROM_ADDRESS = 'atagar@torproject.org'
 TO_ADDRESSES = ['tor-consensus-health@lists.torproject.org']
 ERROR_ADDRESS = 'atagar@torproject.org'
 
+TEST_RUN = False  # print script results rather than emailing
+
 
 def get_path(*comp):
   """
@@ -87,6 +89,13 @@ def send(subject, body, to = TO_ADDRESSES, cc = None, bcc = None):
 
   :raises: **Exception** if the email fails to be sent
   """
+
+  if TEST_RUN:
+    print('Email to: %s' % to)
+    print('Subject: %s' % subject)
+    print('-' * 60)
+    print(body)
+    return
 
   msg = MIMEMultipart('alternative')
   msg['Subject'] = subject
