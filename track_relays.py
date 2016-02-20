@@ -19,7 +19,7 @@ log = util.get_logger('track_relays')
 EMAIL_SUBJECT = 'Relays Returned'
 
 EMAIL_BODY = """\
-The following previously BadExit relays have returned to the network...
+The following previously BadExited relays have returned to the network...
 
 """
 
@@ -79,10 +79,25 @@ def get_tracked_relays():
   config = stem.util.conf.get_config('tracked_relays')
   config.load(util.get_path('data', 'tracked_relays.cfg'))
 
-  # TODO: check for expired entries
+  results, expired = [], []
 
-  identifiers = set([key.split('.')[0] for key in config.keys()])
-  return [TrackedRelay(identifier, config) for identifier in identifiers]
+  for identifier in set([key.split('.')[0] for key in config.keys()]):
+    relay = TrackedRelay(identifier, config)
+
+    if relay.expires > datetime.datetime.now():
+      results.append(relay)
+    else:
+      expired.append(relay)
+
+  if expired:
+    body = 'The following entries in tracked_relays.cfg have expired...\n\n'
+
+    for relay in expired:
+      body += '* %s (%s)\n' % (relay.identifier, relay.expires.strftime('%Y-%m-%d'))
+
+    util.send('tracked_relays.cfg entries expired', body = body, to = ['atagar@torproject.org'])
+
+  return results
 
 
 def main():
