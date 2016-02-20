@@ -89,10 +89,7 @@ def main():
 
       body += "\n"
 
-    try:
-      util.send(EMAIL_SUBJECT, body = body, to = ['bad-relays@lists.torproject.org', 'atagar@torproject.org'])
-    except Exception as exc:
-      log.warn("Unable to send email: %s" % exc)
+    util.send(EMAIL_SUBJECT, body = body, to = ['bad-relays@lists.torproject.org', 'atagar@torproject.org'])
 
     # register that we've notified for these
 
