@@ -10,6 +10,7 @@ import datetime
 import traceback
 
 import stem.descriptor.remote
+import stem.exit_policy
 import stem.util.conf
 
 import util
@@ -111,7 +112,10 @@ def main():
   for relay in get_tracked_relays():
     if relay.address:
       if '/' in relay.address:
-        tracked_address_ranges[relay.address] = relay
+        # It's a total hack, but taking advantage of exit policies where we
+        # already support address ranges.
+
+        tracked_address_ranges[stem.exit_policy.ExitPolicyRule('accept %s:*' % relay.address)] = relay
       else:
         tracked_addresses[relay.address] = relay
 
@@ -127,7 +131,9 @@ def main():
     elif desc.fingerprint in tracked_fingerprints:
       found_relays[tracked_fingerprints[desc.fingerprint]] = desc
     else:
-      pass  # TODO: implement for tracked_address_ranges
+      for addr_entry, relay in tracked_address_ranges.items():
+        if addr_entry.is_match(desc.address):
+          found_relays[relay] = desc
 
   if found_relays:
     log.debug("Sending a notification for %i relay entries..." % len(found_relays))
