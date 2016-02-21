@@ -662,9 +662,26 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
 
   for fingerprint in disagreed_bad_exits:
     with_flag = set([authority for authority, flagged in bad_exits.items() if fingerprint in flagged])
-    without_flag = voting_authorities.difference(with_flag)
+    without_flag = []
+    not_in_consensus = []
 
-    issues.append(Issue(Runlevel.NOTICE, 'BADEXIT_OUT_OF_SYNC', fingerprint = fingerprint, with_flag = ', '.join(with_flag), without_flag = ', '.join(without_flag), to = bad_exits.keys()))
+    for authority in voting_authorities.difference(with_flag):
+      vote = votes[authority]
+
+      if fingerprint in vote.routers:
+        without_flag.append(authority)
+      else:
+        not_in_consensus.append(authority)
+
+    attr = ['with flag: %s' % ', '.join(with_flag)]
+
+    if without_flag:
+      attr.append('without flag: %s' % ', '.join(without_flag))
+
+    if not_in_consensus:
+      attr.append('not in consensus: %s' % ', '.join(not_in_consensus))
+
+    issues.append(Issue(Runlevel.NOTICE, 'BADEXIT_OUT_OF_SYNC', fingerprint = fingerprint, counts = ', '.join(attr), to = bad_exits.keys()))
 
   return issues
 
