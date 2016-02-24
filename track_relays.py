@@ -32,8 +32,8 @@ class TrackedRelay(object):
   :var str identifier: brief identifier given to the entry
   :var str description: description of why we're tracking it
   :var datetime expires: when this entry expires
-  :var str address: address of the relay we're tracking
-  :var str fingerprint: fingerprint of the relay we're tracking
+  :var list addresses: address of the relay we're tracking
+  :var list fingerprints: fingerprint of the relay we're tracking
   """
 
   def __init__(self, identifier, config):
@@ -50,20 +50,20 @@ class TrackedRelay(object):
     except ValueError:
       raise ValueError("'%s.expires' is malformed. We expect it to be in the form 'Year-Month-Day'" % identifier)
 
-    self.address = config.get('%s.address' % identifier, None)
-    self.fingerprint = config.get('%s.fingerprint' % identifier, None)
+    self.addresses = config.get('%s.address' % identifier, [])
+    self.fingerprints = config.get('%s.fingerprint' % identifier, [])
 
-    if not self.address and not self.fingerprint:
+    if not self.addresses and not self.fingerprints:
       raise ValueError("We need either a '%s.address' or '%s.fingerprint' to track" % (identifier, identifier))
 
   def __str__(self):
     attr = []
 
-    if self.address:
-      attr.append('address: %s' % self.address)
+    for address in self.addresses:
+      attr.append('address: %s' % address)
 
-    if self.fingerprint:
-      attr.append('fingerprint: %s' % self.fingerprint)
+    for fingerprint in self.fingerprints:
+      attr.append('fingerprint: %s' % fingerprint)
 
     return '%s (%s)' % (self.identifier, ', '.join(attr))
 
@@ -110,17 +110,17 @@ def main():
   tracked_fingerprints = {}
 
   for relay in get_tracked_relays():
-    if relay.address:
-      if '/' in relay.address:
+    for address in relay.addresses:
+      if '/' in address:
         # It's a total hack, but taking advantage of exit policies where we
         # already support address ranges.
 
-        tracked_address_ranges[stem.exit_policy.ExitPolicyRule('accept %s:*' % relay.address)] = relay
+        tracked_address_ranges[stem.exit_policy.ExitPolicyRule('accept %s:*' % address)] = relay
       else:
-        tracked_addresses[relay.address] = relay
+        tracked_addresses[address] = relay
 
-    if relay.fingerprint:
-      tracked_fingerprints[relay.fingerprint] = relay
+    for fingerprint in relay.fingerprints:
+      tracked_fingerprints[fingerprint] = relay
 
   downloader = stem.descriptor.remote.DescriptorDownloader()
   found_relays = {}  # mapping of TrackedRelay => RouterStatusEntry
