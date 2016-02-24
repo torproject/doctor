@@ -673,6 +673,15 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
       else:
         not_in_consensus.append(authority)
 
+    # If this relay's missing from a consensus and has been active for less
+    # than an hour then don't bother. It gets negligable traffic and is likely
+    # part of normal network churn.
+
+    desc = votes[with_flag[0]].routers[fingerprint]
+
+    if not_in_consensus and (datetime.datetime.now() - desc.published).total_seconds() > 3600:
+      continue
+
     attr = ['with flag: %s' % ', '.join(with_flag)]
 
     if without_flag:
