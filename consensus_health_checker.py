@@ -677,7 +677,7 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
     # than an hour then don't bother. It gets negligable traffic and is likely
     # part of normal network churn.
 
-    desc = votes[with_flag[0]].routers[fingerprint]
+    desc = votes[list(with_flag)[0]].routers[fingerprint]
 
     if not_in_consensus and (datetime.datetime.now() - desc.published).total_seconds() > 3600:
       continue
