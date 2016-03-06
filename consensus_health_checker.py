@@ -678,8 +678,9 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
     # part of normal network churn.
 
     desc = votes[list(with_flag)[0]].routers[fingerprint]
+    uptime = (datetime.datetime.now() - desc.published).total_seconds()
 
-    if not_in_consensus and (datetime.datetime.now() - desc.published).total_seconds() > 3600:
+    if not_in_consensus and uptime < 3600:
       continue
 
     attr = ['with flag: %s' % ', '.join(with_flag)]
