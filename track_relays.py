@@ -7,6 +7,8 @@ Notifies if specific relays reappear in the network.
 """
 
 import datetime
+import os
+import time
 import traceback
 
 import stem.descriptor.remote
@@ -18,9 +20,11 @@ import util
 log = util.get_logger('track_relays')
 
 EMAIL_SUBJECT = 'Relays Returned'
+ONE_WEEK = 7 * 24 * 60 * 60
 
 EMAIL_BODY = """\
-The following previously BadExited relays have returned to the network...
+The following previously relays flagged as being malicious have returned to the
+network...
 
 """
 
@@ -102,6 +106,14 @@ def get_tracked_relays():
 
 
 def main():
+  last_notified_config = stem.util.conf.get_config('last_notified')
+  last_notified_path = util.get_path('data', 'track_relays_last_notified.cfg')
+
+  if os.path.exists(last_notified_path):
+    last_notified_config.load(last_notified_path)
+  else:
+    last_notified_config._path = last_notified_path
+
   # Map addresses and fingerprints to relays for constant time lookups. Address
   # ranges are handled separately cuz... well, they're a pita.
 
@@ -122,30 +134,61 @@ def main():
     for fingerprint in relay.fingerprints:
       tracked_fingerprints[fingerprint] = relay
 
-  downloader = stem.descriptor.remote.DescriptorDownloader()
   found_relays = {}  # mapping of TrackedRelay => RouterStatusEntry
 
-  for desc in downloader.get_consensus():
+  for desc in stem.descriptor.remote.get_consensus():
     if desc.address in tracked_addresses:
-      found_relays[tracked_addresses[desc.address]] = desc
+      found_relays.setdefault(tracked_addresses[desc.address], []).append(desc)
     elif desc.fingerprint in tracked_fingerprints:
-      found_relays[tracked_fingerprints[desc.fingerprint]] = desc
+      found_relays.setdefault(tracked_fingerprints[desc.fingerprint], []).append(desc)
     else:
       for addr_entry, relay in tracked_address_ranges.items():
         if addr_entry.is_match(desc.address):
-          found_relays[relay] = desc
+          found_relays.setdefault(relay, []).append(desc)
 
-  if found_relays:
+  all_descriptors = []
+
+  for relays in found_relays.values():
+    all_descriptors += relays
+
+  if found_relays and not is_notification_suppressed(all_descriptors):
     log.debug("Sending a notification for %i relay entries..." % len(found_relays))
+    current_time = str(int(time.time()))
     body = EMAIL_BODY
 
-    for tracked_relay, desc in found_relays.items():
+    for tracked_relay, relays in found_relays.items():
       log.debug('* %s' % tracked_relay)
       body += '* %s (%s)\n' % (tracked_relay.identifier, tracked_relay.description)
-      body += '  address: %s\n' % desc.address
-      body += '  fingerprint: %s\n\n' % desc.fingerprint
+
+      for desc in relays:
+        body += '  address: %s:%s, fingerprint: %s\n' % (desc.address, desc.or_port, desc.fingerprint)
+        last_notified_config.set('%s:%s' % (desc.address, desc.or_port), current_time)
 
     util.send(EMAIL_SUBJECT, body = body, to = ['bad-relays@lists.torproject.org', 'atagar@torproject.org'])
+    last_notified_config.save()
+
+
+def is_notification_suppressed(relays):
+  """
+  Check to see if we've already notified for all these relays today. No
+  point in causing too much noise.
+  """
+
+  is_all_suppressed = True
+  log.debug("Checking if notification should be suppressed...")
+  last_notified_config = stem.util.conf.get_config('last_notified')
+
+  for desc in relays:
+    key = '%s:%s' % (desc.address, desc.or_port)
+    suppression_time = ONE_WEEK - (int(time.time()) - last_notified_config.get(key, 0))
+
+    if suppression_time < 0:
+      log.debug("* notification for %s isn't suppressed" % key)
+      is_all_suppressed = False
+    else:
+      log.debug("* we already notified for %s recently, suppressed for %i hours" % (key, suppression_time / 3600))
+
+  return is_all_suppressed
 
 
 if __name__ == '__main__':
