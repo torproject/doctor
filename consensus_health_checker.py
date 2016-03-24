@@ -663,7 +663,7 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
   for fingerprint in disagreed_bad_exits:
     with_flag = set([authority for authority, flagged in bad_exits.items() if fingerprint in flagged])
     without_flag = []
-    not_in_consensus = []
+    not_in_vote = []
 
     for authority in voting_authorities.difference(with_flag):
       vote = votes[authority]
@@ -671,16 +671,13 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
       if fingerprint in vote.routers:
         without_flag.append(authority)
       else:
-        not_in_consensus.append(authority)
+        not_in_vote.append(authority)
 
-    # If this relay's missing from a consensus and has been active for less
-    # than an hour then don't bother. It gets negligable traffic and is likely
-    # part of normal network churn.
+    # If this relay's missing from a consensus then don't bother. It gets
+    # negligable traffic and is likely part of normal network churn.
 
-    desc = votes[list(with_flag)[0]].routers[fingerprint]
-    uptime = (datetime.datetime.now() - desc.published).total_seconds()
-
-    if not_in_consensus and uptime < 3600:
+    if fingerprint not in latest_consensus.routers:
+      log.debug("BadExit sync check is skipping %s because it's not in the latest consensus" % fingerprint)
       continue
 
     attr = ['with flag: %s' % ', '.join(with_flag)]
@@ -688,8 +685,8 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
     if without_flag:
       attr.append('without flag: %s' % ', '.join(without_flag))
 
-    if not_in_consensus:
-      attr.append('not in consensus: %s' % ', '.join(not_in_consensus))
+    if not_in_vote:
+      attr.append('not in consensus: %s' % ', '.join(not_in_vote))
 
     issues.append(Issue(Runlevel.NOTICE, 'BADEXIT_OUT_OF_SYNC', fingerprint = fingerprint, counts = ', '.join(attr), to = bad_exits.keys()))
 
