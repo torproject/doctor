@@ -325,6 +325,7 @@ def run_checks(consensuses, votes):
     is_recommended_versions,
     bad_exits_in_sync,
     bandwidth_authorities_in_sync,
+    is_orport_reachable,
   )
 
   all_issues = []
@@ -580,7 +581,7 @@ def unmeasured_relays(latest_consensus, consensuses, votes):
       percentage = 100 * unmeasured / total
 
       if percentage >= 5:
-        issues.append(Issue(Runlevel.NOTICE, 'TOO_MANY_UNMEASURED_RELAYS', authority = authority, unmeasured = unmeasured, total = total, percentage = percentage, to = [authority]))
+        issues.append(Issue(Runlevel.NOTICE, 'TOO_MANY_UNMEASURED_RELAYS', authority = authority.nickname, unmeasured = unmeasured, total = total, percentage = percentage, to = [authority]))
 
   return issues
 
@@ -613,6 +614,7 @@ def has_expected_fingerprints(latest_consensus, consensuses, votes):
   "Checks that the authorities have the fingerprints that we expect."
 
   issues = []
+
   for desc in latest_consensus.routers.values():
     if desc.nickname in DIRECTORY_AUTHORITIES and Flag.NAMED in desc.flags:
       expected_fingerprint = DIRECTORY_AUTHORITIES[desc.nickname].fingerprint
@@ -686,7 +688,7 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
       attr.append('without flag: %s' % ', '.join(without_flag))
 
     if not_in_vote:
-      attr.append('not in consensus: %s' % ', '.join(not_in_vote))
+      attr.append('not in vote: %s' % ', '.join(not_in_vote))
 
     issues.append(Issue(Runlevel.NOTICE, 'BADEXIT_OUT_OF_SYNC', fingerprint = fingerprint, counts = ', '.join(attr), to = bad_exits.keys()))
 
@@ -719,10 +721,9 @@ def bandwidth_authorities_in_sync(latest_consensus, consensuses, votes):
       return Issue(Runlevel.NOTICE, 'BANDWIDTH_AUTHORITIES_OUT_OF_SYNC', authorities = ', '.join(entries), to = measurement_counts.keys())
 
 
-def is_ipv6_orport_reachable(latest_consensus, consensuses, votes):
+def is_orport_reachable(latest_consensus, consensuses, votes):
   """
-  Simple check to see if we can reach the authority's IPv6 ORPort when it has
-  one.
+  Simple check to see if we can reach the authority's ORPort.
   """
 
   issues = []
@@ -734,22 +735,14 @@ def is_ipv6_orport_reachable(latest_consensus, consensuses, votes):
       continue  # authority isn't in the consensus
 
     for address, port, is_ipv6 in desc.or_addresses:
-      if is_ipv6:
-        # TODO: Ok, now for the bit I'm unfamiliar with. How do we ping
-        # this endpoint? On cappadocicum seems we're missing something...
-        #
-        #   % ping6 2001:858:2:2:aabb:0:563b:1526
-        #   connect: Network is unreachable
-        #
-        # Do we need a tunnel? 6to4 configuration?
-        #
-        #   https://wiki.debian.org/DebianIPv6#IPv6_6to4_Configuration
-        #
-        # Green to this space so lets ask...
+      orport_socket = socket.socket(socket.AF_INET6 if is_ipv6 else socket.AF_INET, socket.SOCK_STREAM)
 
-        orport_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+      try:
         orport_socket.connect((address, port))
-        # ???
+      except Exception as exc:
+        issues.append(Issue(Runlevel.WARNING, 'UNABLE_TO_REACH_ORPORT', authority = authority.nickname, address = address, port = port, error = exc, to = [authority]))
+      finally:
+        orport_socket.close()
 
   return issues
 
@@ -799,9 +792,9 @@ def _get_documents(label, resource):
     median_time = sorted(times_taken.values())[len(times_taken) / 2]
     authority_times = ', '.join(['%s => %0.1fs' % (authority, time_taken) for authority, time_taken in times_taken.items()])
 
-    for authority, time_taken in times_taken.items():
+    for nickname, time_taken in times_taken.items():
       if time_taken > median_time * 5:
-        issues.append(Issue(Runlevel.NOTICE, 'LATENCY', authority = authority, time_taken = '%0.1fs' % time_taken, median_time = '%0.1fs' % median_time, authority_times = authority_times, to = [authority]))
+        issues.append(Issue(Runlevel.NOTICE, 'LATENCY', authority = nickname, time_taken = '%0.1fs' % time_taken, median_time = '%0.1fs' % median_time, authority_times = authority_times, to = [nickname]))
 
   return documents, issues
 
