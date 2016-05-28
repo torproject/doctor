@@ -9,7 +9,6 @@ Performs a variety of checks against the present votes and consensus.
 import collections
 import datetime
 import os
-import socket
 import time
 import traceback
 
@@ -735,14 +734,10 @@ def is_orport_reachable(latest_consensus, consensuses, votes):
       continue  # authority isn't in the consensus
 
     for address, port, is_ipv6 in desc.or_addresses:
-      orport_socket = socket.socket(socket.AF_INET6 if is_ipv6 else socket.AF_INET, socket.SOCK_STREAM)
+      issue = util.check_reachability(address, port)
 
-      try:
-        orport_socket.connect((address, port))
-      except Exception as exc:
-        issues.append(Issue(Runlevel.WARNING, 'UNABLE_TO_REACH_ORPORT', authority = authority.nickname, address = address, port = port, error = exc, to = [authority]))
-      finally:
-        orport_socket.close()
+      if issue:
+        issues.append(Issue(Runlevel.WARNING, 'UNABLE_TO_REACH_ORPORT', authority = authority.nickname, address = address, port = port, error = issue, to = [authority]))
 
   return issues
 
