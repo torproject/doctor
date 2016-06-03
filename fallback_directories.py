@@ -61,7 +61,7 @@ def main():
       issues.append('%s => Downloading the consensus took %0.1f seconds' % (relay.fingerprint, download_time))
 
   issue_percent = 100.0 * len(issues) / len(fallback_directories)
-  log.info('%i ssues found (%i%%)' % (len(issues), issue_percent))
+  log.info('%i issues found (%i%%)' % (len(issues), issue_percent))
 
   if issue_percent >= NOTIFICATION_THRESHOLD:
     log.info('Sending notification')

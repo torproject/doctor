@@ -53,6 +53,8 @@ def main():
     if not query.error:
       count = len(list(query))
       log.debug("  %i descriptors retrieved from %s in %0.2fs" % (count, query.download_url, query.runtime))
+    elif "'dirreq-v3-ips' line had non-ascii content" in str(query.error):
+      log.debug("Suppressing error due to malformed dirreq-v3-ips line: https://trac.torproject.org/projects/tor/ticket/16858")
     else:
       log.warn("Unable to retrieve the %s: %s" % (descriptor_type, query.error))
       send_email(EMAIL_SUBJECT, descriptor_type, query)
