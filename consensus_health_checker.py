@@ -317,7 +317,7 @@ def run_checks(consensuses, votes):
     #vote_parameters_mismatch_consensus,
     certificate_expiration,
     consensuses_have_same_votes,
-    #has_all_signatures,
+    has_all_signatures,
     voting_bandwidth_scanners,
     #unmeasured_relays,
     has_authority_flag,
