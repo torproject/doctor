@@ -674,6 +674,9 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
       else:
         not_in_vote.append(authority)
 
+    if not without_flag:
+      continue  # skip notice if the only disagreement is due to not having a vote
+
     # If this relay's missing from a consensus then don't bother. It gets
     # negligable traffic and is likely part of normal network churn.
 
