@@ -603,10 +603,8 @@ def has_authority_flag(latest_consensus, consensuses, votes):
   if missing_authorities:
     issues.append(Issue(Runlevel.WARNING, 'MISSING_AUTHORITIES', authorities = ', '.join(missing_authorities), to = missing_authorities))
 
-  # TODO: Re-enable when Tonga is gone.
-
-  #if extra_authorities:
-  #  issues.append(Issue(Runlevel.NOTICE, 'EXTRA_AUTHORITIES', authorities = ', '.join(extra_authorities), to = extra_authorities))
+  if extra_authorities:
+    issues.append(Issue(Runlevel.NOTICE, 'EXTRA_AUTHORITIES', authorities = ', '.join(extra_authorities), to = extra_authorities))
 
   return issues
 
