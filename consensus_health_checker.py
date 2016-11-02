@@ -322,7 +322,7 @@ def run_checks(consensuses, votes):
     #unmeasured_relays,
     has_authority_flag,
     is_recommended_versions,
-    #bad_exits_in_sync,
+    bad_exits_in_sync,
     bandwidth_authorities_in_sync,
     is_orport_reachable,
   )
