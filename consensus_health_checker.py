@@ -786,7 +786,7 @@ def _get_documents(label, resource):
     except Exception as exc:
       issues.append(Issue(Runlevel.ERROR, 'AUTHORITY_UNAVAILABLE', fetch_type = label, authority = authority.nickname, url = query.download_url, error = exc, to = [authority.nickname]))
 
-  if label == 'consensus':
+  if label == 'consensus' and times_taken:
     median_time = sorted(times_taken.values())[len(times_taken) / 2]
     authority_times = ', '.join(['%s => %0.1fs' % (authority, time_taken) for authority, time_taken in times_taken.items()])
 
