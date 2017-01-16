@@ -776,7 +776,6 @@ def _get_documents(label, resource):
       resource,
       endpoints = [(authority.address, authority.dir_port)],
       default_params = False,
-      validate = True,
     )
 
     try:
