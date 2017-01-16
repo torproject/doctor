@@ -2,6 +2,7 @@
 Module for issuing email notifications to me via gmail.
 """
 
+import getpass
 import logging
 import os
 import socket
@@ -17,7 +18,7 @@ FROM_ADDRESS = 'atagar@torproject.org'
 TO_ADDRESSES = ['tor-consensus-health@lists.torproject.org']
 ERROR_ADDRESS = 'atagar@torproject.org'
 
-TEST_RUN = False  # print script results rather than emailing
+TEST_RUN = getpass.getuser() != 'doctor'  # print script results rather than emailing
 
 
 def get_path(*comp):
