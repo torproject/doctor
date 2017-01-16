@@ -325,6 +325,7 @@ def run_checks(consensuses, votes):
     bad_exits_in_sync,
     bandwidth_authorities_in_sync,
     is_orport_reachable,
+    shared_random_commitment_mismatch,
   )
 
   all_issues = []
@@ -744,6 +745,25 @@ def is_orport_reachable(latest_consensus, consensuses, votes):
 
   return issues
 
+
+def shared_random_commitment_mismatch(latest_consensus, consensuses, votes):
+  """
+  Check that each authority's commitment matches the votes from other
+  authorities.
+  """
+
+  issues = []
+  self_commitments = {}
+
+  for authority, vote in votes.items():
+    our_v3ident = DIRECTORY_AUTHORITIES[authority].v3ident
+    our_commitment = [c.commit for c in vote.directory_authorities[0].shared_randomness_commitments if c.identity == our_v3ident][0]
+    self_commitments[our_v3ident] = our_commitment
+
+  for authority, vote in votes.items():
+    for commitment in vote.directory_authorities[0].shared_randomness_commitments:
+      if commitment.commit != self_commitments[commitment.identity]:
+        issues.append(Issue(Runlevel.WARNING, 'SHARED_RANDOM_COMMITMENT_MISMATCH', authority = authority.nickname, their_v3ident = commitment.identity, our_value = commitment.commit, their_value = self_commitments[commitment.identity], to = [authority]))
 
 def get_consensuses():
   """
