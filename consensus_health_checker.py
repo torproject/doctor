@@ -752,6 +752,14 @@ def shared_random_commitment_mismatch(latest_consensus, consensuses, votes):
   authorities.
   """
 
+  # Check is for the commit phase which is 0:00 to 12:00 UTC. Just gonna check
+  # near the end of that.
+
+  utc_hour = datetime.datetime.utcnow().hour
+
+  if utc_hour < 8 or utc_hour >= 12:
+    return
+
   issues = []
   self_commitments = {}
 
