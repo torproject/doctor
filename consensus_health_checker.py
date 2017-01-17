@@ -325,7 +325,8 @@ def run_checks(consensuses, votes):
     bad_exits_in_sync,
     bandwidth_authorities_in_sync,
     is_orport_reachable,
-    shared_random_commitment_mismatch,
+    shared_random_commit_partitioning,
+    shared_random_reveal_partitioning,
   )
 
   all_issues = []
@@ -746,14 +747,12 @@ def is_orport_reachable(latest_consensus, consensuses, votes):
   return issues
 
 
-def shared_random_commitment_mismatch(latest_consensus, consensuses, votes):
+def shared_random_commit_partitioning(latest_consensus, consensuses, votes):
   """
   Check that each authority's commitment matches the votes from other
-  authorities.
+  authorities during the commit phase. The commit phase is 0:00 to 12:00 UTC
+  and this just checks near the end of that.
   """
-
-  # Check is for the commit phase which is 0:00 to 12:00 UTC. Just gonna check
-  # near the end of that.
 
   utc_hour = datetime.datetime.utcnow().hour
 
@@ -771,7 +770,40 @@ def shared_random_commitment_mismatch(latest_consensus, consensuses, votes):
   for authority, vote in votes.items():
     for commitment in vote.directory_authorities[0].shared_randomness_commitments:
       if commitment.commit != self_commitments[commitment.identity]:
-        issues.append(Issue(Runlevel.WARNING, 'SHARED_RANDOM_COMMITMENT_MISMATCH', authority = authority.nickname, their_v3ident = commitment.identity, our_value = commitment.commit, their_value = self_commitments[commitment.identity], to = [authority]))
+        issues.append(Issue(Runlevel.WARNING, 'SHARED_RANDOM_COMMITMENT_MISMATCH', authority = authority, their_v3ident = commitment.identity, our_value = commitment.commit, their_value = self_commitments[commitment.identity], to = [authority]))
+
+def shared_random_reveal_partitioning(latest_consensus, consensuses, votes):
+  """
+  Check that each authority's vote has all commitments during the reveal phase.
+  The reveal phase is 12:00 to 0:00 UTC and this just checks near the end of
+  that.
+  """
+
+  utc_hour = datetime.datetime.utcnow().hour
+
+  if utc_hour < 20:
+    return
+
+  issues = []
+  self_reveals = {}
+
+  for authority, vote in votes.items():
+    our_v3ident = DIRECTORY_AUTHORITIES[authority].v3ident
+    our_reveal = [c.reveal for c in vote.directory_authorities[0].shared_randomness_commitments if c.identity == our_v3ident][0]
+    self_reveals[our_v3ident] = our_reveal
+
+  for authority, vote in votes.items():
+    commitments = vote.directory_authorities[0].shared_randomness_commitments
+
+    for v3ident, reveal in self_reveals.items():
+      matches = [c.reveal for c in commitments if c.identity == v3ident]
+
+      if len(matches) == 0:
+        issues.append(Issue(Runlevel.WARNING, 'SHARED_RANDOM_REVEAL_MISSING', authority = authority, their_v3ident = v3ident, their_value = reveal, to = [authority]))
+      elif len(matches) > 0:
+        issues.append(Issue(Runlevel.WARNING, 'SHARED_RANDOM_REVEAL_DUPLICATED', authority = authority, their_v3ident = v3ident, to = [authority]))
+      elif matches[0] != reveal:
+        issues.append(Issue(Runlevel.WARNING, 'SHARED_RANDOM_REVEAL_MISMATCH', authority = authority, their_v3ident = v3ident, our_value = matches[0], their_value = reveal, to = [authority]))
 
 def get_consensuses():
   """
