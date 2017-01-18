@@ -325,6 +325,7 @@ def run_checks(consensuses, votes):
     bad_exits_in_sync,
     bandwidth_authorities_in_sync,
     is_orport_reachable,
+    shared_random_present,
     shared_random_commit_partitioning,
     shared_random_reveal_partitioning,
   )
@@ -743,6 +744,23 @@ def is_orport_reachable(latest_consensus, consensuses, votes):
 
       if issue:
         issues.append(Issue(Runlevel.WARNING, 'UNABLE_TO_REACH_ORPORT', authority = authority.nickname, address = address, port = port, error = issue, to = [authority]))
+
+  return issues
+
+
+def shared_random_present(latest_consensus, consensuses, votes):
+  """
+  Check that the consensus has shared randomness values necessary for hidden
+  services to function.
+  """
+
+  issues = []
+
+  if latest_consensus.shared_randomness_current_value is None:
+    issues.append(Issue(Runlevel.ERROR, 'CURRENT_SHARED_RANDOM_MISSING'))
+
+  if latest_consensus.shared_randomness_previous_value is None:
+    issues.append(Issue(Runlevel.ERROR, 'PREVIOUS_SHARED_RANDOM_MISSING'))
 
   return issues
 
