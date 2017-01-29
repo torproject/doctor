@@ -807,8 +807,14 @@ def shared_random_reveal_partitioning(latest_consensus, consensuses, votes):
 
   for authority, vote in votes.items():
     our_v3ident = DIRECTORY_AUTHORITIES[authority].v3ident
-    our_reveal = [c.reveal for c in vote.directory_authorities[0].shared_randomness_commitments if c.identity == our_v3ident][0]
-    self_reveals[our_v3ident] = our_reveal
+    our_reveals = [c.reveal for c in vote.directory_authorities[0].shared_randomness_commitments if c.identity == our_v3ident]
+
+    if not our_reveals:
+      issues.append(Issue(Runlevel.WARNING, 'SHARED_RANDOM_NO_REVEAL', authority = authority, to = [authority]))
+    elif len(our_reveals) > 1:
+      issues.append(Issue(Runlevel.WARNING, 'SHARED_RANDOM_MULTIPLE_REVEAL', authority = authority, count = len(our_reveals), to = [authority]))
+    else:
+      self_reveals[our_v3ident] = our_reveals[0]
 
   for authority, vote in votes.items():
     commitments = vote.directory_authorities[0].shared_randomness_commitments
