@@ -553,7 +553,7 @@ def voting_bandwidth_scanners(latest_consensus, consensuses, votes):
   issues = []
 
   if missing_authorities:
-    runlevel = Runlevel.ERROR if len(missing_authorities) > 1 else Runlevel.WARNING
+    runlevel = Runlevel.ERROR if len(missing_authorities) > 1 else Runlevel.NOTICE
     issues.append(Issue(runlevel, 'MISSING_BANDWIDTH_SCANNERS', authorities = ', '.join(missing_authorities), to = missing_authorities))
 
   if extra_authorities:
