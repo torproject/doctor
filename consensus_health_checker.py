@@ -787,7 +787,9 @@ def shared_random_commit_partitioning(latest_consensus, consensuses, votes):
 
   for authority, vote in votes.items():
     for commitment in vote.directory_authorities[0].shared_randomness_commitments:
-      if commitment.commit != self_commitments[commitment.identity]:
+      if commitment.identity not in self_commitments[commitment.identity:
+        pass  # we didn't get a vote for this authority so we don't know its self-reported commitment
+      elif commitment.commit != self_commitments[commitment.identity]:
         issues.append(Issue(Runlevel.WARNING, 'SHARED_RANDOM_COMMITMENT_MISMATCH', authority = authority, their_v3ident = commitment.identity, our_value = commitment.commit, their_value = self_commitments[commitment.identity], to = [authority]))
 
 def shared_random_reveal_partitioning(latest_consensus, consensuses, votes):
