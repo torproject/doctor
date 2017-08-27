@@ -545,6 +545,11 @@ def voting_bandwidth_scanners(latest_consensus, consensuses, votes):
         contains_measured_bandwidth = True
         break
 
+    # TODO: re-enable when gabelmoo is fixed
+
+    if authority == 'gabelmoo':
+      continue
+
     if DIRECTORY_AUTHORITIES[authority].is_bandwidth_authority and not contains_measured_bandwidth:
       missing_authorities.append(authority)
     if not DIRECTORY_AUTHORITIES[authority].is_bandwidth_authority and contains_measured_bandwidth:
