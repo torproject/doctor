@@ -10,7 +10,6 @@ Checks for outdated versions on the packages wiki...
 
 import collections
 import re
-import ssl
 import urllib2
 
 DEBIAN_VERSION = '<h1>Package: \S+ \(([0-9\.]+).*\)'
@@ -87,22 +86,27 @@ if __name__ == '__main__':
     print(DIV)
 
     for package in packages:
+      request, request_exc = None, None
+
       for i in range(3):
         try:
           request = urllib2.urlopen(package.url, timeout = 5).read()
           break
-        except (urllib2.HTTPError, ssl.SSLError):
-          pass
+        except Exception as exc:
+          request_exc = exc  # note exception and retry
 
-      match = re.search(package.regex, request)
-      current_version = match.group(1) if match else None
+      if request:
+        match = re.search(package.regex, request)
+        current_version = match.group(1) if match else None
 
-      if not current_version:
-        msg = 'unable to determine current version'
-      elif current_version == package.version:
-        msg = 'up to date'
+        if not current_version:
+          msg = 'unable to determine current version'
+        elif current_version == package.version:
+          msg = 'up to date'
+        else:
+          msg = 'current version is %s but wiki has %s' % (current_version, package.version)
       else:
-        msg = 'current version is %s but wiki has %s' % (current_version, package.version)
+        msg = 'unable to retrieve current version: %s' % request_exc
 
       print(COLUMN % (project, package.platform, package.version, msg))
 
