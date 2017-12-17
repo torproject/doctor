@@ -10,6 +10,7 @@ Checks for outdated versions on the packages wiki...
 
 import collections
 import re
+import time
 import urllib2
 
 DEBIAN_VERSION = '<h1>Package: \S+ \(([0-9\.]+).*\)'
@@ -94,6 +95,9 @@ if __name__ == '__main__':
           break
         except Exception as exc:
           request_exc = exc  # note exception and retry
+
+          if i != 2:
+            time.sleep(2 ** i)
 
       if request:
         match = re.search(package.regex, request)
