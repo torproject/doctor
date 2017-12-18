@@ -13,6 +13,8 @@ import re
 import time
 import urllib2
 
+import util
+
 DEBIAN_VERSION = '<h1>Package: \S+ \(([0-9\.]+).*\)'
 FEDORA_VERSION = '<div class="package-name">([0-9\.]+).*</div>'
 ARCH_LINUX_VERSION = '<title>Arch Linux - \S+ ([0-9\.]+).*</title>'
@@ -78,6 +80,8 @@ PACKAGES = [
   ]),
 ]
 
+log = util.get_logger('package_versions')
+
 
 def gentoo_version(request):
   # Unlike other platforms gentoo lists all package versions, so we
@@ -98,12 +102,15 @@ def gentoo_version(request):
   return highest_version
 
 
-if __name__ == '__main__':
-  print(DIV)
-  print(COLUMN % ('Project', 'Platform', 'Version', 'Status'))
+def email_content():
+  lines = []
+  lines.append(DIV)
+  lines.append(COLUMN % ('Project', 'Platform', 'Version', 'Status'))
+
+  has_issue = False
 
   for project, packages in PACKAGES:
-    print(DIV)
+    lines.append(DIV)
 
     for package in packages:
       request, request_exc = None, None
@@ -127,13 +134,29 @@ if __name__ == '__main__':
 
         if not current_version:
           msg = 'unable to determine current version'
+          has_issue = True
         elif current_version == package.version:
           msg = 'up to date'
         else:
           msg = 'current version is %s but wiki has %s' % (current_version, package.version)
+          has_issue = True
       else:
         msg = 'unable to retrieve current version: %s' % request_exc
+        has_issue = True
 
-      print(COLUMN % (project, package.platform, package.version, msg))
+      lines.append(COLUMN % (project, package.platform, package.version, msg))
 
-  print(DIV)
+  lines.append(DIV)
+  return '\n'.join(lines), has_issue
+
+
+if __name__ == '__main__':
+  content, has_issue = email_content()
+
+  if has_issue:
+    try:
+      util.send('Packages wiki possibly outdated', body = content, to = [util.ERROR_ADDRESS])
+    except Exception as exc:
+      log.warn("Unable to send email: %s" % exc)
+
+  log.debug('\n' + content)
