@@ -32,7 +32,7 @@ PACKAGES = [
     Package('mac', 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/tor.rb', '0.3.1.9', 'tor-([0-9\.]+).tar.gz'),
     Package('debian', 'https://packages.debian.org/sid/tor', '0.3.1.9', DEBIAN_VERSION),
     Package('fedora', 'https://apps.fedoraproject.org/packages/tor', '0.3.1.9', FEDORA_VERSION),
-    #Package('gentoo', 'https://packages.gentoo.org/packages/net-vpn/tor', '0.3.1.9', None),
+    Package('gentoo', 'https://packages.gentoo.org/packages/net-vpn/tor', '0.3.1.9', None),
     Package('archlinux', 'https://www.archlinux.org/packages/community/x86_64/tor/', '0.3.1.9', ARCH_LINUX_VERSION),
     Package('slackware', 'https://slackbuilds.org/repository/14.2/network/tor/', '0.3.1.9', 'tor-([0-9\.]+).tar.gz'),
     Package('freebsd', 'https://www.freshports.org/security/tor/', '0.3.1.9', FREEBSD_VERSION),
@@ -40,7 +40,7 @@ PACKAGES = [
     Package('netbsd', 'http://pkgsrc.se/net/tor', '0.3.1.9', NETBSD_VERSION),
   ]),
   ('nyx', [
-    #Package('gentoo', 'https://packages.gentoo.org/packages/net-misc/nyx', '2.0.4', None),
+    Package('gentoo', 'https://packages.gentoo.org/packages/net-misc/nyx', '2.0.4', None),
     Package('archlinux', 'https://aur.archlinux.org/packages/nyx/', '2.0.4', AUR_VERSION),
     Package('slackware', 'https://slackbuilds.org/repository/14.2/python/nyx/', '2.0.4', 'nyx-([0-9\.]+).tar.gz'),
     Package('freebsd', 'https://www.freshports.org/security/nyx/', '2.0.4', FREEBSD_VERSION),
@@ -49,7 +49,7 @@ PACKAGES = [
   ('stem', [
     Package('debian', 'https://packages.debian.org/sid/python-stem', '1.6.0', DEBIAN_VERSION),
     Package('fedora', 'https://apps.fedoraproject.org/packages/python-stem', '1.6.0', FEDORA_VERSION),
-    #Package('gentoo', 'https://packages.gentoo.org/packages/net-libs/stem', '1.6.0', None),
+    Package('gentoo', 'https://packages.gentoo.org/packages/net-libs/stem', '1.6.0', None),
     Package('archlinux', 'https://aur.archlinux.org/packages/stem/', '1.6.0', AUR_VERSION),
     Package('slackware', 'https://slackbuilds.org/repository/14.2/python/stem/', '1.6.0', 'stem-([0-9\.]+).tar.gz'),
     Package('freebsd', 'https://www.freshports.org/security/py-stem/', '1.6.0', FREEBSD_VERSION),
@@ -57,7 +57,7 @@ PACKAGES = [
   ]),
   ('txtorcon', [
     Package('debian', 'https://packages.debian.org/sid/python-txtorcon', '0.19.3', DEBIAN_VERSION),
-    #Package('gentoo', 'https://packages.gentoo.org/packages/dev-python/txtorcon', '0.19.3', None),
+    Package('gentoo', 'https://packages.gentoo.org/packages/dev-python/txtorcon', '0.19.3', None),
     Package('slackware', 'https://slackbuilds.org/repository/14.2/python/txtorcon/', '0.19.3', 'txtorcon-([0-9\.]+).tar.gz'),
     Package('freebsd', 'https://www.freshports.org/security/py-txtorcon/', '0.19.3', FREEBSD_VERSION),
   ]),
@@ -65,7 +65,7 @@ PACKAGES = [
     Package('mac', 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/torsocks.rb', '2.2.0', ':tag => "v([0-9\.]+)",'),
     Package('debian', 'https://packages.debian.org/sid/torsocks', '2.2.0', DEBIAN_VERSION),
     Package('fedora', 'https://apps.fedoraproject.org/packages/torsocks', '2.1.0', FEDORA_VERSION),
-    #Package('gentoo', 'https://packages.gentoo.org/packages/net-proxy/torsocks', '2.2.0', None),
+    Package('gentoo', 'https://packages.gentoo.org/packages/net-proxy/torsocks', '2.2.0', None),
     Package('archlinux', 'https://www.archlinux.org/packages/community/x86_64/torsocks/', '2.2.0', ARCH_LINUX_VERSION),
     Package('slackware', 'https://slackbuilds.org/repository/14.2/network/torsocks/', '2.2.0', 'torsocks \(([0-9\.]+)\)    </h2>'),
     Package('freebsd', 'https://www.freshports.org/net/torsocks/', '2.2.0', 'SHA256 \(dgoulet-torsocks-v([0-9\.]+)_GH0.tar.gz\)'),
@@ -77,6 +77,25 @@ PACKAGES = [
     Package('archlinux', 'https://aur.archlinux.org/packages/ooniprobe/', '1.2.2', AUR_VERSION),
   ]),
 ]
+
+
+def gentoo_version(request):
+  # Unlike other platforms gentoo lists all package versions, so we
+  # need to figure out what's the latest.
+
+  highest_version, highest_version_int = None, 0
+
+  for version in set(re.findall('.ebuild">([0-9\.]+)(?:-r[0-9]+)?</a>', request)):
+    version_int = 0
+
+    for section in version.split('.'):
+      version_int = (version_int * 10) + int(section)
+
+    if version_int > highest_version_int:
+      highest_version = version
+      highest_version_int = version_int
+
+  return highest_version
 
 
 if __name__ == '__main__':
@@ -100,8 +119,11 @@ if __name__ == '__main__':
             time.sleep(2 ** i)
 
       if request:
-        match = re.search(package.regex, request)
-        current_version = match.group(1) if match else None
+        if package.platform == 'gentoo':
+          current_version = gentoo_version(request)
+        else:
+          match = re.search(package.regex, request)
+          current_version = match.group(1) if match else None
 
         if not current_version:
           msg = 'unable to determine current version'
