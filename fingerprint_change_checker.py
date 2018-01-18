@@ -62,16 +62,26 @@ def main():
       # if we've changed more than ten times in the last ten days then alarm
 
       if len(prior_fingerprints) >= 10:
-        alarm_for.add((relay.address, relay.or_port))
+        alarm_for.add((relay.address, relay.or_port, relay.fingerprint))
 
   if alarm_for and not is_notification_suppressed(alarm_for):
     log.debug("Sending a notification for %i relays..." % len(alarm_for))
     body = EMAIL_BODY
 
-    for address, or_port in alarm_for:
+    for address, or_port, fingerprint in alarm_for:
+      try:
+        desc = downloader.get_server_descriptors(fingerprint).run()[0]
+      except:
+        desc = None  # might not be available, just used for extra info
+
       fp_changes = fingerprint_changes[(address, or_port)]
       log.debug("* %s:%s has had %i fingerprints: %s" % (address, or_port, len(fp_changes), ', '.join(fp_changes.keys())))
-      body += "* %s:%s\n" % (address, or_port)
+
+      if desc:
+        body += "* %s:%s (platform: %s, contact: %s)\n" % (address, or_port, desc.platform.decode('utf-8', 'replace'), desc.contact)
+      else:
+        body += "* %s:%s\n" % (address, or_port)
+
       count = 0
 
       for fingerprint in sorted(fp_changes, reverse = True, key = lambda k: fp_changes[k]):
@@ -92,7 +102,7 @@ def main():
     subject = EMAIL_SUBJECT
 
     if len(alarm_for) == 1:
-      subject += ' (%s:%s') % alarm_for[0]
+      subject += ' (%s:%s)' % list(alarm_for)[0][:2]
 
     util.send(subject, body = body, to = ['bad-relays@lists.torproject.org', 'atagar@torproject.org'])
 
@@ -100,7 +110,7 @@ def main():
 
     current_time = str(int(time.time()))
 
-    for address, or_port in alarm_for:
+    for address, or_port, _ in alarm_for:
       last_notified_config.set('%s:%s' % (address, or_port), current_time)
 
     last_notified_config.save()
@@ -162,7 +172,7 @@ def is_notification_suppressed(fingerprint_changes):
   log.debug("Checking if notification should be suppressed...")
   last_notified_config = conf.get_config('last_notified')
 
-  for address, or_port in fingerprint_changes:
+  for address, or_port, _ in fingerprint_changes:
     key = '%s:%s' % (address, or_port)
     suppression_time = ONE_DAY - (int(time.time()) - last_notified_config.get(key, 0))
 
