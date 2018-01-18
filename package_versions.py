@@ -31,15 +31,15 @@ Package = collections.namedtuple('Package', ['platform', 'url', 'version', 'rege
 
 PACKAGES = [
   ('tor', [
-    Package('mac', 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/tor.rb', '0.3.1.9', 'tor-([0-9\.]+).tar.gz'),
-    Package('debian', 'https://packages.debian.org/sid/tor', '0.3.1.9', DEBIAN_VERSION),
-    Package('fedora', 'https://apps.fedoraproject.org/packages/tor', '0.3.1.9', FEDORA_VERSION),
-    Package('gentoo', 'https://packages.gentoo.org/packages/net-vpn/tor', '0.3.1.9', None),
+    Package('mac', 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/tor.rb', '0.3.2.9', 'tor-([0-9\.]+).tar.gz'),
+    Package('debian', 'https://packages.debian.org/sid/tor', '0.3.2.9', DEBIAN_VERSION),
+    Package('fedora', 'https://apps.fedoraproject.org/packages/tor', '0.3.2.9', FEDORA_VERSION),
+    Package('gentoo', 'https://packages.gentoo.org/packages/net-vpn/tor', '0.3.2.9', None),
     Package('archlinux', 'https://www.archlinux.org/packages/community/x86_64/tor/', '0.3.1.9', ARCH_LINUX_VERSION),
-    Package('slackware', 'https://slackbuilds.org/repository/14.2/network/tor/', '0.3.1.9', 'tor-([0-9\.]+).tar.gz'),
-    Package('freebsd', 'https://www.freshports.org/security/tor/', '0.3.1.9', FREEBSD_VERSION),
-    Package('openbsd', 'https://cvsweb.openbsd.org/cgi-bin/cvsweb/ports/net/tor/Makefile?rev=HEAD&content-type=text/x-cvsweb-markup', '0.3.1.9', OPENBSD_DIST_VERSION),
-    Package('netbsd', 'http://pkgsrc.se/net/tor', '0.3.1.9', NETBSD_VERSION),
+    Package('slackware', 'https://slackbuilds.org/repository/14.2/network/tor/', '0.3.2.9', 'tor-([0-9\.]+).tar.gz'),
+    Package('freebsd', 'https://www.freshports.org/security/tor/', '0.3.2.9', FREEBSD_VERSION),
+    Package('openbsd', 'https://cvsweb.openbsd.org/cgi-bin/cvsweb/ports/net/tor/Makefile?rev=HEAD&content-type=text/x-cvsweb-markup', '0.3.2.9', OPENBSD_DIST_VERSION),
+    Package('netbsd', 'http://pkgsrc.se/net/tor', '0.3.2.9', NETBSD_VERSION),
   ]),
   ('nyx', [
     Package('gentoo', 'https://packages.gentoo.org/packages/net-misc/nyx', '2.0.4', None),
