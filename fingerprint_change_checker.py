@@ -89,7 +89,12 @@ def main():
 
       body += "\n"
 
-    util.send(EMAIL_SUBJECT, body = body, to = ['bad-relays@lists.torproject.org', 'atagar@torproject.org'])
+    subject = EMAIL_SUBJECT
+
+    if len(alarm_for) == 1:
+      subject += ' (%s:%s') % alarm_for[0]
+
+    util.send(subject, body = body, to = ['bad-relays@lists.torproject.org', 'atagar@torproject.org'])
 
     # register that we've notified for these
 
