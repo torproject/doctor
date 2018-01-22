@@ -313,7 +313,7 @@ def run_checks(consensuses, votes):
     consensus_method_unsupported,
     different_recommended_client_version,
     different_recommended_server_version,
-    unknown_consensus_parameters,
+    #unknown_consensus_parameters,  # tor is fiddling with these quite a bit, #24895
     #vote_parameters_mismatch_consensus,
     certificate_expiration,
     consensuses_have_same_votes,
