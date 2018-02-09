@@ -35,7 +35,7 @@ PACKAGES = [
     Package('debian', 'https://packages.debian.org/sid/tor', '0.3.2.9', DEBIAN_VERSION),
     Package('fedora', 'https://apps.fedoraproject.org/packages/tor', '0.3.2.9', FEDORA_VERSION),
     Package('gentoo', 'https://packages.gentoo.org/packages/net-vpn/tor', '0.3.2.9', None),
-    Package('archlinux', 'https://www.archlinux.org/packages/community/x86_64/tor/', '0.3.1.9', ARCH_LINUX_VERSION),
+    Package('archlinux', 'https://www.archlinux.org/packages/community/x86_64/tor/', '0.3.2.9', ARCH_LINUX_VERSION),
     Package('slackware', 'https://slackbuilds.org/repository/14.2/network/tor/', '0.3.2.9', 'tor-([0-9\.]+).tar.gz'),
     Package('freebsd', 'https://www.freshports.org/security/tor/', '0.3.2.9', FREEBSD_VERSION),
     Package('openbsd', 'https://cvsweb.openbsd.org/cgi-bin/cvsweb/ports/net/tor/Makefile?rev=HEAD&content-type=text/x-cvsweb-markup', '0.3.2.9', OPENBSD_DIST_VERSION),
