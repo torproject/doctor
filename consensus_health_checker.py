@@ -321,6 +321,7 @@ def run_checks(consensuses, votes):
     voting_bandwidth_scanners,
     #unmeasured_relays,
     has_authority_flag,
+    has_similar_flag_counts,
     is_recommended_versions,
     bad_exits_in_sync,
     bandwidth_authorities_in_sync,
@@ -608,6 +609,35 @@ def has_authority_flag(latest_consensus, consensuses, votes):
 
   if extra_authorities:
     issues.append(Issue(Runlevel.NOTICE, 'EXTRA_AUTHORITIES', authorities = ', '.join(extra_authorities), to = extra_authorities))
+
+  return issues
+
+
+def has_similar_flag_counts(latest_consensus, consensuses, votes):
+  "Checks that flags issued by authorities are similar."
+
+  issues = []
+  flag_count = {}  # {flag => count}
+
+  for desc in latest_consensus.routers.values():
+    for flag in desc.flags:
+      flag_count[flag] = flag_count.setdefault(flag, 0) + 1
+
+  for authority, vote in votes.items():
+    authority_flag_count = {}
+
+    for desc in vote.routers.values():
+      for flag in desc.flags:
+        authority_flag_count[flag] = authority_flag_count.setdefault(flag, 0) + 1
+
+    for flag, count in flag_count.items():
+      if flag == 'BadExit':
+        continue
+
+      vote_count = authority_flag_count.get(flag, 0)
+
+      if vote_count > count * 1.5 or vote_count < count * 0.5:
+        issues.append(Issue(Runlevel.NOTICE, 'FLAG_COUNT_DIFFERS', authority = authority, flag = flag, consensus_count = count, vote_count = vote_count, to = [authority]))
 
   return issues
 
