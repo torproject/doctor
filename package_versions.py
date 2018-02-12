@@ -61,6 +61,7 @@ PACKAGES = [
   ('txtorcon', [
     Package('debian', 'https://packages.debian.org/sid/python-txtorcon', DEBIAN_VERSION),
     Package('gentoo', 'https://packages.gentoo.org/packages/dev-python/txtorcon', None),
+    Package('archlinux', 'https://aur.archlinux.org/packages/python-txtorcon/', AUR_VERSION),
     Package('slackware', 'https://slackbuilds.org/repository/14.2/python/txtorcon/', 'txtorcon-([0-9\.]+).tar.gz'),
     Package('freebsd', 'https://www.freshports.org/security/py-txtorcon/', FREEBSD_VERSION),
   ]),
