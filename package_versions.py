@@ -83,6 +83,17 @@ PACKAGES = [
 log = util.get_logger('package_versions')
 
 
+def fetch_url(url):
+  for i in range(3):
+    try:
+      return urllib2.urlopen(url, timeout = 5).read()
+    except Exception as exc:
+      if i < 2:
+        time.sleep(2 ** i)
+      else:
+        raise IOError(str(exc))
+
+
 def gentoo_version(request):
   # Unlike other platforms gentoo lists all package versions, so we
   # need to figure out what's the latest.
@@ -113,19 +124,9 @@ def email_content():
     lines.append(DIV)
 
     for package in packages:
-      request, request_exc = None, None
+      try:
+        request = fetch_url(package.url)
 
-      for i in range(3):
-        try:
-          request = urllib2.urlopen(package.url, timeout = 5).read()
-          break
-        except Exception as exc:
-          request_exc = exc  # note exception and retry
-
-          if i != 2:
-            time.sleep(2 ** i)
-
-      if request:
         if package.platform == 'gentoo':
           current_version = gentoo_version(request)
         else:
@@ -140,9 +141,14 @@ def email_content():
         else:
           msg = 'current version is %s but wiki has %s' % (current_version, package.version)
           has_issue = True
-      else:
-        msg = 'unable to retrieve current version: %s' % request_exc
-        has_issue = True
+      except IOError as exc:
+        msg = 'unable to retrieve current version: %s' % exc
+
+        # Gentoo's site fails pretty routinely. No need to generate notices for
+        # it.
+
+        if package.platform == 'gentoo':
+          has_issue = True
 
       lines.append(COLUMN % (project, package.platform, package.version, msg))
 
