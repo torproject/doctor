@@ -136,6 +136,11 @@ class Issue(object):
       attr.update({'authority': '', 'time_taken': '', 'median_time': '', 'authority_times': ''})
 
       return CONFIG['msg'][self._template].format(**attr).replace(' ', '_')
+    elif self._template == 'FLAG_COUNT_DIFFERS':
+      attr = dict(self._attr)
+      attr.update({'consensus_count': 0, 'vote_count': 0})
+
+      return CONFIG['msg'][self._template].format(**attr).replace(' ', '_')
     else:
       return self.get_message().replace(' ', '_')
 
