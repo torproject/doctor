@@ -229,7 +229,7 @@ def email_content():
         # Gentoo's site fails pretty routinely. No need to generate notices for
         # it.
 
-        if package.platform == 'gentoo':
+        if package.platform != 'gentoo':
           has_issue = True
 
       lines.append(COLUMN % (project, package.platform, wiki_version, msg))
