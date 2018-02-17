@@ -636,7 +636,13 @@ def has_similar_flag_counts(latest_consensus, consensuses, votes):
         authority_flag_count[flag] = authority_flag_count.setdefault(flag, 0) + 1
 
     for flag, count in flag_count.items():
-      if flag == 'BadExit' or flag == 'HSDir':
+      # Skipping check for the following flags because...
+      #
+      #   * BadExit is only voted on by a few authorities.
+      #   * Running isn't voted on when an authority first starts up.
+      #   * moria1 likes to experiment with the HSDir flag.
+
+      if flag in ('BadExit', 'Running', 'HSDir'):
         continue
 
       vote_count = authority_flag_count.get(flag, 0)
