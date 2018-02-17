@@ -631,7 +631,7 @@ def has_similar_flag_counts(latest_consensus, consensuses, votes):
         authority_flag_count[flag] = authority_flag_count.setdefault(flag, 0) + 1
 
     for flag, count in flag_count.items():
-      if flag == 'BadExit':
+      if flag == 'BadExit' or flag == 'HSDir':
         continue
 
       vote_count = authority_flag_count.get(flag, 0)
