@@ -43,6 +43,8 @@ PACKAGES = [
     Package('netbsd', 'http://pkgsrc.se/net/tor', NETBSD_VERSION),
   ]),
   ('nyx', [
+    Package('mac', 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/nyx.rb', 'nyx-([0-9\.]+).tar.gz'),
+    Package('debian', 'https://packages.debian.org/sid/nyx', DEBIAN_VERSION),
     Package('gentoo', 'https://packages.gentoo.org/packages/net-misc/nyx', None),
     Package('archlinux', 'https://aur.archlinux.org/packages/nyx/', AUR_VERSION),
     Package('slackware', 'https://slackbuilds.org/repository/14.2/python/nyx/', 'nyx-([0-9\.]+).tar.gz'),
@@ -114,7 +116,7 @@ def wiki_package_versions():
     if m:
       version_entries.append(m.group(1))
 
-  if len(version_entries) != 38:
+  if len(version_entries) != 40:
     raise IOError('Table on %s no longer matches what this daemon expects (had %i entries)' % (TRAC_URL, len(version_entries)))
 
   return {
@@ -129,39 +131,41 @@ def wiki_package_versions():
       'openbsd': version_entries[7],
       'netbsd': version_entries[8],
     }, 'nyx': {
-      'fedora': version_entries[9],
-      'gentoo': version_entries[10],
-      'archlinux': version_entries[11],
-      'slackware': version_entries[12],
-      'freebsd': version_entries[13],
-      'openbsd': version_entries[14],
+      'mac': version_entries[9],
+      'debian': version_entries[10],
+      'fedora': version_entries[11],
+      'gentoo': version_entries[12],
+      'archlinux': version_entries[13],
+      'slackware': version_entries[14],
+      'freebsd': version_entries[15],
+      'openbsd': version_entries[16],
     }, 'stem': {
-      'debian': version_entries[15],
-      'fedora': version_entries[16],
-      'gentoo': version_entries[17],
-      'archlinux': version_entries[18],
-      'slackware': version_entries[19],
-      'freebsd': version_entries[20],
-      'openbsd': version_entries[21],
+      'debian': version_entries[17],
+      'fedora': version_entries[18],
+      'gentoo': version_entries[19],
+      'archlinux': version_entries[20],
+      'slackware': version_entries[21],
+      'freebsd': version_entries[22],
+      'openbsd': version_entries[23],
     }, 'txtorcon': {
-      'debian': version_entries[22],
-      'gentoo': version_entries[23],
-      'archlinux': version_entries[24],
-      'slackware': version_entries[25],
-      'freebsd': version_entries[26],
+      'debian': version_entries[24],
+      'gentoo': version_entries[25],
+      'archlinux': version_entries[26],
+      'slackware': version_entries[27],
+      'freebsd': version_entries[28],
     }, 'torsocks': {
-      'mac': version_entries[27],
-      'debian': version_entries[28],
-      'fedora': version_entries[29],
-      'gentoo': version_entries[30],
-      'archlinux': version_entries[31],
-      'slackware': version_entries[32],
-      'freebsd': version_entries[33],
-      'openbsd': version_entries[34],
+      'mac': version_entries[29],
+      'debian': version_entries[30],
+      'fedora': version_entries[31],
+      'gentoo': version_entries[32],
+      'archlinux': version_entries[33],
+      'slackware': version_entries[34],
+      'freebsd': version_entries[35],
+      'openbsd': version_entries[36],
     }, 'ooni probe': {
-      'mac': version_entries[35],
-      'debian': version_entries[36],
-      'archlinux': version_entries[37],
+      'mac': version_entries[37],
+      'debian': version_entries[38],
+      'archlinux': version_entries[39],
     }
   }
 
