@@ -315,6 +315,7 @@ def run_checks(consensuses, votes):
 
   checker_functions = (
     missing_latest_consensus,
+    missing_authority_descriptor,
     consensus_method_unsupported,
     different_recommended_client_version,
     different_recommended_server_version,
@@ -365,6 +366,30 @@ def missing_latest_consensus(latest_consensus, consensuses, votes):
   if stale_authorities:
     runlevel = Runlevel.ERROR if len(stale_authorities) > 3 else Runlevel.WARNING
     return Issue(runlevel, 'MISSING_LATEST_CONSENSUS', authorities = ', '.join(stale_authorities), to = stale_authorities)
+
+
+def missing_authority_descriptor(latest_consensus, consensuses, votes):
+  """
+  Check that each authority has server descriptors for the others. This arises
+  when authorities change their Ed25519 key, but others still have the old key
+  cached...
+
+    Mar 23 11:51:42.617 [warn] http status 400 ("Looks like your keypair has
+    changed? This authority previously recorded a different RSA identity for
+    this Ed25519 identity (or vice versa.) Did you replace or copy some of your
+    key files, but not the others? You should either restore the expected
+    keypair, or delete your keys and restart Tor to start your relay with a new
+    identity.") response from dirserver '199.58.81.140:80'. Please correct.
+  """
+
+  issues = []
+
+  for authority, vote in votes.items():
+    for peer in DIRECTORY_AUTHORITIES.values():
+      if peer.fingerprint not in vote.routers:
+        issues.append(Issue(Runlevel.WARNING, 'MISSING_AUTHORITY_DESC', authority = authority, peer = peer.nickname, to = authority))
+
+  return issues
 
 
 def consensus_method_unsupported(latest_consensus, consensuses, votes):
