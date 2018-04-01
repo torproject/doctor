@@ -761,7 +761,12 @@ def bad_exits_in_sync(latest_consensus, consensuses, votes):
     if not_in_vote:
       attr.append('not in vote: %s' % ', '.join(not_in_vote))
 
-    issues.append(Issue(Runlevel.NOTICE, 'BADEXIT_OUT_OF_SYNC', fingerprint = fingerprint, counts = ', '.join(attr), to = bad_exits.keys()))
+    # Notify whoever doesn't match the consensus, and as such are in the minority.
+
+    has_flag_in_consensus = Flag.BADEXIT in latest_consensus.routers[fingerprint].flags
+    notice_for = without_flag if has_flag_in_consensus else with_flag
+
+    issues.append(Issue(Runlevel.NOTICE, 'BADEXIT_OUT_OF_SYNC', fingerprint = fingerprint, counts = ', '.join(attr), to = notice_for))
 
   return issues
 
