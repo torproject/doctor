@@ -62,10 +62,10 @@ def main():
   # download the consensus from each authority
 
   for authority in stem.descriptor.remote.get_authorities().values():
-    # skip authorities that don't vote in the consensus
-
     if authority.v3ident is None:
-      continue
+      continue  # authority doesn't vote in the consensus
+    elif authority.nickname == 'tor26':
+      continue  # DirPort doesn't accept requests without a .z suffix
 
     log.debug("Downloading the consensus from %s..." % authority.nickname)
 
