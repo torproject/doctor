@@ -25,6 +25,8 @@ from stem.util.lru_cache import lru_cache
 Runlevel = stem.util.enum.UppercaseEnum('NOTICE', 'WARNING', 'ERROR')
 
 DIRECTORY_AUTHORITIES = stem.descriptor.remote.get_authorities()
+del DIRECTORY_AUTHORITIES['tor26']  # DirPort does not service requests without a '.z' suffix
+
 EMAIL_SUBJECT = 'Consensus issues'
 
 CONFIG = stem.util.conf.config_dict('consensus_health', {
@@ -627,6 +629,8 @@ def has_authority_flag(latest_consensus, consensuses, votes):
   for desc in latest_consensus.routers.values():
     if Flag.AUTHORITY in desc.flags:
       seen_authorities.add(desc.nickname)
+
+  seen_authorities.remove('tor26')
 
   known_authorities = set(DIRECTORY_AUTHORITIES.keys())
   missing_authorities = known_authorities.difference(seen_authorities)
