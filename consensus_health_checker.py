@@ -927,7 +927,7 @@ def get_votes():
 
 
 def _get_documents(label, resource):
-  documents, times_taken, issues = {}, {}, []
+  documents, times_taken, clock_skew, issues = {}, {}, {}, []
 
   for authority in DIRECTORY_AUTHORITIES.values():
     if authority.v3ident is None:
@@ -940,9 +940,12 @@ def _get_documents(label, resource):
     )
 
     try:
-      start_time = time.time()
+      start_time = datetime.datetime.utcnow()
       documents[authority.nickname] = query.run()[0]
-      times_taken[authority.nickname] = time.time() - start_time
+      response_timestamp = datetime.datetime.strptime(query.reply_headers.get('date'), '%a, %d %b %Y %H:%M:%S %Z')
+
+      times_taken[authority.nickname] = (datetime.datetime.utcnow() - start_time).total_seconds()
+      clock_skew[authority.nickname] = abs((start_time - response_timestamp).total_seconds())
     except Exception as exc:
       issues.append(Issue(Runlevel.ERROR, 'AUTHORITY_UNAVAILABLE', fetch_type = label, authority = authority.nickname, url = query.download_url, error = exc, to = [authority.nickname]))
 
@@ -953,6 +956,10 @@ def _get_documents(label, resource):
     for nickname, time_taken in times_taken.items():
       if time_taken > median_time * 5:
         issues.append(Issue(Runlevel.NOTICE, 'LATENCY', authority = nickname, time_taken = '%0.1fs' % time_taken, median_time = '%0.1fs' % median_time, authority_times = authority_times, to = [nickname]))
+
+    for nickname, difference in clock_skew.items():
+      if difference > 10:
+        issues.append(Issue(Runlevel.NOTICE, 'CLOCK_SKEW', authority = nickname, difference = difference, to = [nickname]))
 
   return documents, issues
 
