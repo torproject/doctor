@@ -42,7 +42,7 @@ def main():
 
   fingerprint_changes = load_fingerprint_changes()
   downloader = DescriptorDownloader(timeout = 15)
-  alarm_for = set()
+  alarm_for = {}
 
   for relay in downloader.get_consensus():
     prior_fingerprints = fingerprint_changes.setdefault((relay.address, relay.or_port), {})
@@ -62,13 +62,13 @@ def main():
       # if we've changed more than ten times in the last ten days then alarm
 
       if len(prior_fingerprints) >= 10:
-        alarm_for.add((relay.address, relay.or_port, relay.fingerprint))
+        alarm_for['%s:%s' % (relay.address, relay.or_port)] = (relay.address, relay.or_port, relay.fingerprint)
 
-  if alarm_for and not is_notification_suppressed(alarm_for):
+  if alarm_for and not is_notification_suppressed(alarm_for.values()):
     log.debug("Sending a notification for %i relays..." % len(alarm_for))
     body = EMAIL_BODY
 
-    for address, or_port, fingerprint in alarm_for:
+    for address, or_port, fingerprint in alarm_for.values():
       try:
         desc = downloader.get_server_descriptors(fingerprint).run()[0]
       except:
@@ -102,7 +102,7 @@ def main():
     subject = EMAIL_SUBJECT
 
     if len(alarm_for) == 1:
-      subject += ' (%s:%s)' % list(alarm_for)[0][:2]
+      subject += ' (%s:%s)' % alarm_for.values()[0][:2]
 
     util.send(subject, body = body, to = ['bad-relays@lists.torproject.org', 'atagar@torproject.org'])
 
@@ -110,7 +110,7 @@ def main():
 
     current_time = str(int(time.time()))
 
-    for address, or_port, _ in alarm_for:
+    for address, or_port, _ in alarm_for.values():
       last_notified_config.set('%s:%s' % (address, or_port), current_time)
 
     last_notified_config.save()
