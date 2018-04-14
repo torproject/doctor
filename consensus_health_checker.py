@@ -138,6 +138,11 @@ class Issue(object):
       attr.update({'authority': '', 'time_taken': '', 'median_time': '', 'authority_times': ''})
 
       return CONFIG['msg'][self._template].format(**attr).replace(' ', '_')
+    elif self._template == 'CLOCK_SKEW':
+      attr = dict(self._attr)
+      attr.update({'authority': '', 'difference': ''})
+
+      return CONFIG['msg'][self._template].format(**attr).replace(' ', '_')
     elif self._template == 'FLAG_COUNT_DIFFERS':
       attr = dict(self._attr)
       attr.update({'consensus_count': 0, 'vote_count': 0})
@@ -959,7 +964,7 @@ def _get_documents(label, resource):
 
     for nickname, difference in clock_skew.items():
       if difference > 10:
-        issues.append(Issue(Runlevel.NOTICE, 'CLOCK_SKEW', authority = nickname, difference = difference, to = [nickname]))
+        issues.append(Issue(Runlevel.NOTICE, 'CLOCK_SKEW', authority = nickname, difference = int(difference), to = [nickname]))
 
   return documents, issues
 
