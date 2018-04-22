@@ -193,7 +193,7 @@ def is_rate_limited(issue):
   hours = issue.get_suppression_duration()
 
   if hours == 0:
-    return True
+    return False
 
   current_time = int(time.time())
   last_seen = stem.util.conf.get_config('last_notified').get(key, 0)
