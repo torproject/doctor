@@ -4,14 +4,14 @@
 
 """
 Health checks for your relay. This provides a simple email notification when
-your relay has become unavailable.
+your relay becomes unavailable.
 """
 
 import smtplib
 import traceback
 
 import stem
-import stem.client
+import stem.descriptor.remote
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -27,14 +27,12 @@ RELAY_LINK = 'https://metrics.torproject.org/rs.html#details/%s' % RELAY_FINGERP
 
 def main():
   try:
-    with stem.client.Relay.connect(RELAY_ADDRESS, RELAY_OR_PORT, [3]) as relay:
-      circ = relay.create_circuit()
-      circ.send('RELAY_BEGIN_DIR', stream_id = 1)
-      our_descriptor = circ.send('RELAY_DATA', 'GET /tor/server/authority HTTP/1.0\r\n\r\n', stream_id = 1).data
-      circ.close()
+    desc = list(stem.descriptor.remote.their_server_descriptor(
+      endpoints = [stem.ORPort(RELAY_ADDRESS, RELAY_OR_PORT)],
+    ))[0]
 
-      if 'router %s %s %s' % (RELAY_NAME, RELAY_ADDRESS, RELAY_OR_PORT) not in our_descriptor:
-        email('Unable to fetch %s descriptor' % RELAY_NAME, "Unable to retrieve the descriptor of %s (%s):\n\n%s" % (RELAY_NAME, RELAY_LINK, our_descriptor))
+    if desc.nickname != RELAY_NAME:
+      raise ValueError('Unexpected descriptor:\n\n%s' % desc)
   except stem.SocketError:
     email('Unable to reach %s' % RELAY_NAME, "Unable to reach %s (%s):\n\n%s" % (RELAY_NAME, RELAY_LINK, traceback.format_exc()))
 
@@ -56,7 +54,7 @@ def email(subject, body):
   msg.attach(MIMEText(body, 'plain'))
 
   server = smtplib.SMTP('localhost')
-  server.sendmail(FROM_ADDRESS, destinations, msg.as_string())
+  server.sendmail('no-rely@torproject.com', [EMAIL_ADDRESS], msg.as_string())
   server.quit()
 
 
