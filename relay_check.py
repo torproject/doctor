@@ -27,9 +27,9 @@ RELAY_LINK = 'https://metrics.torproject.org/rs.html#details/%s' % RELAY_FINGERP
 
 def main():
   try:
-    desc = list(stem.descriptor.remote.their_server_descriptor(
+    desc = stem.descriptor.remote.their_server_descriptor(
       endpoints = [stem.ORPort(RELAY_ADDRESS, RELAY_OR_PORT)],
-    ))[0]
+    ).run()[0]
 
     if desc.nickname != RELAY_NAME:
       raise ValueError('Unexpected descriptor:\n\n%s' % desc)
