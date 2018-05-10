@@ -16,6 +16,7 @@ import util
 
 import stem.descriptor
 import stem.descriptor.remote
+import stem.directory
 import stem.util.conf
 import stem.util.enum
 
@@ -24,7 +25,7 @@ from stem.util.lru_cache import lru_cache
 
 Runlevel = stem.util.enum.UppercaseEnum('NOTICE', 'WARNING', 'ERROR')
 
-DIRECTORY_AUTHORITIES = stem.descriptor.remote.get_authorities()
+DIRECTORY_AUTHORITIES = stem.directory.Authority.from_cache()
 del DIRECTORY_AUTHORITIES['tor26']  # DirPort does not service requests without a '.z' suffix
 
 EMAIL_SUBJECT = 'Consensus issues'

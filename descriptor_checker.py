@@ -17,6 +17,7 @@ import util
 
 import stem.descriptor
 import stem.descriptor.remote
+import stem.directory
 
 EMAIL_SUBJECT = 'Unable to retrieve tor descriptors'
 
@@ -61,7 +62,7 @@ def main():
 
   # download the consensus from each authority
 
-  for authority in stem.descriptor.remote.get_authorities().values():
+  for authority in stem.directory.Authority.from_cache().values():
     if authority.v3ident is None:
       continue  # authority doesn't vote in the consensus
     elif authority.nickname == 'tor26':

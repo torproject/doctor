@@ -9,7 +9,8 @@ Report for how many of our fallback directories are unreachable.
 import time
 import traceback
 
-from stem.descriptor.remote import DescriptorDownloader, FallbackDirectory
+import stem.descriptor.remote
+import stem.directory
 
 import util
 
@@ -24,12 +25,12 @@ EMAIL_BODY = """\
 
 """
 
-downloader = DescriptorDownloader(timeout = 30)
+downloader = stem.descriptor.remote.DescriptorDownloader(timeout = 30)
 
 
 def main():
   try:
-    fallback_directories = FallbackDirectory.from_remote().values()
+    fallback_directories = stem.directory.Fallback.from_remote().values()
     log.info('Retrieved %i fallback directories' % len(fallback_directories))
   except IOError as exc:
     raise IOError("Unable to determine tor's fallback directories: %s" % exc)
