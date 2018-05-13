@@ -29,6 +29,7 @@ DIRECTORY_AUTHORITIES = stem.directory.Authority.from_cache()
 del DIRECTORY_AUTHORITIES['tor26']  # DirPort does not service requests without a '.z' suffix
 
 EMAIL_SUBJECT = 'Consensus issues'
+BANDWIDTH_AUTHORITIES = ('moria1', 'gabelmoo', 'maatuska', 'Faravahar', 'bastet')
 
 CONFIG = stem.util.conf.config_dict('consensus_health', {
   'msg': {},
@@ -584,9 +585,9 @@ def voting_bandwidth_scanners(latest_consensus, consensuses, votes):
         contains_measured_bandwidth = True
         break
 
-    if DIRECTORY_AUTHORITIES[authority].is_bandwidth_authority and not contains_measured_bandwidth:
+    if DIRECTORY_AUTHORITIES[authority].nickname in BANDWIDTH_AUTHORITIES and not contains_measured_bandwidth:
       missing_authorities.append(authority)
-    if not DIRECTORY_AUTHORITIES[authority].is_bandwidth_authority and contains_measured_bandwidth:
+    if not DIRECTORY_AUTHORITIES[authority].nickname in BANDWIDTH_AUTHORITIES and contains_measured_bandwidth:
       extra_authorities.append(authority)
 
   issues = []
@@ -608,7 +609,7 @@ def unmeasured_relays(latest_consensus, consensuses, votes):
   consensus_fingerprints = set([desc.fingerprint for desc in latest_consensus.routers.values()])
 
   for authority, vote in votes.items():
-    if DIRECTORY_AUTHORITIES[authority].is_bandwidth_authority:
+    if DIRECTORY_AUTHORITIES[authority].nickname in BANDWIDTH_AUTHORITIES:
       measured, unmeasured = 0, 0
 
       for desc in vote.routers.values():
