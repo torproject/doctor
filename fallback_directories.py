@@ -53,10 +53,14 @@ def main():
       issues.append('%s => IPv6 ORPort is unreachable (%s:%i)' % (relay.fingerprint, relay.orport_v6[0], relay.orport_v6[1]))
       continue
 
-    start = time.time()
-    downloader.get_consensus(endpoints = [(relay.address, relay.dir_port)]).run()
-    download_time = time.time() - start
-    log.info('%s download time was %0.1f seconds' % (relay.fingerprint, download_time))
+    try:
+      start = time.time()
+      downloader.get_consensus(endpoints = [(relay.address, relay.dir_port)]).run()
+      download_time = time.time() - start
+      log.info('%s download time was %0.1f seconds' % (relay.fingerprint, download_time))
+    except Exception as exc:
+      issues.append('%s => Unable to download from DirPort (%s)' % (relay.fingerprint, exc))
+      continue
 
     if download_time > 15:
       issues.append('%s => Downloading the consensus took %0.1f seconds' % (relay.fingerprint, download_time))
