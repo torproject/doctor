@@ -637,7 +637,8 @@ def has_authority_flag(latest_consensus, consensuses, votes):
     if Flag.AUTHORITY in desc.flags:
       seen_authorities.add(desc.nickname)
 
-  seen_authorities.remove('tor26')
+  if 'tor26' in seen_authorities:
+    seen_authorities.remove('tor26')
 
   known_authorities = set(DIRECTORY_AUTHORITIES.keys())
   missing_authorities = known_authorities.difference(seen_authorities)
