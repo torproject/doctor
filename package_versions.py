@@ -19,7 +19,7 @@ DEBIAN_VERSION = '<h1>Package: \S+ \(([0-9\.]+).*\)'
 FEDORA_VERSION = '<div class="package-name">([0-9\.]+).*</div>'
 ARCH_LINUX_VERSION = '<title>Arch Linux - \S+ ([0-9\.]+).*</title>'
 AUR_VERSION = '<h2>Package Details: \S+ ([0-9\.]+)-\S+</h2>'
-FREEBSD_VERSION = 'SHA256 \(\S+-([0-9\.]+).tar.gz\)'
+FREEBSD_VERSION = 'SHA256 \(\S+-([0-9\.]+).tar.[gx]z\)'
 OPENBSD_DIST_VERSION = 'DISTNAME\s*=\s+\S+-([0-9\.]+)'
 OPENBSD_EGG_VERSION = 'MODPY_EGG_VERSION =\s+([0-9\.]+)'
 NETBSD_VERSION = 'CURRENT, <b>Version: </b>([0-9\.]+),'
@@ -74,7 +74,7 @@ PACKAGES = [
     Package('gentoo', 'https://packages.gentoo.org/packages/net-proxy/torsocks', None),
     Package('archlinux', 'https://www.archlinux.org/packages/community/x86_64/torsocks/', ARCH_LINUX_VERSION),
     Package('slackware', 'https://slackbuilds.org/repository/14.2/network/torsocks/', 'torsocks \(([0-9\.]+)\)    </h2>'),
-    Package('freebsd', 'https://www.freshports.org/net/torsocks/', 'SHA256 \(dgoulet-torsocks-v([0-9\.]+)_GH0.tar.gz\)'),
+    Package('freebsd', 'https://www.freshports.org/net/torsocks/', FREEBSD_VERSION),
     Package('openbsd', 'https://cvsweb.openbsd.org/cgi-bin/cvsweb/ports/net/torsocks/Makefile?rev=HEAD&content-type=text/x-cvsweb-markup', OPENBSD_DIST_VERSION),
   ]),
   ('ooni probe', [
