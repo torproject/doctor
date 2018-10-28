@@ -16,7 +16,7 @@ import util
 
 log = util.get_logger('fallback_directories')
 
-NOTIFICATION_THRESHOLD = 25  # send notice if this percentage of fallbacks are unusable
+NOTIFICATION_THRESHOLD = 50  # send notice if this percentage of fallbacks are unusable
 TO_ADDRESSES = ['tor-consensus-health@lists.torproject.org', 'teor@torproject.org', 'nickm@torproject.org']
 EMAIL_SUBJECT = 'Fallback Directory Summary (%i/%i, %i%%)'
 
