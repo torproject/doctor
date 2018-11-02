@@ -29,7 +29,7 @@ DIRECTORY_AUTHORITIES = stem.directory.Authority.from_cache()
 del DIRECTORY_AUTHORITIES['tor26']  # DirPort does not service requests without a '.z' suffix
 
 EMAIL_SUBJECT = 'Consensus issues'
-BANDWIDTH_AUTHORITIES = ('moria1', 'gabelmoo', 'maatuska', 'Faravahar', 'bastet')
+BANDWIDTH_AUTHORITIES = ('moria1', 'gabelmoo', 'maatuska', 'Faravahar', 'bastet', 'longclaw')
 
 CONFIG = stem.util.conf.config_dict('consensus_health', {
   'msg': {},
