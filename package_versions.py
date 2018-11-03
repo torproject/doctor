@@ -79,7 +79,6 @@ PACKAGES = [
   ]),
   ('ooni probe', [
     Package('mac', 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/ooniprobe.rb', 'ooniprobe-([0-9\.]+).tar.gz'),
-    Package('debian', 'https://packages.debian.org/sid/ooniprobe', DEBIAN_VERSION),
     Package('archlinux', 'https://aur.archlinux.org/packages/ooniprobe/', AUR_VERSION),
   ]),
 ]
@@ -116,7 +115,7 @@ def wiki_package_versions():
     if m:
       version_entries.append(m.group(1))
 
-  if len(version_entries) != 40:
+  if len(version_entries) != 39:
     raise IOError('Table on %s no longer matches what this daemon expects (had %i entries)' % (TRAC_URL, len(version_entries)))
 
   return {
@@ -164,8 +163,7 @@ def wiki_package_versions():
       'openbsd': version_entries[36],
     }, 'ooni probe': {
       'mac': version_entries[37],
-      'debian': version_entries[38],
-      'archlinux': version_entries[39],
+      'archlinux': version_entries[38],
     }
   }
 
