@@ -68,6 +68,7 @@ PACKAGES = [
     Package('archlinux', 'https://aur.archlinux.org/packages/python-txtorcon/', AUR_VERSION),
     Package('slackware', 'https://slackbuilds.org/repository/14.2/python/txtorcon/', 'txtorcon-([0-9\.]+).tar.gz'),
     Package('freebsd', 'https://www.freshports.org/security/py-txtorcon/', FREEBSD_VERSION),
+    Package('netbsd', 'http://pkgsrc.se/net/py-txtorcon', NETBSD_VERSION),
   ]),
   ('torsocks', [
     Package('mac', 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/torsocks.rb', ':tag => "v([0-9\.]+)",'),
@@ -117,7 +118,7 @@ def wiki_package_versions():
     if m:
       version_entries.append(m.group(1))
 
-  if len(version_entries) != 41:
+  if len(version_entries) != 42:
     raise IOError('Table on %s no longer matches what this daemon expects (had %i entries)' % (TRAC_URL, len(version_entries)))
 
   return {
@@ -156,18 +157,19 @@ def wiki_package_versions():
       'archlinux': version_entries[28],
       'slackware': version_entries[29],
       'freebsd': version_entries[30],
+      'netbsd': version_entries[31],
     }, 'torsocks': {
-      'mac': version_entries[31],
-      'debian': version_entries[32],
-      'fedora': version_entries[33],
-      'gentoo': version_entries[34],
-      'archlinux': version_entries[35],
-      'slackware': version_entries[36],
-      'freebsd': version_entries[37],
-      'openbsd': version_entries[38],
+      'mac': version_entries[32],
+      'debian': version_entries[33],
+      'fedora': version_entries[34],
+      'gentoo': version_entries[35],
+      'archlinux': version_entries[36],
+      'slackware': version_entries[37],
+      'freebsd': version_entries[38],
+      'openbsd': version_entries[39],
     }, 'ooni probe': {
-      'mac': version_entries[39],
-      'archlinux': version_entries[40],
+      'mac': version_entries[40],
+      'archlinux': version_entries[41],
     }
   }
 
