@@ -45,6 +45,7 @@ PACKAGES = [
   ('nyx', [
     Package('mac', 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/nyx.rb', 'nyx-([0-9\.]+).tar.gz'),
     Package('debian', 'https://packages.debian.org/sid/nyx', DEBIAN_VERSION),
+    Package('fedora', 'https://apps.fedoraproject.org/packages/nyx', FEDORA_VERSION),
     Package('gentoo', 'https://packages.gentoo.org/packages/net-misc/nyx', None),
     Package('archlinux', 'https://aur.archlinux.org/packages/nyx/', AUR_VERSION),
     Package('slackware', 'https://slackbuilds.org/repository/14.2/python/nyx/', 'nyx-([0-9\.]+).tar.gz'),
@@ -111,6 +112,7 @@ def wiki_package_versions():
 
   request = fetch_url(TRAC_URL)
   version_entries = []
+  expected_count = sum([len(packages) for project, packages in PACKAGES])
 
   for line in request.splitlines():
     m = re.search('<b>Version:</b> <a href=".*">(.*)</a>', line)
@@ -118,60 +120,17 @@ def wiki_package_versions():
     if m:
       version_entries.append(m.group(1))
 
-  if len(version_entries) != 42:
+  if len(version_entries) != expected_count:
     raise IOError('Table on %s no longer matches what this daemon expects (had %i entries)' % (TRAC_URL, len(version_entries)))
 
-  return {
-    'tor': {
-      'mac': version_entries[0],
-      'debian': version_entries[1],
-      'fedora': version_entries[2],
-      'gentoo': version_entries[3],
-      'archlinux': version_entries[4],
-      'slackware': version_entries[5],
-      'freebsd': version_entries[6],
-      'openbsd': version_entries[7],
-      'netbsd': version_entries[8],
-    }, 'nyx': {
-      'mac': version_entries[9],
-      'debian': version_entries[10],
-      'fedora': version_entries[11],
-      'gentoo': version_entries[12],
-      'archlinux': version_entries[13],
-      'slackware': version_entries[14],
-      'freebsd': version_entries[15],
-      'openbsd': version_entries[16],
-      'netbsd': version_entries[17],
-    }, 'stem': {
-      'debian': version_entries[18],
-      'fedora': version_entries[19],
-      'gentoo': version_entries[20],
-      'archlinux': version_entries[21],
-      'slackware': version_entries[22],
-      'freebsd': version_entries[23],
-      'openbsd': version_entries[24],
-      'netbsd': version_entries[25],
-    }, 'txtorcon': {
-      'debian': version_entries[26],
-      'gentoo': version_entries[27],
-      'archlinux': version_entries[28],
-      'slackware': version_entries[29],
-      'freebsd': version_entries[30],
-      'netbsd': version_entries[31],
-    }, 'torsocks': {
-      'mac': version_entries[32],
-      'debian': version_entries[33],
-      'fedora': version_entries[34],
-      'gentoo': version_entries[35],
-      'archlinux': version_entries[36],
-      'slackware': version_entries[37],
-      'freebsd': version_entries[38],
-      'openbsd': version_entries[39],
-    }, 'ooni probe': {
-      'mac': version_entries[40],
-      'archlinux': version_entries[41],
-    }
-  }
+  result, index = {}, 0
+
+  for project, packages in PACKAGES:
+    for pkg in packages:
+      result.setdefault(project, {})[pkg.platform] = version_entries[index]
+      index += 1
+
+  return result
 
 
 def gentoo_version(request):
