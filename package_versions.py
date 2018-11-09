@@ -79,6 +79,7 @@ PACKAGES = [
     Package('slackware', 'https://slackbuilds.org/repository/14.2/network/torsocks/', 'torsocks \(([0-9\.]+)\)    </h2>'),
     Package('freebsd', 'https://www.freshports.org/net/torsocks/', FREEBSD_VERSION),
     Package('openbsd', 'https://cvsweb.openbsd.org/cgi-bin/cvsweb/ports/net/torsocks/Makefile?rev=HEAD&content-type=text/x-cvsweb-markup', OPENBSD_DIST_VERSION),
+    Package('netbsd', 'http://pkgsrc.se/net/torsocks', NETBSD_VERSION),
   ]),
   ('ooni probe', [
     Package('mac', 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/ooniprobe.rb', 'ooniprobe-([0-9\.]+).tar.gz'),
