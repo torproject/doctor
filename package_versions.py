@@ -15,6 +15,7 @@ import urllib2
 
 import util
 
+MAC_VERSION = '\w*<td>([0-9\.]+)</td>'
 DEBIAN_VERSION = '<h1>Package: \S+ \(([0-9\.]+).*\)'
 FEDORA_VERSION = '<div class="package-name">([0-9\.]+).*</div>'
 ARCH_LINUX_VERSION = '<title>Arch Linux - \S+ ([0-9\.]+).*</title>'
@@ -32,7 +33,7 @@ Package = collections.namedtuple('Package', ['platform', 'url', 'regex'])
 
 PACKAGES = [
   ('tor', [
-    Package('mac', 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/tor.rb', 'tor-([0-9\.]+).tar.gz'),
+    Package('mac', 'https://formulae.brew.sh/formula/tor', MAC_VERSION),
     Package('debian', 'https://packages.debian.org/sid/tor', DEBIAN_VERSION),
     Package('fedora', 'https://apps.fedoraproject.org/packages/tor', FEDORA_VERSION),
     Package('gentoo', 'https://packages.gentoo.org/packages/net-vpn/tor', None),
@@ -43,7 +44,7 @@ PACKAGES = [
     Package('netbsd', 'http://pkgsrc.se/net/tor', NETBSD_VERSION),
   ]),
   ('nyx', [
-    Package('mac', 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/nyx.rb', 'nyx-([0-9\.]+).tar.gz'),
+    Package('mac', 'https://formulae.brew.sh/formula/nyx', MAC_VERSION),
     Package('debian', 'https://packages.debian.org/sid/nyx', DEBIAN_VERSION),
     Package('fedora', 'https://apps.fedoraproject.org/packages/nyx', FEDORA_VERSION),
     Package('gentoo', 'https://packages.gentoo.org/packages/net-misc/nyx', None),
@@ -71,7 +72,7 @@ PACKAGES = [
     Package('netbsd', 'http://pkgsrc.se/net/py-txtorcon', NETBSD_VERSION),
   ]),
   ('torsocks', [
-    Package('mac', 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/torsocks.rb', ':tag => "v([0-9\.]+)",'),
+    Package('mac', 'https://formulae.brew.sh/formula/torsocks', MAC_VERSION),
     Package('debian', 'https://packages.debian.org/sid/torsocks', DEBIAN_VERSION),
     Package('fedora', 'https://apps.fedoraproject.org/packages/torsocks', FEDORA_VERSION),
     Package('gentoo', 'https://packages.gentoo.org/packages/net-proxy/torsocks', None),
@@ -82,7 +83,7 @@ PACKAGES = [
     Package('netbsd', 'http://pkgsrc.se/net/torsocks', NETBSD_VERSION),
   ]),
   ('ooni probe', [
-    Package('mac', 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/ooniprobe.rb', 'ooniprobe-([0-9\.]+).tar.gz'),
+    Package('mac', 'https://formulae.brew.sh/formula/ooniprobe', MAC_VERSION),
     Package('archlinux', 'https://aur.archlinux.org/packages/ooniprobe/', AUR_VERSION),
   ]),
 ]
