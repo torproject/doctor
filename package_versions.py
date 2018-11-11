@@ -16,7 +16,7 @@ import urllib2
 import util
 
 MAC_VERSION = '\w*<td>([0-9\.]+)</td>'
-DEBIAN_VERSION = '<h1>Package: \S+ \(([0-9\.]+).*\)'
+DEBIAN_VERSION = '<h1>Source Package: \S+ \(([0-9\.]+).*\)'
 FEDORA_VERSION = '<div class="package-name">([0-9\.]+).*</div>'
 ARCH_LINUX_VERSION = '<title>Arch Linux - \S+ ([0-9\.]+).*</title>'
 AUR_VERSION = '<h2>Package Details: \S+ ([0-9\.]+)-\S+</h2>'
@@ -34,7 +34,7 @@ Package = collections.namedtuple('Package', ['platform', 'url', 'regex'])
 PACKAGES = [
   ('tor', [
     Package('mac', 'https://formulae.brew.sh/formula/tor', MAC_VERSION),
-    Package('debian', 'https://packages.debian.org/sid/tor', DEBIAN_VERSION),
+    Package('debian', 'https://packages.debian.org/source/sid/tor', DEBIAN_VERSION),
     Package('fedora', 'https://apps.fedoraproject.org/packages/tor', FEDORA_VERSION),
     Package('gentoo', 'https://packages.gentoo.org/packages/net-vpn/tor', None),
     Package('archlinux', 'https://www.archlinux.org/packages/community/x86_64/tor/', ARCH_LINUX_VERSION),
@@ -45,7 +45,7 @@ PACKAGES = [
   ]),
   ('nyx', [
     Package('mac', 'https://formulae.brew.sh/formula/nyx', MAC_VERSION),
-    Package('debian', 'https://packages.debian.org/sid/nyx', DEBIAN_VERSION),
+    Package('debian', 'https://packages.debian.org/source/sid/nyx', DEBIAN_VERSION),
     Package('fedora', 'https://apps.fedoraproject.org/packages/nyx', FEDORA_VERSION),
     Package('gentoo', 'https://packages.gentoo.org/packages/net-misc/nyx', None),
     Package('archlinux', 'https://aur.archlinux.org/packages/nyx/', AUR_VERSION),
@@ -55,7 +55,7 @@ PACKAGES = [
     Package('netbsd', 'http://pkgsrc.se/net/nyx', NETBSD_VERSION),
   ]),
   ('stem', [
-    Package('debian', 'https://packages.debian.org/sid/python-stem', DEBIAN_VERSION),
+    Package('debian', 'https://packages.debian.org/source/sid/python-stem', DEBIAN_VERSION),
     Package('fedora', 'https://apps.fedoraproject.org/packages/python-stem', FEDORA_VERSION),
     Package('gentoo', 'https://packages.gentoo.org/packages/net-libs/stem', None),
     Package('archlinux', 'https://aur.archlinux.org/packages/stem/', AUR_VERSION),
@@ -65,7 +65,7 @@ PACKAGES = [
     Package('netbsd', 'http://pkgsrc.se/net/py-stem', NETBSD_VERSION),
   ]),
   ('txtorcon', [
-    Package('debian', 'https://packages.debian.org/sid/python3-txtorcon', DEBIAN_VERSION),
+    Package('debian', 'https://packages.debian.org/source/sid/txtorcon', DEBIAN_VERSION),
     Package('gentoo', 'https://packages.gentoo.org/packages/dev-python/txtorcon', None),
     Package('archlinux', 'https://aur.archlinux.org/packages/python-txtorcon/', AUR_VERSION),
     Package('slackware', 'https://slackbuilds.org/repository/14.2/python/txtorcon/', 'txtorcon-([0-9\.]+).tar.gz'),
@@ -74,7 +74,7 @@ PACKAGES = [
   ]),
   ('torsocks', [
     Package('mac', 'https://formulae.brew.sh/formula/torsocks', MAC_VERSION),
-    Package('debian', 'https://packages.debian.org/sid/torsocks', DEBIAN_VERSION),
+    Package('debian', 'https://packages.debian.org/source/sid/torsocks', DEBIAN_VERSION),
     Package('fedora', 'https://apps.fedoraproject.org/packages/torsocks', FEDORA_VERSION),
     Package('gentoo', 'https://packages.gentoo.org/packages/net-proxy/torsocks', None),
     Package('archlinux', 'https://www.archlinux.org/packages/community/x86_64/torsocks/', ARCH_LINUX_VERSION),
