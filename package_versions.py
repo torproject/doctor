@@ -23,7 +23,7 @@ AUR_VERSION = '<h2>Package Details: \S+ ([0-9\.]+)-\S+</h2>'
 FREEBSD_VERSION = 'SHA256 \(\S+-([0-9\.]+).tar.[gx]z\)'
 OPENBSD_DIST_VERSION = 'DISTNAME\s*=\s+\S+-([0-9\.]+)'
 OPENBSD_EGG_VERSION = 'MODPY_EGG_VERSION =\s+([0-9\.]+)'
-NETBSD_VERSION = 'CURRENT, <b>Version: </b>([0-9\.]+),'
+NETBSD_VERSION = 'CURRENT, <b>Version: </b>([0-9\.]+)[a-z0-9]*,'
 
 COLUMN = '| %-10s | %-10s | %-10s | %-50s |'
 DIV = '+%s+%s+%s+%s+' % ('-' * 12, '-' * 12, '-' * 12, '-' * 52)
