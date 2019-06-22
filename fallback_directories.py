@@ -19,11 +19,7 @@ log = util.get_logger('fallback_directories')
 NOTIFICATION_THRESHOLD = 25  # send notice if this percentage of fallbacks are unusable
 TO_ADDRESSES = ['tor-consensus-health@lists.torproject.org', 'teor@torproject.org', 'nickm@torproject.org', 'gus@torproject.org']
 EMAIL_SUBJECT = 'Fallback Directory Summary (%i/%i, %i%%)'
-
-EMAIL_BODY = """\
-%i/%i (%i%%) fallback directories have become slow or unresponsive...
-
-"""
+SYNOPSIS = '%i/%i (%i%%) fallback directories have become slow or unresponsive...'
 
 downloader = stem.descriptor.remote.DescriptorDownloader(timeout = 30)
 
@@ -70,14 +66,24 @@ def main():
 
   if issue_percent >= NOTIFICATION_THRESHOLD:
     log.info('Sending notification')
+    synopsis = SYNOPSIS % (len(issues), len(fallback_directories), issue_percent)
 
     subject = EMAIL_SUBJECT % (len(issues), len(fallback_directories), issue_percent)
-    body = EMAIL_BODY % (len(issues), len(fallback_directories), issue_percent)
-    util.send(subject, body = body + '\n'.join(['  * %s' % issue for issue in issues]), to = TO_ADDRESSES)
+    email_body = synopsis + '\n\n' + '\n'.join(['  * %s' % issue for issue in issues])
+    util.send(subject, body = email_body, to = TO_ADDRESSES)
 
     # notification for #tor-bots
 
-    body = '\n'.join(['[fallback-directories] %s' % issue for issue in issues])
+    irc_lines = [synopsis]
+
+    for i, issue in enumerate(issues):
+      if i < 4:
+        irc_lines.append(issue)
+      else:
+        irc_lines.append('... and %i more' % (len(issues) - i))
+        break
+
+    irc_body = '\n'.join(['[fallback-directories] %s' % line for line in irc_lines])
     util.send('Announce or', body = body, to = ['tor-misc@commit.noreply.org'])
 
 
