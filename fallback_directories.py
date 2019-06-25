@@ -84,7 +84,7 @@ def main():
         break
 
     irc_body = '\n'.join(['[fallback-directories] %s' % line for line in irc_lines])
-    util.send('Announce or', body = body, to = ['tor-misc@commit.noreply.org'])
+    util.send('Announce or', body = irc_body, to = ['tor-misc@commit.noreply.org'])
 
 
 if __name__ == '__main__':
