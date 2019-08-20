@@ -344,6 +344,7 @@ def run_checks(consensuses, votes):
     shared_random_present,
     shared_random_commit_partitioning,
     shared_random_reveal_partitioning,
+    old_dizum_address_reachable,
   )
 
   all_issues = []
@@ -913,6 +914,23 @@ def shared_random_reveal_partitioning(latest_consensus, consensuses, votes):
         issues.append(Issue(Runlevel.WARNING, 'SHARED_RANDOM_REVEAL_DUPLICATED', authority = authority, their_v3ident = v3ident, to = [authority]))
       elif matches[0] != reveal:
         issues.append(Issue(Runlevel.WARNING, 'SHARED_RANDOM_REVEAL_MISMATCH', authority = authority, their_v3ident = v3ident, our_value = matches[0], their_value = reveal, to = [authority]))
+
+
+def old_dizum_address_reachable(latest_consensus, consensuses, votes):
+  """
+  Check that dizum's old address is still reachable...
+
+    https://trac.torproject.org/projects/tor/ticket/31406
+  """
+
+  try:
+    desc = stem.descriptor.remote.their_server_descriptor(endpoints = [('194.109.206.212', 80)]).run()[0]
+
+    if desc.nickname != 'dizum':
+      raise IOError("Unexpected nickname at dizum's old address (%s)" % desc.nickname)
+  except Exception as exc:
+    return Issue(Runlevel.WARNING, 'OLD_DIZUM_UNAVAILABLE', address = '194.109.206.212', error = exc, to = ['dizum'])
+
 
 def get_consensuses():
   """
