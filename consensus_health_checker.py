@@ -28,6 +28,11 @@ Runlevel = stem.util.enum.UppercaseEnum('NOTICE', 'WARNING', 'ERROR')
 DIRECTORY_AUTHORITIES = stem.directory.Authority.from_cache()
 del DIRECTORY_AUTHORITIES['tor26']  # DirPort does not service requests without a '.z' suffix
 
+# dannenberg runs tor's long-term-stable release which does not support the
+# most recent consensus method, breaking its ability to sign the consensus
+
+del DIRECTORY_AUTHORITIES['dannenberg']
+
 EMAIL_SUBJECT = 'Consensus issues'
 BANDWIDTH_AUTHORITIES = ('moria1', 'gabelmoo', 'maatuska', 'Faravahar', 'bastet', 'longclaw')
 
@@ -640,6 +645,9 @@ def has_authority_flag(latest_consensus, consensuses, votes):
 
   if 'tor26' in seen_authorities:
     seen_authorities.remove('tor26')
+
+  if 'dannenberg' in seen_authorities:
+    seen_authorities.remove('dannenberg')
 
   known_authorities = set(DIRECTORY_AUTHORITIES.keys())
   missing_authorities = known_authorities.difference(seen_authorities)
