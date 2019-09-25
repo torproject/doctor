@@ -67,6 +67,8 @@ def main():
       continue  # authority doesn't vote in the consensus
     elif authority.nickname == 'tor26':
       continue  # DirPort doesn't accept requests without a .z suffix
+    elif authority.nickname == 'dannenberg':
+      continue  # unable to sign consensus (see commit 3f1c5f6)
 
     log.debug("Downloading the consensus from %s..." % authority.nickname)
 
