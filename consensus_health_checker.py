@@ -27,8 +27,6 @@ Runlevel = stem.util.enum.UppercaseEnum('NOTICE', 'WARNING', 'ERROR')
 
 DIRECTORY_AUTHORITIES = stem.directory.Authority.from_cache()
 
-DIRAUTH_SKIP_REACHABLE = ()
-DIRAUTH_SKIP_SEEN = ()
 DIRAUTH_SKIP_CHECKS = (
   'tor26'   # tor26 DirPort does not service requests without a .z suffix
 )
@@ -641,8 +639,7 @@ def has_authority_flag(latest_consensus, consensuses, votes):
 
   for desc in latest_consensus.routers.values():
     if Flag.AUTHORITY in desc.flags:
-      if not desc.nickname in DIRAUTH_SKIP_SEEN:
-        seen_authorities.add(desc.nickname)
+      seen_authorities.add(desc.nickname)
 
   known_authorities = set(DIRECTORY_AUTHORITIES.keys())
   missing_authorities = known_authorities.difference(seen_authorities)
@@ -826,15 +823,18 @@ def is_orport_reachable(latest_consensus, consensuses, votes):
     if not desc:
       continue  # authority isn't in the consensus
 
-    if authority.nickname in DIRAUTH_SKIP_REACHABLE:
-      continue  # reachability of authority impaired
+    # check the IPv4 ORPort
 
     issue = util.check_reachability(desc.address, desc.or_port)
+
     if issue:
       issues.append(Issue(Runlevel.WARNING, 'UNABLE_TO_REACH_ORPORT', authority = authority.nickname, address = desc.address, port = desc.or_port, error = issue, to = [authority]))
 
+    # check the IPv6 ORPorts
+
     for address, port, is_ipv6 in desc.or_addresses:
       issue = util.check_reachability(address, port)
+
       if issue:
         issues.append(Issue(Runlevel.WARNING, 'UNABLE_TO_REACH_ORPORT', authority = authority.nickname, address = address, port = port, error = issue, to = [authority]))
 
