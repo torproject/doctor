@@ -29,6 +29,10 @@ time: %s
 error: %s
 """
 
+DIRAUTH_SKIP_CHECKS = (
+  'tor26'   # tor26 DirPort does not service requests without a .z suffix
+)
+
 log = util.get_logger('descriptor_checker')
 util.log_stem_debugging('descriptor_checker')
 
@@ -65,8 +69,8 @@ def main():
   for authority in stem.directory.Authority.from_cache().values():
     if authority.v3ident is None:
       continue  # authority doesn't vote in the consensus
-    elif authority.nickname == 'tor26':
-      continue  # DirPort doesn't accept requests without a .z suffix
+    elif authority.nickname in DIRAUTH_SKIP_CHECKS:
+      continue  # checking of authority impaired
 
     log.debug("Downloading the consensus from %s..." % authority.nickname)
 

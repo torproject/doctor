@@ -26,7 +26,12 @@ from stem.util.lru_cache import lru_cache
 Runlevel = stem.util.enum.UppercaseEnum('NOTICE', 'WARNING', 'ERROR')
 
 DIRECTORY_AUTHORITIES = stem.directory.Authority.from_cache()
-del DIRECTORY_AUTHORITIES['tor26']  # DirPort does not service requests without a '.z' suffix
+
+DIRAUTH_SKIP_REACHABLE = ()
+DIRAUTH_SKIP_SEEN = ()
+DIRAUTH_SKIP_CHECKS = (
+  'tor26'   # tor26 DirPort does not service requests without a .z suffix
+)
 
 EMAIL_SUBJECT = 'Consensus issues'
 BANDWIDTH_AUTHORITIES = ('moria1', 'gabelmoo', 'maatuska', 'Faravahar', 'bastet', 'longclaw')
@@ -636,10 +641,8 @@ def has_authority_flag(latest_consensus, consensuses, votes):
 
   for desc in latest_consensus.routers.values():
     if Flag.AUTHORITY in desc.flags:
-      seen_authorities.add(desc.nickname)
-
-  if 'tor26' in seen_authorities:
-    seen_authorities.remove('tor26')
+      if not desc.nickname in DIRAUTH_SKIP_SEEN:
+        seen_authorities.add(desc.nickname)
 
   known_authorities = set(DIRECTORY_AUTHORITIES.keys())
   missing_authorities = known_authorities.difference(seen_authorities)
@@ -823,9 +826,15 @@ def is_orport_reachable(latest_consensus, consensuses, votes):
     if not desc:
       continue  # authority isn't in the consensus
 
+    if authority.nickname in DIRAUTH_SKIP_REACHABLE:
+      continue  # reachability of authority impaired
+
+    issue = util.check_reachability(desc.address, desc.or_port)
+    if issue:
+      issues.append(Issue(Runlevel.WARNING, 'UNABLE_TO_REACH_ORPORT', authority = authority.nickname, address = desc.address, port = desc.or_port, error = issue, to = [authority]))
+
     for address, port, is_ipv6 in desc.or_addresses:
       issue = util.check_reachability(address, port)
-
       if issue:
         issues.append(Issue(Runlevel.WARNING, 'UNABLE_TO_REACH_ORPORT', authority = authority.nickname, address = address, port = port, error = issue, to = [authority]))
 
@@ -956,8 +965,12 @@ def _get_documents(label, resource):
   documents, times_taken, clock_skew, issues = {}, {}, {}, []
 
   for authority in DIRECTORY_AUTHORITIES.values():
+
     if authority.v3ident is None:
       continue  # not a voting authority
+
+    if authority.nickname in DIRAUTH_SKIP_CHECKS:
+      continue  # checking of authority impaired
 
     query = downloader.query(
       resource,
@@ -976,7 +989,7 @@ def _get_documents(label, resource):
       issues.append(Issue(Runlevel.ERROR, 'AUTHORITY_UNAVAILABLE', fetch_type = label, authority = authority.nickname, url = query.download_url, error = exc, to = [authority.nickname]))
 
   if label == 'consensus' and times_taken:
-    median_time = sorted(times_taken.values())[len(times_taken) / 2]
+    median_time = sorted(times_taken.values())[int(len(times_taken) / 2)]
     authority_times = ', '.join(['%s => %0.1fs' % (authority, time_taken) for authority, time_taken in times_taken.items()])
 
     for nickname, time_taken in times_taken.items():
