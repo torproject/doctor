@@ -30,7 +30,7 @@ error: %s
 """
 
 DIRAUTH_SKIP_CHECKS = (
-  'tor26'   # tor26 DirPort does not service requests without a .z suffix
+  'tor26',   # tor26 DirPort does not service requests without a .z suffix
 )
 
 log = util.get_logger('descriptor_checker')
