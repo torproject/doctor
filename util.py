@@ -14,9 +14,9 @@ from email.mime.text import MIMEText
 import stem.util.connection
 import stem.util.log
 
-FROM_ADDRESS = 'atagar@torproject.org'
+FROM_ADDRESS = 'gk@torproject.org'
 TO_ADDRESSES = ['tor-consensus-health@lists.torproject.org']
-ERROR_ADDRESS = 'atagar@torproject.org'
+ERROR_ADDRESS = 'gk@torproject.org'
 
 TEST_RUN = getpass.getuser() != 'doctor'  # print script results rather than emailing
 

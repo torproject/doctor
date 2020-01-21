@@ -100,7 +100,7 @@ def get_tracked_relays():
     for relay in expired:
       body += '* %s (%s)\n' % (relay.identifier, relay.expires.strftime('%Y-%m-%d'))
 
-    util.send('tracked_relays.cfg entries expired', body = body, to = ['atagar@torproject.org'])
+    util.send('tracked_relays.cfg entries expired', body = body, to = ['gk@torproject.org'])
 
   return results
 
@@ -164,7 +164,7 @@ def main():
         body += '  address: %s:%s, fingerprint: %s\n' % (desc.address, desc.or_port, desc.fingerprint)
         last_notified_config.set('%s:%s' % (desc.address, desc.or_port), current_time)
 
-    util.send(EMAIL_SUBJECT, body = body, to = ['bad-relays@lists.torproject.org', 'atagar@torproject.org'])
+    util.send(EMAIL_SUBJECT, body = body, to = ['bad-relays@lists.torproject.org', 'gk@torproject.org'])
     last_notified_config.save()
 
 

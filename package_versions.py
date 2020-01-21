@@ -212,7 +212,7 @@ if __name__ == '__main__':
 
   if has_issue:
     try:
-      util.send('Packages wiki possibly outdated', body = content, to = [util.ERROR_ADDRESS])
+      util.send('Packages wiki possibly outdated', body = content, to = ['atagar@torproject.org'])
     except Exception as exc:
       log.warn("Unable to send email: %s" % exc)
 

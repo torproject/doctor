@@ -104,7 +104,7 @@ def main():
     if len(alarm_for) == 1:
       subject += ' (%s:%s)' % alarm_for.values()[0][:2]
 
-    util.send(subject, body = body, to = ['tor-network-alerts@lists.torproject.org', 'atagar@torproject.org'])
+    util.send(subject, body = body, to = ['tor-network-alerts@lists.torproject.org', 'gk@torproject.org'])
 
     # register that we've notified for these
 
