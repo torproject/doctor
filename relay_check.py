@@ -21,7 +21,7 @@ RELAY_OR_PORT = 1443
 RELAY_NAME = 'caersidi'
 RELAY_FINGERPRINT = '3BB34C63072D9D10E836EE42968713F7B9325F66'
 
-EMAIL_ADDRESS = 'gk@torproject.org'
+EMAIL_ADDRESS = 'atagar@torproject.org'
 RELAY_LINK = 'https://metrics.torproject.org/rs.html#details/%s' % RELAY_FINGERPRINT
 
 
