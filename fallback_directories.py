@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright 2016-2019, Damian Johnson and The Tor Project
+# Copyright 2016-2020, Damian Johnson and The Tor Project
 # See LICENSE for licensing information
 
 """
@@ -17,7 +17,7 @@ import util
 log = util.get_logger('fallback_directories')
 
 NOTIFICATION_THRESHOLD = 25  # send notice if this percentage of fallbacks are unusable
-TO_ADDRESSES = ['tor-consensus-health@lists.torproject.org', 'teor@torproject.org', 'nickm@torproject.org', 'gus@torproject.org']
+TO_ADDRESSES = ['tor-consensus-health@lists.torproject.org', 'dgoulet@torproject.org', 'nickm@torproject.org', 'gus@torproject.org']
 EMAIL_SUBJECT = 'Fallback Directory Summary (%i/%i, %i%%)'
 SYNOPSIS = '%i/%i (%i%%) fallback directories have become slow or unresponsive...'
 
