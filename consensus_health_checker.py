@@ -29,6 +29,7 @@ DIRECTORY_AUTHORITIES = stem.directory.Authority.from_cache()
 
 DIRAUTH_SKIP_CHECKS = (
   'tor26',   # tor26 DirPort does not service requests without a .z suffix
+  'dannenberg', # al asked for skipping the checks for now (2020-06-18)
 )
 
 EMAIL_SUBJECT = 'Consensus issues'
