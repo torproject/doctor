@@ -31,6 +31,7 @@ error: %s
 
 DIRAUTH_SKIP_CHECKS = (
   'tor26',   # tor26 DirPort does not service requests without a .z suffix
+  'dannenberg', # al asked for skipping the checks for now (2020-06-18)
 )
 
 log = util.get_logger('descriptor_checker')
